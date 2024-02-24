@@ -95,14 +95,13 @@ for (year in years) {
     
     # remaining land value
     # create land value columns after transferring land using both hazards
-    land_column_title <- paste0("Land_Value_", year, "_l", hazard_type) 
-    #remaining land net taxable
-    landtaxable_column_title <- paste0("Land_NetTaxable_", year, "_l", hazard_type) 
+    land_assess_col <- paste0("Land_Assess_", year, "_l", hazard_type) 
+    land_apr_col <- paste0("Land_Appraise_", year, "_l", hazard_type) 
     
     # fill land value columns by multiplying percentage of parcel within hazard zones by original assessed land value. (rounding used so small negative land values don't occur)
-    clean_retreat_calcs[[land_column_title]] <- (1- round(clean_retreat_calcs[[column_title]],digits=6)) * clean_retreat_calcs$Current_Land_Applied_Value
-    clean_retreat_calcs[[landtaxable_column_title]] <- (1- round(clean_retreat_calcs[[column_title]],digits=6)) * clean_retreat_calcs$Current_Land_Net_taxable
-    
+    clean_retreat_calcs[[land_assess_col]] <- (1- round(clean_retreat_calcs[[column_title]],digits=6)) * clean_retreat_calcs$ASMTLAND 
+    clean_retreat_calcs[[land_apr_col]] <- (1- round(clean_retreat_calcs[[column_title]],digits=6)) * clean_retreat_calcs$APRLANDMKT  
+
   }
 }
 
@@ -132,25 +131,17 @@ for (i in 1:length(yearsTB)) {
     
     # remaining land value
     # create land value columns after transferring land using both hazards
-    land_column_title <- paste0("Land_Value_", y, "_l", hazard_type)
-    #remaining land net taxable
-    landtaxable_column_title <- paste0("Land_NetTaxable_", y, "_l", hazard_type) 
+    land_assess_col <- paste0("Land_Assess_", y, "_l", hazard_type) 
+    land_apr_col <- paste0("Land_Appraise_", y, "_l", hazard_type)
     
     # fill land value columns by multiplying percentage of parcel within hazard zones by original assessed land value. (rounding used so small negative land values don't occur)
-    clean_retreat_calcs[[land_column_title]] <- clean_retreat_calcs$Current_Land_Applied_Value - clean_retreat_calcs[[column_title]] * clean_retreat_calcs$Current_Land_Applied_Value
-    clean_retreat_calcs[[landtaxable_column_title]] <- clean_retreat_calcs$Current_Land_Net_taxable - clean_retreat_calcs[[column_title]] * clean_retreat_calcs$Current_Land_Net_taxable
-    
+    clean_retreat_calcs[[land_assess_col]] <- clean_retreat_calcs$ASMTLAND - clean_retreat_calcs[[column_title]] * clean_retreat_calcs$ASMTLAND
+    clean_retreat_calcs[[land_apr_col]] <- clean_retreat_calcs$APRLANDMKT - clean_retreat_calcs[[column_title]] * clean_retreat_calcs$APRLANDMKT
   }
 }
 
 
 # Calculate tax revenue 
-
-# Define the tax rates for residential and residential A
-residential_rate <- 3.50 / 1000
-residential_a_rate_low <- 4.50 / 1000
-residential_a_rate_high <- 10.50 / 1000
-residential_a_threshold <- 1000000
 
 # Assume hazards used here are WF and CE, use same call for hazards as prior for loop
 years <- c("2023", "2026", "2030","2040", "2050", "2062", "2075", "2087", "2100") 
@@ -158,61 +149,46 @@ bvals <- c(1,0) #indicate whether building value is full (1) or none (0)
 
 for (year in years) {
   for (hazard_type in hazard_types) {
-    
-    # calculate remaining tax revenue after land transfer using only land value
-    # title new columns for tax revenue after land transfer for each hazard type for land only
-    landtax_column_title <- paste0("Land_TaxRev_", year, "_l", hazard_type)
-    
-    
-    # reference correct net land taxable columns after land transfer
-    landvalue_column_title <- paste0("Land_Value_", year, "_l", hazard_type) 
-    #remaining land net taxable
-    landtaxable_column_title <- paste0("Land_NetTaxable_", year, "_l", hazard_type) 
-    
-    # create columns and fill with new tax revenue using land only 
-    clean_retreat_calcs[[landtax_column_title]] <- ifelse(clean_retreat_calcs$Land_Class == "RESIDENTIAL",
-                                                          clean_retreat_calcs[[landtaxable_column_title]] * residential_rate,
-                                                          ifelse(clean_retreat_calcs$Land_Class == "RESIDENTIALA",
-                                                                 ifelse(clean_retreat_calcs[[landtaxable_column_title]] <= residential_a_threshold,
-                                                                        clean_retreat_calcs[[landtaxable_column_title]] * residential_a_rate_low,
-                                                                        (residential_a_threshold * residential_a_rate_low) +
-                                                                          ((clean_retreat_calcs[[landtaxable_column_title]] - residential_a_threshold) * residential_a_rate_high)),
-                                                                 0))     
     for(trigger in triggers){
       for(bval in bvals){
-        # calculate total value 
-        totalvalue_column_title <- paste0("Total_Value_", year, "_t", trigger, "_l", hazard_type, "_bv",bval) 
-        landvalue_column_title <- paste0("Land_Value_", year, "_l", hazard_type) 
         
-        clean_retreat_calcs[[totalvalue_column_title]] <- clean_retreat_calcs[[landvalue_column_title]] + bval * clean_retreat_calcs$Current_Building_Applied_Value
+        # reference land value columns after land transfer
+        land_assess_col <- paste0("Land_Assess_", year, "_l", hazard_type) 
+        land_apr_col <- paste0("Land_Appraise_", year, "_l", hazard_type)
+        
+        # calculate total value 
+        totalvalue_column_title <- paste0("Total_Appraise_", year, "_t", trigger, "_l", hazard_type, "_bv",bval) 
+        clean_retreat_calcs[[totalvalue_column_title]] <- clean_retreat_calcs[[land_apr_col]] + bval * clean_retreat_calcs$APRBLDGMKT
+        
+        # calculate private property loss
+        privproploss_column_title <- paste0("Priv_Prop_Loss_", year, "_t", trigger, "_l", hazard_type, "_bv",bval) 
+        clean_retreat_calcs[[privproploss_column_title]] <- clean_retreat_calcs$APRTOTMKT - clean_retreat_calcs[[totalvalue_column_title]]
         
         #calculate total net taxable
-        landtaxable_column_title <- paste0("Land_NetTaxable_", year, "_l", hazard_type)
         totaltaxable_column_title <- paste0("Total_NetTaxable_", year, "_t", trigger, "_l", hazard_type, "_bv",bval) 
         #if before reactive year, building has full/0 value (depending on bval scenario). if after year reactive, building value is 0
         col_RE_trigger <- paste0("year_RE_t",trigger)
         clean_retreat_calcs[[totaltaxable_column_title]] <- ifelse(clean_retreat_calcs[[col_RE_trigger]] > year,
-                                                                   clean_retreat_calcs[[landtaxable_column_title]] + bval * clean_retreat_calcs$Current_Building_Net_taxable,
-                                                                   clean_retreat_calcs[[landtaxable_column_title]])
-        
-        # calculate private property loss
-        privproploss_column_title <- paste0("Priv_Prop_Loss_", year, "_t", trigger, "_l", hazard_type, "_bv",bval) 
-        
-        clean_retreat_calcs[[privproploss_column_title]] <- clean_retreat_calcs$Current_Total_Value - clean_retreat_calcs[[totalvalue_column_title]]
+                                                                   clean_retreat_calcs[[land_assess_col]] + bval * clean_retreat_calcs$ASMTBLDG - clean_retreat_calcs$TOTEXEMPT,
+                                                                   clean_retreat_calcs[[land_assess_col]] - clean_retreat_calcs$TOTEXEMPT) 
         
         # calculate remaining tax revenue after land transfer using total value
         # title new columns for tax revenue after land transfer for each hazard type
         totaltax_column_title <- paste0("Total_TaxRev_", year, "_t", trigger, "_l", hazard_type, "_bv",bval) 
         
         # create columns and fill with new tax revenue 
-        clean_retreat_calcs[[totaltax_column_title]] <- ifelse(clean_retreat_calcs$Land_Class == "RESIDENTIAL",
-                                                               clean_retreat_calcs[[totaltaxable_column_title]] * residential_rate,
-                                                               ifelse(clean_retreat_calcs$Land_Class == "RESIDENTIALA",
-                                                                      ifelse(clean_retreat_calcs[[totaltaxable_column_title]] <= residential_a_threshold,
-                                                                             clean_retreat_calcs[[totaltaxable_column_title]] * residential_a_rate_low,
-                                                                             (residential_a_threshold * residential_a_rate_low) +
-                                                                               ((clean_retreat_calcs[[totaltaxable_column_title]] - residential_a_threshold) * residential_a_rate_high)),
-                                                                      0))
+        #min property tax =75 to avoid negative taxes https://www.kauai.gov/Government/Departments-Agencies/Finance/Real-Property-Tax/Assessment/ExemptionTax-Relief-Information#section-9
+        clean_retreat_calcs[[totaltax_column_title]] <- ifelse(clean_retreat_calcs[[totaltaxable_column_title]] < 75, 75, case_when( 
+          clean_retreat_calcs$TAXCLASS == "1:RESIDENTIAL" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00545,
+          clean_retreat_calcs$TAXCLASS == "2:VACATION RENTAL" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00985,
+          clean_retreat_calcs$TAXCLASS == "3:COMMERCIAL" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00810,
+          clean_retreat_calcs$TAXCLASS == "4:INDUSTRIAL" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00810,
+          clean_retreat_calcs$TAXCLASS == "5:AGRICULTURAL" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00675,
+          clean_retreat_calcs$TAXCLASS == "6:CONSERVATION" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00675,
+          clean_retreat_calcs$TAXCLASS == "7:HOTEL AND RESORT" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.01085,
+          clean_retreat_calcs$TAXCLASS == "8:HOMESTEAD" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00259,
+          clean_retreat_calcs$TAXCLASS == "9:Residential Investor" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00940,
+          clean_retreat_calcs$TAXCLASS == "10:Commercialized Home Use" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00505))
       }
     }
   }

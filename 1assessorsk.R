@@ -52,7 +52,7 @@ assessors <- rbind(assessors,assessorscpr)
 clean_assessors <- assessors[, c("PARID","COTMK","CPR_UNIT","TAXCLASS",
                                  "APRBLDGMKT","ASMTBLDG","APRLANDMKT","ASMTLAND",
                                  "APRTOTMKT","ASMTTOT","TOTEXEMPT","NETTAXABLE",
-                                 "TARGET_FID","NEAR_2021",
+                                 "TARGET_FID","GIS_SQFT","NEAR_2021",
                                  "NEAR_CE05","NEAR_CE11","NEAR_CE20","NEAR_CE32",
                                  "NEAR_PF05","NEAR_PF11","NEAR_PF20","NEAR_PF32",
                                  "NEAR_WF05","NEAR_WF11","NEAR_WF20","NEAR_WF32",
@@ -62,7 +62,8 @@ clean_assessors <- assessors[, c("PARID","COTMK","CPR_UNIT","TAXCLASS",
 clean_assessors <- clean_assessors %>%
   rename(TMK = PARID,              #new name = old name
          NEAR_VEG = NEAR_2021,
-         BuildingID = TARGET_FID)
+         BuildingID = TARGET_FID,
+         BLDG_SQFT = GIS_SQFT)
 
 # create column summing number of CPR units per building (need this later for dividing retreat costs per CPR'd building)
 clean_assessors <- clean_assessors %>%
@@ -77,10 +78,15 @@ clean_assessors <- clean_assessors %>%
   group_by(TMK) %>%
   mutate(buildings = n())
 
-# if there are two buildings on a single non-CPR'd parcel, keep only the row with the most makai building
-clean_assessors <- clean_assessors[order(clean_assessors$NEAR_VEG), ]
-clean_assessors <- clean_assessors[!duplicated(clean_assessors$TMK), ] #pre: nrow = 1038, post: nrow = 856  
-
+# if there are >1 buildings on a single non-CPR'd parcel, keep only the row with the most makai building that is >300sqft
+clean_assessors <- clean_assessors %>%
+  group_by(TMK) %>%
+  filter(
+    buildings == 1 | 
+      (buildings > 1 & 
+         (BLDG_SQFT > 300 & NEAR_VEG == min(NEAR_VEG)))
+  ) %>%
+  ungroup()
 
 
 # Calculate current assessed tax revenue ($)
@@ -91,16 +97,36 @@ clean_assessors <- clean_assessors[!duplicated(clean_assessors$TMK), ] #pre: nro
 #homestead <- 2.59 / 1000
 #residential investor <- 9.40 / 1000
 #commercialized home use <- 5.05 / 1000
+#hotel and resort <- 10.85 / 1000
+#commercial <- 8.10 / 1000
+#industrial <- 8.10 / 1000
+#agricultural <- 6.75 / 1000
+#conservation <- 6.75 / 1000         # doesn't appear in the dataset
 
-#remove TMK's that are not residential 
+#remove TMK's that are not residential, but keep non-res those that are in CPR'd building with res
+
+#Filter TMK8 ending in 0000 general parcel. If residential, keep all CPR’s within
+#If CPR but no 0000 parcel, only keep those that are residential
 residential <- c("1:RESIDENTIAL", "2:VACATION RENTAL","8:HOMESTEAD","9:Residential Investor","10:Commercialized Home Use") 
-clean_assessors <- clean_assessors[clean_assessors$TAXCLASS %in% residential, ] #pre: nrow = 856, post: nrow = 581  
 
-# Calculate the current tax revenue based on land class. residential tax rate = 0.0035. if below threshold 1,000,000, Residential A rate is 0.0045. 
-# if above threshold, use high rate of 0.0105
+clean_assessors <- clean_assessors %>%
+  filter( #pre nrow 856, post nrow 787
+    COTMK %in% filter(clean_assessors, substr(TMK, 9, 12) == "0000" & TAXCLASS %in% residential)$COTMK | 
+      TAXCLASS %in% residential
+  )
+
+
+
+
+# Calculate the current tax revenue based on land class
 clean_assessors$Current_Tax_Revenue <- case_when(
   clean_assessors$TAXCLASS == "1:RESIDENTIAL" ~ clean_assessors$NETTAXABLE * 0.00545,
   clean_assessors$TAXCLASS == "2:VACATION RENTAL" ~ clean_assessors$NETTAXABLE * 0.00985,
+  clean_assessors$TAXCLASS == "3:COMMERCIAL" ~ clean_assessors$NETTAXABLE * 0.00810,
+  clean_assessors$TAXCLASS == "4:INDUSTRIAL" ~ clean_assessors$NETTAXABLE * 0.00810,
+  clean_assessors$TAXCLASS == "5:AGRICULTURAL" ~ clean_assessors$NETTAXABLE * 0.00675,
+  clean_assessors$TAXCLASS == "6:CONSERVATION" ~ clean_assessors$NETTAXABLE * 0.00675,
+  clean_assessors$TAXCLASS == "7:HOTEL AND RESORT" ~ clean_assessors$NETTAXABLE * 0.01085,
   clean_assessors$TAXCLASS == "8:HOMESTEAD" ~ clean_assessors$NETTAXABLE * 0.00259,
   clean_assessors$TAXCLASS == "9:Residential Investor" ~ clean_assessors$NETTAXABLE * 0.00940,
   clean_assessors$TAXCLASS == "10:Commercialized Home Use" ~ clean_assessors$NETTAXABLE * 0.00505)
@@ -135,21 +161,28 @@ seawallhazarddf <- seawallhazarddf %>%
          Shape_Area_2050_WF = SA_WF11,
          Shape_Area_2075_WF = SA_WF20,
          Shape_Area_2100_WF = SA_WF32,
-         OG_PARCEL_AREA = area_og,
          Seawall_Direct = Direct,
          Seawall_Indirect = Indirect,
          SeawallID = SS_FID,
          Seawall_Len_M = SS_Len_m)
 
-# Import OSDS counts data frame 
-OSDS <- read.csv("tmk_OSDS.csv")
+#if NA in seawall_direct/seawall_indirect column, replace with 0
+seawallhazarddf$Seawall_Direct[is.na(seawallhazarddf$Seawall_Direct)] <- 0
+seawallhazarddf$Seawall_Indirect[is.na(seawallhazarddf$Seawall_Indirect)] <- 0
 
-# Rename the 'POINT_COUN' column to 'OSDS'
-OSDS <- OSDS %>% rename(OSDS = Join_Count)
+# Import OSDS counts data frame 
+OSDSshp <- st_read("F:/slr/kauai/tmk_XA_dd_OSDS") 
+OSDS <- as.data.frame(OSDSshp)
+
+#just keep the columns we need
+OSDS <- OSDS[, c('PARID','osds_qty')]
+
+# Rename column
+OSDS <- OSDS %>% rename(TMK = PARID,OSDS = osds_qty)
 
 # Join dataframes together
 seawallhazarddf <- seawallhazarddf %>%
-  inner_join(OSDS %>% select(TMK, OSDS), by = "tmk")
+  inner_join(OSDS %>% select(TMK, OSDS), by = "TMK")
 
 
 # Convert column names in Clean Parcel Hazard Area to uppercase
@@ -158,9 +191,10 @@ names(seawallhazarddf) <- toupper(names(seawallhazarddf))
 # Join Building Footprint with assessor's and TMK with Parcel with hazard areas
 clean_retreat_calcs <- left_join(clean_assessors, seawallhazarddf, by = c("TMK"))
 
-
-
-
+# sum parcel area for CPR'd parcels 
+clean_retreat_calcs <- clean_retreat_calcs %>%
+  group_by(COTMK) %>%
+  mutate(OG_PARCEL_AREA = sum(AREA_OG,na.rm=T))
 
 
 # add regional/ahupuaa/moku filter if desired
