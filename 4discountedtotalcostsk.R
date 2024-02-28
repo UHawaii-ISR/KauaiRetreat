@@ -394,14 +394,50 @@ for(scenario in scenarios){
 }
 
 
-# Infrastructure Retreat Cost ** do we need to discount seawalls?
-scenarios <- c("AO","TB","RE")
+# Infrastructure & Seawall Retreat Cost 
+#AO
+for(trigger in triggers){
+  for(seawall in seawalls){
+    seawall_col <- paste0("seawall_AO",seawall,trigger)
+    infrastructure_col <- paste0("infrastructure_AO",seawall,trigger)
+    
+    Retreat_Analysis_Total[[seawall_col]] <- sum(Retreat_Analysis[seawall_col])
+    Retreat_Analysis_Total[[infrastructure_col]] <- sum(Retreat_Analysis[infrastructure_col])
+  }
+}
+
+#TB&RE
+scenarios <- c("TB","RE")
 for(scenario in scenarios){
   for(trigger in triggers){
     for(seawall in seawalls){
-      infra_col <- paste0("infrastructure_",scenario,seawall)
+      seawall_col <- paste0("seawall_",scenario,seawall,trigger)
+      infrastructure_col <- paste0("infrastructure_",scenario,seawall,trigger)
       
-      Retreat_Analysis_Total[[infra_col]] <- 0 #sum(Retreat_Analysis[infra_col])
+      # Calculate the discounted costs for each year
+      discounted_seawall_costs <- sapply(years, function(year) {
+        # Retrieve the discount rate for the current year from DiscountRate26 data frame
+        discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+        
+        # Calculate the sum discounted costs
+        seawall <- Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] / discount_rate
+      })
+      discounted_infra_costs <- sapply(years, function(year) {
+        # Retrieve the discount rate for the current year from DiscountRate26 data frame
+        discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+        
+        # Calculate the sum discounted costs
+        infra <- Retreat_Analysis[[infrastructure_col]][Retreat_Analysis$Years == year] / discount_rate
+      })
+      
+      # Sum up all discounted demolition costs
+      total_discounted_seawall_costs <- sum(discounted_seawall_costs)  
+      total_discounted_infra_costs <- sum(discounted_infra_costs) 
+      
+      # add to dataframe
+      Retreat_Analysis_Total[[seawall_col]] <- total_discounted_seawall_costs
+      Retreat_Analysis_Total[[infrastructure_col]] <- total_discounted_infra_costs
+      
     }
   }
 }

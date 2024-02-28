@@ -56,7 +56,7 @@ assessors <- assessors %>%
   inner_join(communitydf %>% select(PARID, Community), by = "PARID")
 
 # Clean assessor's data, only keep important columns. no issue with duplicate TMK in kauai data
-clean_assessors <- assessors[, c("PARID","COTMK","CPR_UNIT","TAXCLASS",
+clean_assessors <- assessors[, c("PARID","COTMK","Community","CPR_UNIT","TAXCLASS",
                                  "APRBLDGMKT","ASMTBLDG","APRLANDMKT","ASMTLAND",
                                  "APRTOTMKT","ASMTTOT","TOTEXEMPT","NETTAXABLE",
                                  "TARGET_FID","GIS_SQFT","NEAR_2021",
@@ -207,13 +207,13 @@ clean_retreat_calcs <- clean_retreat_calcs %>%
 
 # add regional/ahupuaa/moku filter if desired
 
-#allisland <- clean_retreat_calcs
-#makaha <- clean_retreat_calcs[clean_retreat_calcs$Community == "Mākaha", ]
-
+allisland <- clean_retreat_calcs
+kekaha <- clean_retreat_calcs[clean_retreat_calcs$Community == "Kekaha", ]
+kapaa <- clean_retreat_calcs[clean_retreat_calcs$Community == "Kapaʻa", ]
 
 
 #overwrite clean_retreat_calcs to selected ahupuaa/qaqc
-#clean_retreat_calcs <- makaha
+clean_retreat_calcs <- kapaa
 
 
 

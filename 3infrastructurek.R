@@ -225,36 +225,84 @@ for (seawallid in seawallIDs) {
 #add infrastructure demo calcs to Retreat_Analysis df
 
 years <- c(2023, 2026, 2030, 2040, 2050, 2062, 2075, 2087, 2100)
+scenarios <- c('AO','TB','RE')
 
 for (year in years) {
   for(seawall in seawalls){
     for(trigger in triggers){
-      #roads
+      
+      #highways, bridges, roads
+      bridge_reloc <- 24855 #per meter retreat
+      bridge_riprap <- 65617 #per meter retrofit
+      highway_reloc <- 229659 #per meter realignment
+      water_reloc <- 4734 #per meter removal replacement water mains
+      highway_riprap <- 32808 #per meter hardening
+      road_remove <- 33 #per meter
+      
+      for(scenario in scenarios){
+        subdf <- subset(infra_retreat, Scenario == scenario & Year == year)
+        infrastructure_col <- paste0("infrastructure_",scenario,seawall,trigger)
+        
+        if(nrow(subdf)==0){
+          Retreat_Analysis[[infrastructure_col]][Retreat_Analysis$Years == year] <- 0
+        } else{
+          Retreat_Analysis[[infrastructure_col]][Retreat_Analysis$Years == year] <- 
+            sum(subdf$relocate_b,na.rm=T)*bridge_reloc + sum(subdf$riprap_b,na.rm=T)*bridge_riprap + 
+            sum(subdf$relocate_hwy,na.rm=T)*(highway_reloc+water_reloc) + sum(subdf$riprap_hwy,na.rm=T)*highway_riprap+
+            sum(subdf$remove_rd,na.rm=T)*road_remove
+        }
+      }
+      
+      #seawalls
+      demolition_seawall <- ifelse(seawall == "_",13123,0) # conditional seawall demolition depending on scenario. $4000/ft ($13123/m) for inaccessible seawall e.g. residential area)
+      
+      if(seawall == '_'){
+        yearAO_col <- paste0("year_AO",seawall,"t",trigger)
+        yearTB_col <- paste0("year_TB",seawall,"t",trigger)
+        yearRE_col <- paste0("year_RE",seawall,"t",trigger)
+        
+        AO_matching_rows <- seawalldemo[[yearAO_col]] == year
+        TB_matching_rows <- seawalldemo[[yearTB_col]] == year
+        RE_matching_rows <- seawalldemo[[yearRE_col]] == year
+
+        column_name <- paste0("SEAWALL_LEN_M")
+        
+        #AO
+        seawall_col <- paste0("seawall_AO",seawall,trigger)
+        seawallm <- sum(seawalldemo[[column_name]][AO_matching_rows], na.rm = TRUE)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(year==2023,seawallm*demolition_seawall,0)
+        
+        #TB
+        seawall_col <- paste0("seawall_TB",seawall,trigger)
+        seawallm <- sum(seawalldemo[[column_name]][TB_matching_rows], na.rm = TRUE)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          seawallm*demolition_seawall
+        
+        #RE
+        seawall_col <- paste0("seawall_RE",seawall,trigger)
+        seawallm <- sum(seawalldemo[[column_name]][RE_matching_rows], na.rm = TRUE)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          seawallm*demolition_seawall
+        
+      }
+      
+      if(seawall == '_s_'){
+        seawall_col <- paste0("seawall_AO",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 0
+        
+        seawall_col <- paste0("seawall_TB",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 0
+        
+        seawall_col <- paste0("seawall_RE",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 0
+      }
     }
   }
 }
       
 
 
-seawall_col <- paste0("seawall_",scenario,seawall,trigger)
-
-
-taxrev_col <- paste0("Total_TaxRev_TB",seawall,"t", trigger, "_l", hazard_type, "_bv",bval)
-column_name <- paste0("Total_TaxRev_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
-Retreat_Analysis[[taxrev_col]][Retreat_Analysis$Years == year] <- 
-  sum(clean_retreat_calcs[[column_name]][TB_matching_rows], na.rm = TRUE)
 
 
 
-
-
-demolition_seawall <- ifelse(seawall == "_",13123,0) # conditional seawall demolition depending on scenario. $4000/ft ($13123/m) for inaccessible seawall e.g. residential area)
-seawalls_col <- paste0("SEAWALL_LEN_M")
-seawallm <- sum(clean_retreat_calcs[[seawalls_col]][AO_matching_rows], na.rm = TRUE)
-seawallm*demolition_seawall 
-seawallm <- sum(clean_retreat_calcs[[seawalls_col]][TB_matching_rows], na.rm = TRUE)
-seawallm <- sum(clean_retreat_calcs[[seawalls_col]][RE_matching_rows], na.rm = TRUE)
-
-demo_col <- paste0("demolition_AO",seawall,"t",trigger)
-Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
-  ifelse(year==2023,aptcount*demolition_apartment + housecount*demolition_house,0) 
