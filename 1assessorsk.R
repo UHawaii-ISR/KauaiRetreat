@@ -48,6 +48,13 @@ assessorscpr <- assessorscpr[!is.na(assessorscpr$CPR_UNIT),]
 assessorscpr <- subset(assessorscpr, select=-c(JOIN_FID))# remove column "JOIN_FID" that doesn't exist in assessors method1
 assessors <- rbind(assessors,assessorscpr)
 
+#add regional/ahupuaa/moku data
+communityshp <- st_read("F:/slr/kauai/tmk_XA_dd_Community")
+communitydf <- as.data.frame(communityshp)
+
+assessors <- assessors %>%
+  inner_join(communitydf %>% select(PARID, Community), by = "PARID")
+
 # Clean assessor's data, only keep important columns. no issue with duplicate TMK in kauai data
 clean_assessors <- assessors[, c("PARID","COTMK","CPR_UNIT","TAXCLASS",
                                  "APRBLDGMKT","ASMTBLDG","APRLANDMKT","ASMTLAND",
@@ -197,9 +204,11 @@ clean_retreat_calcs <- clean_retreat_calcs %>%
   mutate(OG_PARCEL_AREA = sum(AREA_OG,na.rm=T))
 
 
+
 # add regional/ahupuaa/moku filter if desired
+
 #allisland <- clean_retreat_calcs
-#makaha <- clean_retreat_calcs[clean_retreat_calcs$AHUPUAA == "Mākaha", ]
+#makaha <- clean_retreat_calcs[clean_retreat_calcs$Community == "Mākaha", ]
 
 
 

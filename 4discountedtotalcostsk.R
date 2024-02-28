@@ -29,7 +29,7 @@ for(scenario in scenarios){
   for(seawall in seawalls){
     for(trigger in triggers){
       buildings_col <- paste0("buildings_",scenario,seawall,"t",trigger)
-      parcel_col <- paste0("parcels_",scenario,seawall,"t",trigger)
+      parcel_col <- paste0("parcels8_",scenario,seawall,"t",trigger)
       
       Retreat_Analysis_Total[[buildings_col]] <- sum(Retreat_Analysis[buildings_col],na.rm=T)
       Retreat_Analysis_Total[[parcel_col]] <- sum(Retreat_Analysis[parcel_col],na.rm=T)
@@ -401,7 +401,7 @@ for(scenario in scenarios){
     for(seawall in seawalls){
       infra_col <- paste0("infrastructure_",scenario,seawall)
       
-      Retreat_Analysis_Total[[infra_col]] <- sum(Retreat_Analysis[infra_col])
+      Retreat_Analysis_Total[[infra_col]] <- 0 #sum(Retreat_Analysis[infra_col])
     }
   }
 }
