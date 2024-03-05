@@ -180,6 +180,8 @@ for (year in years) {
       
       ### OSDS REMOVAL
       
+      #** need to add a cost for non-osds homes wastewater pipe removal
+      
       # OSDS removal costs for AO ($)
       osds_col <- paste0("osdsremoval_AO",seawall,"t",trigger)
       Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-

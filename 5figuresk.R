@@ -183,12 +183,13 @@ total_cost$costtype <- factor(total_cost$costtype, levels =
                                 c('Private property value loss','Ambiguous-payer cost','Tax revenue loss',
                                   'Infrastructure retreat cost','Land and dwelling retreat public cost'))
 
-ggplot(total_cost, aes(fill=factor(costtype) ,y=valueMil, x=subscenario)) + 
+fig3 <- ggplot(total_cost, aes(fill=factor(costtype) ,y=valueMil, x=subscenario)) + 
   geom_bar(position="stack", stat="identity", width= 0.7, colour="grey", linewidth=0.2) +
   scale_fill_manual(values = c('Private property value loss'='#F5938D','Ambiguous-payer cost'='#b55ef1','Tax revenue loss'='#B3C5F1',
                                'Infrastructure retreat cost'='#658EF3','Land and dwelling retreat public cost'='#1953E3')) + 
   xlab('Retreat Approach')+
   ylab('Cost ($2023,mil)') +
+  ggtitle(paste0(titlename)) +
   labs(fill= '') + 
   theme_minimal() +
   facet_grid(~scenario, switch = "x", scales="free") + #creates groups

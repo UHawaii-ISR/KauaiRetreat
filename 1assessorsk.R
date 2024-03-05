@@ -21,8 +21,7 @@ setwd("F:/slr/kauai/kauai_retreat_code/")
 options(scipen = 999)
 
 # Import Assessor's data and Assign data frame.  make sure TMK column cell is not in scientific notation
-#assessorsshp <- st_read("F:/slr/kauai/2023_Real_Property_Tax_Data") ** make sure correct datasets are imported!
-assessorsshp <- st_read("F:/slr/kauai/Practice_data",layer="buildings_tmk_dd") 
+assessorsshp <- st_read("F:/slr/kauai/Practice_data",layer="buildings_tmk_dd") #** make sure correct datasets are imported!
 assessorsshpcpr <- st_read("F:/slr/kauai/Practice_data",layer="buildings_tmk_dd_CPR")
 assessorscpr <- as.data.frame(assessorsshpcpr)
 assessors <- as.data.frame(assessorsshp)
@@ -207,13 +206,13 @@ clean_retreat_calcs <- clean_retreat_calcs %>%
 
 # add regional/ahupuaa/moku filter if desired
 
-allisland <- clean_retreat_calcs
-kekaha <- clean_retreat_calcs[clean_retreat_calcs$Community == "Kekaha", ]
-kapaa <- clean_retreat_calcs[clean_retreat_calcs$Community == "Kapaʻa", ]
+#allisland <- clean_retreat_calcs
+#kekaha <- clean_retreat_calcs[clean_retreat_calcs$Community == "Kekaha", ]
+#kapaa <- clean_retreat_calcs[clean_retreat_calcs$Community == "Kapaʻa", ]
 
 
 #overwrite clean_retreat_calcs to selected ahupuaa/qaqc
-clean_retreat_calcs <- kapaa
+#clean_retreat_calcs <- kapaa
 
 
 
