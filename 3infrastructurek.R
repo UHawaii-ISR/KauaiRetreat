@@ -282,7 +282,7 @@ for (year in years) {
       highway_riprap <- 37069 #per meter hardening
       road_remove <- 34 #per meter
       emdom_hwy #per meter length of road
-      riprap_remove <- 14764 #per meter ** need to add this
+      riprap_remove <- 14764 #per meter 
       wastewater_remove <- 5686 #** this number needs checking. and will be added once gis is provided
       
       for(scenario in scenarios){

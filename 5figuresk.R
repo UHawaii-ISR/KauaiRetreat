@@ -4,6 +4,10 @@ library(dplyr)
 library(ggplot2)
 library(ggpubr)
 library(data.table)
+library(scales)
+library(plotly) #https://plotly.com/r/
+
+
 setwd("F:/slr/kauai/kauai_retreat_code/")
 
 
@@ -212,6 +216,41 @@ fig3 <- ggplot(total_cost, aes(fill=factor(costtype) ,y=valueMil, x=subscenario)
 
 
 
+#plot just scenarios of interest to kauai
+# miniscenarios <- c('AO_tXA_lCE_bv1','AO_tCE_lCE_bv1', #**this should be full value for land. 'AO_tXA_lfull_bv1','AO_tCE_lfull_bv1' need a new scenario lfull and lnone
+#                    'TB_tCE_lWF_bv1','TB_tCE_lCE_bv1','TB_s_tXA_lWF_bv1','TB_s_tXA_lCE_bv1',
+#                    'RE_tCE_lCE_bv0_chi','RE_tCE_lCE_bv0_clo','RE_s_tCE_lCE_bv0_chi','RE_s_tCE_lCE_bv0_clo', #** 'RE_tCE_lnone_bv0','RE_s_tCE_lnone_bv0'
+#                    'areahazard_lCE','areahazard_lWF') 
+total_cost_mini <- subset(total_cost, subscenario %in% miniscenarios)
+
+fig3mini <- ggplot(total_cost_mini, aes(fill=factor(costtype) ,y=valueMil, x=subscenario)) + 
+  geom_bar(position="stack", stat="identity", width= 0.7, colour="grey", linewidth=0.2) +
+  scale_fill_manual(values = c('Private property value loss'='#F5938D','Ambiguous-payer cost'='#b55ef1','Tax revenue loss'='#B3C5F1',
+                               'Infrastructure retreat cost'='#658EF3','Land and dwelling retreat public cost'='#1953E3')) + 
+  xlab('Retreat Approach')+
+  ylab('Cost ($2023,mil)') +
+  ggtitle(paste0(titlename)) +
+  labs(fill= '') + 
+  theme_minimal() +
+  facet_grid(~scenario, switch = "x", scales="free") + #creates groups
+  theme(strip.placement = "outside",
+        strip.background = element_rect(fill = NA, color = "white"), #remove background color
+        panel.spacing = unit(0,"cm"), # remove space between groups
+        panel.grid.major.x = element_blank(), #remove vertical lines
+        panel.grid.minor.x = element_blank(), # remove vertical lines
+        legend.text = element_text(size = 12), #legend text size
+        legend.background = element_rect(fill="white",colour="white"),
+        legend.position = c(0.75,0.8), # put legend within plot
+        legend.spacing.y = unit(0.25, 'cm'), #add space between legend lines
+        text=element_text(size=16), #overall text size
+        axis.title.x = element_text(size = 16), #xaxis text size
+        axis.title.y = element_text(size = 16), #yaxis text size
+        axis.text.x = element_text(angle = 270, vjust = 0.5, hjust=1)) + 
+  guides(fill = guide_legend(byrow = TRUE)) #add space between legend lines
+
+
+
+
 
 
 
@@ -246,7 +285,7 @@ for(i in 1:length(years)){
         totalval_col <- paste0("Total_Value_TB_t",trigger,"_l",hazard_type,"_bv",bval)
         demo_col <- paste0("demolition_TB_t",trigger)
         osds_col <- paste0("osdsremoval_TB_t",trigger)
-        infra_col <- paste0("TB_Infra")
+        infra_col <- paste0("infrastructure_TB",seawall,trigger)
         privproploss_col <- paste0("Priv_Prop_Loss_TB_t",trigger,"_l",hazard_type,"_bv",bval)
         taxrevloss_col <- paste0("Total_TaxRev_TB_t",trigger,"_l",hazard_type,"_bv",bval)
         arearetreat_col <- paste0("arearetreat_TB_t",trigger)
@@ -259,9 +298,9 @@ for(i in 1:length(years)){
                   as.numeric(Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year]) +
                   as.numeric(Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year]) +
                   as.numeric(Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[taxrevloss_col]][Retreat_Analysis$Years == year]))) / 
-             DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]  + 
-             Retreat_Analysis$TB_Infrastructure[Retreat_Analysis$Years == year]) / 1000000 #** are infrastructure costs already discounted?
+                  as.numeric(Retreat_Analysis[[taxrevloss_col]][Retreat_Analysis$Years == year])+
+                  as.numeric(Retreat_Analysis[[infra_col]][Retreat_Analysis$Years == year]))) / 
+             DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000 
         totalarea <- ifelse(year==2023,0,as.numeric(areatime$area[areatime$subscenario == scenario_col & areatime$year == prevyear])) +
           Retreat_Analysis[[arearetreat_col]][Retreat_Analysis$Years == year]
         
@@ -292,9 +331,9 @@ for(i in 1:length(years)){
           ((sum(as.numeric(Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year]) +
                   as.numeric(Retreat_Analysis[[cleanup_col]][Retreat_Analysis$Years == year]) +
                   as.numeric(Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[taxrevloss_col]][Retreat_Analysis$Years == year]))) / 
-             DiscountRate26$Discount_Rates_26[DiscountRate26$year == year] + 
-             Retreat_Analysis$RE_Infrastructure[Retreat_Analysis$Years == year]) / 1000000
+                  as.numeric(Retreat_Analysis[[taxrevloss_col]][Retreat_Analysis$Years == year]) +
+                  as.numeric(Retreat_Analysis[[infra_col]][Retreat_Analysis$Years == year]))) / 
+             DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000
         totalarea <- ifelse(year==2023,0,as.numeric(areatime$area[areatime$subscenario == scenario_col & areatime$year == prevyear])) +
           Retreat_Analysis[[arearetreat_col]][Retreat_Analysis$Years == year]
         
@@ -327,10 +366,11 @@ areatime$scenario <- factor(areatime$scenario, levels = c("AO","TB","RE","CE","W
 areatime$area <- as.numeric(areatime$area)
 
 
+costtime_mini <- subset(costtime, subscenario %in% miniscenarios)
+areatime_mini <- subset(areatime, subscenario %in% miniscenarios)
 
 
-library(scales)
-lpc_seg <- ggplot(costtime,aes(x=year,y=cost,group=subscenario,color=scenario))+
+lpc_seg <- ggplot(costtime_mini,aes(x=year,y=cost,group=subscenario,color=scenario))+
   #geom_linerange(aes(ymin=min.cost,ymax=max.cost,linewidth=0.001,alpha=0.2))+
   #geom_errorbar(aes(ymin = min.cost, ymax = max.cost), width = 0.9,alpha=0.4)+
   geom_point(shape=15,size=4)+
@@ -340,7 +380,7 @@ lpc_seg <- ggplot(costtime,aes(x=year,y=cost,group=subscenario,color=scenario))+
   scale_y_continuous(name="Cumulative total cost ($2023, millions)",labels = label_number(scale = 1))+
   xlab("Year") 
 
-lpb <- ggplot(areatime, aes(x=year,y=area, group=subscenario,color=scenario))+
+lpb <- ggplot(areatime_mini, aes(x=year,y=area, group=subscenario,color=scenario))+
   #geom_smooth(aes(color=retreat.scenario),linewidth=1.5,se=F)+
   geom_line(aes(color=scenario),linewidth=1.5)+
   scale_color_manual(name="Retreat approach",labels=c("AO","TB","RE","CE","WF"),
@@ -353,10 +393,10 @@ fig4 <- ggarrange(lpc_seg,lpb,
                   labels=c("A","B"),
                   ncol=1,nrow=2,
                   align="v")
+fig4 <- annotate_figure(fig4,top=text_grob(titlename))
 print(fig4)
 #export as pdf: 7in x 6in. remove duplicate legend. export pdf to image
 
-library(plotly) #https://plotly.com/r/
 plot4a <- plot_ly(costtime, type = 'scatter', mode = 'markers') 
 plot4a <- plot4a %>%
   add_trace(
