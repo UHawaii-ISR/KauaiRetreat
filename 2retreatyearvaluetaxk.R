@@ -77,7 +77,7 @@ for(trigger in triggers){
 
 #calculate land value & tax
 years <- c("2023", "2030","2050","2075","2100")  
-hazard_types <- c("CE","WF")
+hazard_types <- c("CE","WF",'full','none')
 
 #calculate land value based on percent exposure to hazard
 for (year in years) {
@@ -90,13 +90,22 @@ for (year in years) {
     # reference correct Shape_Area columns
     shape_column_title <- paste0("SHAPE_AREA_", year, "_", hazard_type) 
     
-    # create columns and fill with percentages of parcel within hazard zones (divide area in hazard zones by original parcel area)
-    clean_retreat_calcs[[column_title]] <- clean_retreat_calcs[[shape_column_title]] / clean_retreat_calcs$OG_PARCEL_AREA 
-    
     # remaining land value
     # create land value columns after transferring land using both hazards
     land_assess_col <- paste0("Land_Assess_", year, "_l", hazard_type) 
     land_apr_col <- paste0("Land_Appraise_", year, "_l", hazard_type) 
+    
+    if(hazard_type == 'CE' | hazard_type == 'WF'){
+      # create columns and fill with percentages of parcel within hazard zones (divide area in hazard zones by original parcel area)
+      clean_retreat_calcs[[column_title]] <- clean_retreat_calcs[[shape_column_title]] / clean_retreat_calcs$OG_PARCEL_AREA 
+      
+    } else if(hazard_type == 'full'){ # retain full land value (AO subscenario)
+      
+      clean_retreat_calcs[[column_title]] <- 0 # percentage of land in hazard zone = 0 bc retain full land value
+    } else if(hazard_type == 'none'){ # retain no land value (RE subscenario)
+      
+      clean_retreat_calcs[[column_title]] <- 1 # percentage of land in hazard zone = 1 bc retain zero land value
+    }
     
     # fill land value columns by multiplying percentage of parcel within hazard zones by original assessed land value. (rounding used so small negative land values don't occur)
     clean_retreat_calcs[[land_assess_col]] <- (1- round(clean_retreat_calcs[[column_title]],digits=6)) * clean_retreat_calcs$ASMTLAND 
@@ -126,8 +135,18 @@ for (i in 1:length(yearsTB)) {
     column_title1 <- paste0("Parcel_", yearAve1, "_l", hazard_type) 
     column_title2 <- paste0("Parcel_", yearAve2, "_l", hazard_type)
     
-    # create columns and fill with percentages of parcel within hazard zones (divide area in hazard zones by original parcel area)
-    clean_retreat_calcs[[column_title]] <- (clean_retreat_calcs[[column_title1]] +  clean_retreat_calcs[[column_title2]])/2 
+    if(hazard_type == 'CE' | hazard_type == 'WF'){
+      # create columns and fill with percentages of parcel within hazard zones (divide area in hazard zones by original parcel area)
+      clean_retreat_calcs[[column_title]] <- (clean_retreat_calcs[[column_title1]] +  clean_retreat_calcs[[column_title2]])/2
+      
+    } else if(hazard_type == 'full'){ # retain full land value (AO subscenario)
+      
+      clean_retreat_calcs[[column_title]] <- 0 # percentage of land in hazard zone = 0 bc retain full land value
+    } else if(hazard_type == 'none'){ # retain no land value (RE subscenario)
+      
+      clean_retreat_calcs[[column_title]] <- 1 # percentage of land in hazard zone = 1 bc retain zero land value
+    }
+    
     
     # remaining land value
     # create land value columns after transferring land using both hazards
