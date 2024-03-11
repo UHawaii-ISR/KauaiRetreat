@@ -130,10 +130,10 @@ for(id in infraIDs){
       infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id, 'total_swallhwy'] <- total_swallhwy
       infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id, 'total_length'] <- total_length
       
-      #if total length is >305, then retreat occurs. 
+      #if total length is >304.8, then retreat occurs and any subsequent sections of road also immediately retreat
       #relocate_hwy and relocate_b are equal to total_hwy and total_b. seawall/riprap removed is total_swallhwy
       #total_length, total_hwy, total_swallhwy, total_b are reset
-      retreatyr <- ifelse(total_length > 305, year, NA)
+      retreatyr <- ifelse(total_length > 304.8, year, NA)
       infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id, 'retreatyr'] <- retreatyr
       
       if(!is.na(retreatyr)){
@@ -141,13 +141,14 @@ for(id in infraIDs){
         infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id, 'relocate_b'] <- total_b
         infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id, 'removeriprap_hwy'] <- total_swallhwy
         
-        total_length <- 0
+        #don't reset total length. it just continue to sum and any future affected infrastructure immediately relocated
+        #total_length <- 0
         total_hwy <- 0
         total_b <- 0
         total_swallhwy <- 0
       }
       
-      #if total length is <305 (retreat is NA), then riprap occurs. riprap_hwy and riprap_b are equal to new_hwy and new_b.
+      #if total length is <304.8 (retreat is NA), then riprap occurs. riprap_hwy and riprap_b are equal to new_hwy and new_b.
       # these lengths are also added to the running total_swallhwy to know how much riprap must later be removed
       if(is.na(retreatyr)){
         infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id, 'riprap_hwy'] <- new_hwy
@@ -275,7 +276,7 @@ for (year in years) {
     for(trigger in triggers){
       
       #highways, bridges, roads
-      bridge_reloc <- 27239 #per meter retreat
+      bridge_reloc <- 27239 #per meter retreat     #** FIX TO 337992
       bridge_riprap <- 71910 #per meter retrofit
       highway_reloc <- 259489 #per meter realignment
       water_reloc <- 5686 #per meter removal replacement water mains
@@ -350,5 +351,13 @@ for (year in years) {
 
 
 
+## QAQC infra
 
+infra_totalaffected <- aggregate(infra_retreat$riprap_hwy, by=list(infra_retreat$Year,infra_retreat$Scenario),FUN=sum,na.rm=T)
+
+aggregate(infra_retreat$riprap_hwy, by=list(infra_retreat$Year,infra_retreat$Scenario),FUN=sum,na.rm=T)
+
+
+#infra_retreat$relocate_hwy,infra_retreat$relocate_b,infra_retreat$riprap_hwy,infra_retreat$riprap_b,infra_retreat$removeriprap_hwy,
+#infra_retreat$remove_rd,infra_retreat$removeriprap_rd
 

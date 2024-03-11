@@ -10,9 +10,7 @@ kapaa <- clean_retreat_calcs[clean_retreat_calcs$Community == "Kapaʻa", ]
 
 #overwrite clean_retreat_calcs to selected ahupuaa/qaqc
 clean_retreat_calcs <- kapaa
-titlename <- 'Kapaʻa' # Kapaʻa Kekaha Kauaʻi 
-
-#kauai
+titlename <- 'Kauaʻi' # Kapaʻa Kekaha Kauaʻi 
 
 source("C:/Users/rsett/Documents/KauaiRetreat/2retreatyearvaluetaxk.R")
 source("C:/Users/rsett/Documents/KauaiRetreat/3costsovertimek.R")
