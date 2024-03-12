@@ -89,7 +89,7 @@ scenarios <- unique(na.omit(infra_retreat$Scenario))
 years <- unique(na.omit(infra_retreat$Year))
 
 infra_retreat[ ,c("new_hwy","total_hwy","new_b","total_b","new_swallhwy","total_swallhwy","total_length","retreatyr",
-                  "relocate_hwy","relocate_b","riprap_hwy","riprap_b","removeriprap_hwy","remove_rd","removeriprap_rd")] <- NA
+                  "maintain_hwy","relocate_hwy","relocate_b","riprap_hwy","riprap_b","removeriprap_hwy","remove_rd","removeriprap_rd")] <- NA
 
 for(id in infraIDs){
   for(scenario in scenarios){
@@ -114,12 +114,12 @@ for(id in infraIDs){
       new_b <- ifelse(!is.na(prev_b), b - prev_b, b)
       swallhwy <- subdf$seawallhwy[subdf$Year == year]
       prev_swallhwy <- ifelse(year > 2030,subdf$seawallhwy[subdf$Year == prevyear],0)
-      new_swallhwy <- ifelse(!is.na(prev_swallhwy), swallhwy - prev_swallhwy, swallhwy)
+      new_swallhwy <- ifelse(!is.na(prev_swallhwy), swallhwy - prev_swallhwy, swallhwy) #the amount of highway already riprap
       
       total_hwy <- sum(new_hwy,total_hwy,na.rm=T)
       total_b <- sum(new_b,total_b, na.rm=T)
       total_swallhwy <- sum(new_swallhwy,total_swallhwy,na.rm=T)
-      total_length <- sum(total_hwy, total_b, na.rm=T)
+      total_length <- sum(total_length, new_hwy, new_b, na.rm=T)
       
       
       infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id, 'new_hwy'] <- new_hwy
@@ -151,8 +151,9 @@ for(id in infraIDs){
       #if total length is <304.8 (retreat is NA), then riprap occurs. riprap_hwy and riprap_b are equal to new_hwy and new_b.
       # these lengths are also added to the running total_swallhwy to know how much riprap must later be removed
       if(is.na(retreatyr)){
-        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id, 'riprap_hwy'] <- new_hwy
+        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id, 'riprap_hwy'] <- new_riprap_hwy
         infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id, 'riprap_b'] <- new_b
+        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id, 'maintain_hwy'] <- new_swallhwy
         
         total_swallhwy <- total_swallhwy + new_hwy + new_b
       }
@@ -170,14 +171,22 @@ for(id in infraIDs){
     }
     if(scenario == "RE"){
       #add row for AO
+      #get current riprap hwy/rd lengths
+      ao_removeriprap_hwy <- subdf$seawallhwy[subdf$Year == 2100]
+      ao_removeriprap_rd <- subdf$seawallrd[subdf$Year == 2100]
+      
       ao_hwy <- subdf$hwy[subdf$Year == 2100]
       ao_b <- subdf$b[subdf$Year == 2100]
       ao_rd <- subdf$rd[subdf$Year == 2100]
       
+      ao_relocate_hwy <- ifelse(!is.na(ao_removeriprap_hwy), ao_hwy - ao_removeriprap_hwy, ao_hwy)
+      ao_relocate_b <- ao_b
+      ao_remove_rd <- ifelse(!is.na(ao_removeriprap_rd), ao_rd - ao_removeriprap_rd, ao_rd)
       
       infra_retreat <- infra_retreat %>%
         ungroup() %>%
-        add_row(ID=id,Year=2023,Scenario='AO',retreatyr=2023,relocate_hwy=ao_hwy,relocate_b=ao_b,remove_rd=ao_rd) %>% 
+        add_row(ID=id,Year=2023,Scenario='AO',retreatyr=2023,relocate_hwy=ao_relocate_hwy,relocate_b=ao_relocate_b,remove_rd=ao_remove_rd,
+                removeriprap_hwy=ao_removeriprap_hwy,removeriprap_rd=ao_removeriprap_rd) %>% 
         group_by(ID, Scenario) 
     }
   }
@@ -276,7 +285,7 @@ for (year in years) {
     for(trigger in triggers){
       
       #highways, bridges, roads
-      bridge_reloc <- 27239 #per meter retreat     #** FIX TO 337992
+      bridge_reloc <- 337992 #per meter retreat    
       bridge_riprap <- 71910 #per meter retrofit
       highway_reloc <- 259489 #per meter realignment
       water_reloc <- 5686 #per meter removal replacement water mains
@@ -285,6 +294,7 @@ for (year in years) {
       emdom_hwy #per meter length of road
       riprap_remove <- 14764 #per meter 
       wastewater_remove <- 5686 #** this number needs checking. and will be added once gis is provided
+      maintain <- 11814 #per meter
       
       for(scenario in scenarios){
         subdf <- subset(infra_retreat, Scenario == scenario & Year == year)
@@ -296,7 +306,7 @@ for (year in years) {
           Retreat_Analysis[[infrastructure_col]][Retreat_Analysis$Years == year] <- 
             sum(subdf$relocate_b,na.rm=T)*bridge_reloc + sum(subdf$riprap_b,na.rm=T)*bridge_riprap + 
             sum(subdf$relocate_hwy,na.rm=T)*(highway_reloc+water_reloc+emdom_hwy) + sum(subdf$riprap_hwy,na.rm=T)*highway_riprap+ sum(subdf$removeriprap_hwy,na.rm=T)*riprap_remove+
-            sum(subdf$remove_rd,na.rm=T)*road_remove + sum(subdf$removeriprap_rd,na.rm=T)*riprap_remove
+            sum(subdf$remove_rd,na.rm=T)*road_remove + sum(subdf$removeriprap_rd,na.rm=T)*riprap_remove + sum(subdf$maintain_hwy,na.rm=T)*maintain
         }
       }
       
