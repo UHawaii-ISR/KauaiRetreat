@@ -395,6 +395,8 @@ for(scenario in scenarios){
 
 
 # Infrastructure & Seawall Retreat Cost 
+infrastructure_total <- data.frame(init = c(NA))
+
 #AO
 for(trigger in triggers){
   for(seawall in seawalls){
@@ -429,7 +431,7 @@ for(scenario in scenarios){
         # Calculate the sum discounted costs
         infra <- Retreat_Analysis[[infrastructure_col]][Retreat_Analysis$Years == year] / discount_rate
       })
-      
+
       # Sum up all discounted demolition costs
       total_discounted_seawall_costs <- sum(discounted_seawall_costs)  
       total_discounted_infra_costs <- sum(discounted_infra_costs) 

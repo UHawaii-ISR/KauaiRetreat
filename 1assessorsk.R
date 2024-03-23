@@ -21,8 +21,8 @@ setwd("F:/slr/kauai/kauai_retreat_code/")
 options(scipen = 999)
 
 # Import Assessor's data and Assign data frame.  make sure TMK column cell is not in scientific notation
-assessorsshp <- st_read("F:/slr/kauai/Practice_data",layer="buildings_tmk_dd") #** make sure correct datasets are imported!
-assessorsshpcpr <- st_read("F:/slr/kauai/Practice_data",layer="buildings_tmk_dd_CPR")
+assessorsshp <- st_read("F:/slr/kauai/Buildings_Footp_XA_tmk_Islandwide_1",layer="Buildings_Footp_XA_tmk") 
+assessorsshpcpr <- st_read("F:/slr/kauai/Buildings_Footp_XA_tmk_Islandwide_1",layer="Buildings_Footp_XA_tmk_CPR")
 assessorscpr <- as.data.frame(assessorsshpcpr)
 assessors <- as.data.frame(assessorsshp)
 
@@ -44,32 +44,57 @@ assessors <- as.data.frame(assessorsshp)
 #join the dataframes. use the building-TMK-join method1 "centroid within" for non-CPR, method2 "intersect" for CPR units
 assessors <- assessors[is.na(assessors$CPR_UNIT),]
 assessorscpr <- assessorscpr[!is.na(assessorscpr$CPR_UNIT),]
-assessorscpr <- subset(assessorscpr, select=-c(JOIN_FID))# remove column "JOIN_FID" that doesn't exist in assessors method1
 assessors <- rbind(assessors,assessorscpr)
 
-#add regional/ahupuaa/moku data
-communityshp <- st_read("F:/slr/kauai/tmk_XA_dd_Community")
-communitydf <- as.data.frame(communityshp)
+# Import OSDS counts data frame 
+# data from here: https://github.com/cshuler/Act132_Cesspool_Prioritization/blob/main/Projected_data/OSDS_v6/Exploding_Multi_unit_TMKs/Outs/OSDSv6_Exploded_ALL.csv
+osds <- read.csv("F:/slr/kauai/OSDSv6_Exploded_ALL.csv") 
 
+#just keep the columns we need
+osds <- osds[, c('TMK','OSDS_QTY_calc')]
+
+# Join dataframes together
+#this is joining osds file by TMK9. because of CPR, there may be multiple rows that could join. if there are multiple rows, this picks the first 
 assessors <- assessors %>%
-  inner_join(communitydf %>% select(PARID, Community), by = "PARID")
+  left_join(osds %>% select(TMK, OSDS_QTY_calc), by = "TMK",multiple='first') 
+
+#if NA in osds column, set as 0
+assessors$OSDS_QTY_calc[is.na(assessors$OSDS_QTY_calc)] <- 0
 
 # Clean assessor's data, only keep important columns. no issue with duplicate TMK in kauai data
 clean_assessors <- assessors[, c("PARID","COTMK","Community","CPR_UNIT","TAXCLASS",
                                  "APRBLDGMKT","ASMTBLDG","APRLANDMKT","ASMTLAND",
                                  "APRTOTMKT","ASMTTOT","TOTEXEMPT","NETTAXABLE",
-                                 "TARGET_FID","GIS_SQFT","NEAR_2021",
+                                 "TARGET_FID","GIS_SQFT","NEAR_VEG",
                                  "NEAR_CE05","NEAR_CE11","NEAR_CE20","NEAR_CE32",
                                  "NEAR_PF05","NEAR_PF11","NEAR_PF20","NEAR_PF32",
                                  "NEAR_WF05","NEAR_WF11","NEAR_WF20","NEAR_WF32",
-                                 "NEAR_XA05","NEAR_XA11","NEAR_XA20","NEAR_XA32")]
+                                 "NEAR_XA05","NEAR_XA11","NEAR_XA20","NEAR_XA32",
+                                 'area_og','SA_CE05','SA_CE11','SA_CE20','SA_CE32',
+                                 'SA_WF05','SA_WF11','SA_WF20','SA_WF32','OSDS_QTY_calc')]
+
+
+#Create baseline SA_2023_[hazard] with values of 0 (for easy integration in for loops). 
+#All are assigned 0 as this is our baseline (no parcels have lost value yet, assessors value is that of current "original" parcel area)
+clean_assessors$SA_2023_WF <- 0
+clean_assessors$SA_2023_CE <- 0
 
 # rename columns
 clean_assessors <- clean_assessors %>%
   rename(TMK = PARID,              #new name = old name
-         NEAR_VEG = NEAR_2021,
+         #NEAR_VEG = NEAR_2021,
          BuildingID = TARGET_FID,
-         BLDG_SQFT = GIS_SQFT)
+         BLDG_SQFT = GIS_SQFT,
+         SA_2030_CE = SA_CE05,
+         SA_2050_CE = SA_CE11,
+         SA_2075_CE = SA_CE20,
+         SA_2100_CE = SA_CE32,
+         SA_2030_WF = SA_WF05,
+         SA_2050_WF = SA_WF11,
+         SA_2075_WF = SA_WF20,
+         SA_2100_WF = SA_WF32,
+         OSDS = OSDS_QTY_calc)
+
 
 # create column summing number of CPR units per building (need this later for dividing retreat costs per CPR'd building)
 clean_assessors <- clean_assessors %>%
@@ -147,26 +172,13 @@ seawallhazardshp <- st_read("F:/slr/kauai/tmk_XA_dd_Seawall")
 seawallhazarddf <- as.data.frame(seawallhazardshp)
 
 #just keep the columns we need
-seawallhazarddf <- seawallhazarddf[, c('PARID','area_og','SA_CE05','SA_CE11','SA_CE20','SA_CE32','SA_WF05','SA_WF11','SA_WF20','SA_WF32','Direct','Indirect','SS_FID','SS_Len_m')]
-
-#Create baseline Shape_Area_2023_[hazard] with values of 0 (for easy integration in for loops). 
-#All are assigned 0 as this is our baseline (no parcels have lost value yet, assessors value is that of current "original" parcel area)
-seawallhazarddf$Shape_Area_2023_WF <- 0
-seawallhazarddf$Shape_Area_2023_CE <- 0
+seawallhazarddf <- seawallhazarddf[, c('PARID','Direct','Indirect','SS_FID','SS_Len_m')]
 
 
 # Convert SLR intervals to years
 # Define the new column names
 seawallhazarddf <- seawallhazarddf %>%
   rename(TMK = PARID,
-         Shape_Area_2030_CE = SA_CE05,
-         Shape_Area_2050_CE = SA_CE11,
-         Shape_Area_2075_CE = SA_CE20,
-         Shape_Area_2100_CE = SA_CE32,
-         Shape_Area_2030_WF = SA_WF05,
-         Shape_Area_2050_WF = SA_WF11,
-         Shape_Area_2075_WF = SA_WF20,
-         Shape_Area_2100_WF = SA_WF32,
          Seawall_Direct = Direct,
          Seawall_Indirect = Indirect,
          SeawallID = SS_FID,
@@ -175,20 +187,6 @@ seawallhazarddf <- seawallhazarddf %>%
 #if NA in seawall_direct/seawall_indirect column, replace with 0
 seawallhazarddf$Seawall_Direct[is.na(seawallhazarddf$Seawall_Direct)] <- 0
 seawallhazarddf$Seawall_Indirect[is.na(seawallhazarddf$Seawall_Indirect)] <- 0
-
-# Import OSDS counts data frame 
-OSDSshp <- st_read("F:/slr/kauai/tmk_XA_dd_OSDS") 
-OSDS <- as.data.frame(OSDSshp)
-
-#just keep the columns we need
-OSDS <- OSDS[, c('PARID','osds_qty')]
-
-# Rename column
-OSDS <- OSDS %>% rename(TMK = PARID,OSDS = osds_qty)
-
-# Join dataframes together
-seawallhazarddf <- seawallhazarddf %>%
-  inner_join(OSDS %>% select(TMK, OSDS), by = "TMK")
 
 
 # Convert column names in Clean Parcel Hazard Area to uppercase
@@ -200,7 +198,7 @@ clean_retreat_calcs <- left_join(clean_assessors, seawallhazarddf, by = c("TMK")
 # sum parcel area for CPR'd parcels 
 clean_retreat_calcs <- clean_retreat_calcs %>%
   group_by(COTMK) %>%
-  mutate(OG_PARCEL_AREA = sum(AREA_OG,na.rm=T))
+  mutate(OG_PARCEL_AREA = sum(area_og,na.rm=T))
 
 
 

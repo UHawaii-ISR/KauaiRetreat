@@ -19,6 +19,7 @@ options(scipen = 999)
 infrademo <- data.frame(matrix(ncol=1,nrow=0))
 colnames(infrademo)<- c('ID')
 infrademo$ID <- as.character(infrademo$ID)
+infrademo$Community <- as.character(infrademo$Community)
 
 levels <- c("05","11","20","32")
 buffer <- c("","b")
@@ -26,46 +27,45 @@ buffer <- c("","b")
 for(level in levels){
   for(buff in buffer){
     #read in all shapefiles
-    hwyshp <- st_read("F:/slr/kauai/HWY/HWY",layer=paste0("HWY_CE",level,buff))
+    hwyshp <- st_read("F:/slr/kauai/HWY_Islandwide_1/HWY/",layer=paste0("HWY_CE",level,buff))
     hwydf <- as.data.frame(hwyshp)
     hwydf <- hwydf %>% drop_na(id)
-    bshp<- st_read("F:/slr/kauai/Bridge/Bridge",layer=paste0("Bri_CE",level,buff))
+    bshp<- st_read("F:/slr/kauai/Bridge_Islandwide_1/Bridge",layer=paste0("Bri_CE",level,buff))
     bdf <- as.data.frame(bshp)
-    rdshp <- st_read("F:/slr/kauai/nonHWY/nonHWY",layer=paste0("nonHWY_CE",level,buff))
+    rdshp <- st_read("F:/slr/kauai/nonHWY_Islandwide_1/nonHWY",layer=paste0("nonHWY_CE",level,buff))
     rddf <- as.data.frame(rdshp)
     rddf <- rddf %>% drop_na(id)
     rddf$id <- paste("r", rddf$id, sep="")
     
     year <- ifelse(level=="05",2030,ifelse(level=='11',2050,ifelse(level=='20',2075,ifelse(level=='32',2100,NA))))
     
-    #ce <- ifelse(buff=="b","E","CE")
-    
     #highway
     dfsum <- hwydf %>%
-      group_by(id) %>%
+      group_by(Community,id) %>%
       summarise(
         !!sym(paste0("hwy_", year, "_", buff)) := sum(!!sym(paste0('Ln_m_CE', level, buff))),
         !!sym(paste0("seawallhwy_", year, "_", buff)) := sum(case_when(SS_FID_1 > 0 ~ !!sym(paste0('Ln_m_CE', level, buff)), TRUE ~ 0))
       )
     
-    infrademo <- full_join(infrademo, dfsum, by =c('ID' = 'id'))
+    infrademo <- full_join(infrademo, dfsum, by =c('ID' = 'id','Community' = 'Community'))
     
     #bridge
     dfsum <- bdf %>%
-      group_by(id) %>%
+      group_by(Community,id) %>%
       summarise(!!sym(paste0("b_",year,"_",buff)) := sum(!!sym(paste0('Ln_m_CE',level,buff))))
     
-    infrademo <- full_join(infrademo, dfsum, by =c('ID' = 'id'))
+    infrademo <- full_join(infrademo, dfsum, by =c('ID' = 'id','Community' = 'Community'))
     
     #road (non-highway)
+    #column for nonHWY is "realign" 0= ignore 1= realign 2= remove
     dfsum <- rddf %>%
-      group_by(id) %>%
+      group_by(Community,id) %>%
       summarise(
         !!sym(paste0("rd_", year, "_", buff)) := sum(!!sym(paste0('Ln_m_CE', level, buff))),
         !!sym(paste0("seawallrd_", year, "_", buff)) := sum(case_when(SS_FID_1 > 0 ~ !!sym(paste0('Ln_m_CE', level, buff)), TRUE ~ 0))
       )
     
-    infrademo <- full_join(infrademo, dfsum, by =c('ID' = 'id'))
+    infrademo <- full_join(infrademo, dfsum, by =c('ID' = 'id','Community' = 'Community'))
     
     # sum the seawall columns together (from road seawalls and highway seawalls)
     infrademo[[paste0("seawall_", year, "_", buff)]] <- rowSums(infrademo[, c(paste0("seawallrd_", year, "_", buff), 
@@ -76,13 +76,13 @@ for(level in levels){
 
 #highway+bridge. retreat occurs when length of highway+bridge under CE exceeds 1000ft (304.8m)
 infra_retreat <- infrademo %>%
-  select(ID, starts_with("hwy_"), starts_with("b_"), starts_with("rd_"),starts_with("seawall")) %>%
-  pivot_longer(cols = -ID, names_to = c(".value", "Year", "Scenario"), names_sep = "_") %>%
+  select(ID,Community, starts_with("hwy_"), starts_with("b_"), starts_with("rd_"),starts_with("seawall")) %>%
+  pivot_longer(cols = -c(ID,Community), names_to = c(".value", "Year", "Scenario"), names_sep = "_") %>%
   mutate(Scenario = ifelse(grepl("b$", Scenario), "TB", "RE"),
          Year = as.numeric(gsub("hwy_|b_|rd_", "", Year))
   ) %>%
-  arrange(ID, Scenario, Year) %>%
-  group_by(ID, Scenario) 
+  arrange(Community,ID, Scenario, Year) %>%
+  group_by(Community,ID, Scenario) 
 
 infraIDs <- unique(na.omit(infra_retreat$ID))
 scenarios <- unique(na.omit(infra_retreat$Scenario))
@@ -115,6 +115,7 @@ for(id in infraIDs){
       swallhwy <- subdf$seawallhwy[subdf$Year == year]
       prev_swallhwy <- ifelse(year > 2030,subdf$seawallhwy[subdf$Year == prevyear],0)
       new_swallhwy <- ifelse(!is.na(prev_swallhwy), swallhwy - prev_swallhwy, swallhwy) #the amount of highway already riprap
+      new_riprap_hwy <- ifelse(!is.na(new_swallhwy),new_hwy - new_swallhwy,new_hwy) #amount of highway that needs to be riprapped
       
       total_hwy <- sum(new_hwy,total_hwy,na.rm=T)
       total_b <- sum(new_b,total_b, na.rm=T)
@@ -148,7 +149,7 @@ for(id in infraIDs){
         total_swallhwy <- 0
       }
       
-      #if total length is <304.8 (retreat is NA), then riprap occurs. riprap_hwy and riprap_b are equal to new_hwy and new_b.
+      #if total length is <304.8 (retreat is NA), then riprap occurs. riprap_hwy and riprap_b are equal to new_riprap_hwy and new_b.
       # these lengths are also added to the running total_swallhwy to know how much riprap must later be removed
       if(is.na(retreatyr)){
         infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id, 'riprap_hwy'] <- new_riprap_hwy
@@ -178,6 +179,7 @@ for(id in infraIDs){
       ao_hwy <- subdf$hwy[subdf$Year == 2100]
       ao_b <- subdf$b[subdf$Year == 2100]
       ao_rd <- subdf$rd[subdf$Year == 2100]
+      infracommunity <- subdf$Community[1]
       
       ao_relocate_hwy <- ifelse(!is.na(ao_removeriprap_hwy), ao_hwy - ao_removeriprap_hwy, ao_hwy)
       ao_relocate_b <- ao_b
@@ -185,12 +187,19 @@ for(id in infraIDs){
       
       infra_retreat <- infra_retreat %>%
         ungroup() %>%
-        add_row(ID=id,Year=2023,Scenario='AO',retreatyr=2023,relocate_hwy=ao_relocate_hwy,relocate_b=ao_relocate_b,remove_rd=ao_remove_rd,
+        add_row(ID=id,Year=2023,Community=infracommunity,Scenario='AO',retreatyr=2023,relocate_hwy=ao_relocate_hwy,relocate_b=ao_relocate_b,remove_rd=ao_remove_rd,
                 removeriprap_hwy=ao_removeriprap_hwy,removeriprap_rd=ao_removeriprap_rd) %>% 
         group_by(ID, Scenario) 
     }
   }
 }
+
+#filter to just community of interest
+if(!is.na(communityfilter)){
+  infra_retreat <- subset(infra_retreat, Community==communityfilter)
+  }
+
+
 
 
 #calculate cost for eminent domain
@@ -275,10 +284,13 @@ for (seawallid in seawallIDs) {
 
 
 
-#add infrastructure demo calcs to Retreat_Analysis df
+#add infrastructure demo calcs to Retreat_Analysis df and breakdown in infra_costtime
 
 years <- c(2023, 2026, 2030, 2040, 2050, 2062, 2075, 2087, 2100)
 scenarios <- c('AO','TB','RE')
+
+infra_costtime <- data.frame(
+  Years = years)
 
 for (year in years) {
   for(seawall in seawalls){
@@ -299,15 +311,56 @@ for (year in years) {
       for(scenario in scenarios){
         subdf <- subset(infra_retreat, Scenario == scenario & Year == year)
         infrastructure_col <- paste0("infrastructure_",scenario,seawall,trigger)
+        b_reloc_col <- paste0("bridgerelocate",scenario,seawall,trigger)
+        b_retrofit_col <- paste0("bridgeretrofit",scenario,seawall,trigger)
+        hwy_reloc_col <- paste0("hwyrelocate",scenario,seawall,trigger)
+        water_reloc_col <- paste0("waterrelocate",scenario,seawall,trigger)
+        emdom_col <- paste0("emdom",scenario,seawall,trigger)
+        hwy_riprap_col <- paste0("hwyriprap",scenario,seawall,trigger)
+        rd_remove_col <- paste0("rdremove",scenario,seawall,trigger)
+        riprap_remove_col <- paste0("riprapremove",scenario,seawall,trigger)
+        wastewater_remove_col <- paste0("waterremove",scenario,seawall,trigger)
+        maintain_col <- paste0("maintain",scenario,seawall,trigger)
         
         if(nrow(subdf)==0){
-          Retreat_Analysis[[infrastructure_col]][Retreat_Analysis$Years == year] <- 0
+          infra_costtime[[b_reloc_col]][infra_costtime$Years == year] <- 0
+          infra_costtime[[b_retrofit_col]][infra_costtime$Years == year] <- 0
+          infra_costtime[[hwy_reloc_col]][infra_costtime$Years == year] <- 0
+          infra_costtime[[water_reloc_col]][infra_costtime$Years == year] <- 0
+          infra_costtime[[emdom_col]][infra_costtime$Years == year] <- 0
+          infra_costtime[[hwy_riprap_col]][infra_costtime$Years == year] <- 0
+          infra_costtime[[rd_remove_col]][infra_costtime$Years == year] <- 0
+          infra_costtime[[riprap_remove_col]][infra_costtime$Years == year] <- 0
+          #infra_costtime[[wastewater_remove_col]][infra_costtime$Years == year] <- 0
+          infra_costtime[[maintain_col]][infra_costtime$Years == year] <- 0
+          
+          
         } else{
-          Retreat_Analysis[[infrastructure_col]][Retreat_Analysis$Years == year] <- 
-            sum(subdf$relocate_b,na.rm=T)*bridge_reloc + sum(subdf$riprap_b,na.rm=T)*bridge_riprap + 
-            sum(subdf$relocate_hwy,na.rm=T)*(highway_reloc+water_reloc+emdom_hwy) + sum(subdf$riprap_hwy,na.rm=T)*highway_riprap+ sum(subdf$removeriprap_hwy,na.rm=T)*riprap_remove+
-            sum(subdf$remove_rd,na.rm=T)*road_remove + sum(subdf$removeriprap_rd,na.rm=T)*riprap_remove + sum(subdf$maintain_hwy,na.rm=T)*maintain
+          infra_costtime[[b_reloc_col]][infra_costtime$Years == year] <- sum(subdf$relocate_b,na.rm=T)*bridge_reloc
+          infra_costtime[[b_retrofit_col]][infra_costtime$Years == year] <- sum(subdf$riprap_b,na.rm=T)*bridge_riprap
+          infra_costtime[[hwy_reloc_col]][infra_costtime$Years == year] <- sum(subdf$relocate_hwy,na.rm=T)*highway_reloc
+          infra_costtime[[water_reloc_col]][infra_costtime$Years == year] <- sum(subdf$relocate_hwy,na.rm=T)*water_reloc
+          infra_costtime[[emdom_col]][infra_costtime$Years == year] <- sum(subdf$relocate_hwy,na.rm=T)*emdom_hwy
+          infra_costtime[[hwy_riprap_col]][infra_costtime$Years == year] <- sum(subdf$riprap_hwy,na.rm=T)*highway_riprap
+          infra_costtime[[rd_remove_col]][infra_costtime$Years == year] <- sum(subdf$remove_rd,na.rm=T)*road_remove
+          infra_costtime[[riprap_remove_col]][infra_costtime$Years == year] <- sum(subdf$removeriprap_rd,na.rm=T)*riprap_remove
+          #infra_costtime[[wastewater_remove_col]][infra_costtime$Years == year] <- sum(subdf$removewater,na.rm=T)*wastewater_remove
+          infra_costtime[[maintain_col]][infra_costtime$Years == year] <- sum(subdf$maintain_hwy,na.rm=T)*maintain
+          
         }
+        
+        Retreat_Analysis[[infrastructure_col]][Retreat_Analysis$Years == year] <- 
+          sum(infra_costtime[[b_reloc_col]][infra_costtime$Years == year],
+              infra_costtime[[b_retrofit_col]][infra_costtime$Years == year],
+              infra_costtime[[hwy_reloc_col]][infra_costtime$Years == year],
+              infra_costtime[[water_reloc_col]][infra_costtime$Years == year],
+              infra_costtime[[emdom_col]][infra_costtime$Years == year],
+              infra_costtime[[hwy_riprap_col]][infra_costtime$Years == year],
+              infra_costtime[[rd_remove_col]][infra_costtime$Years == year],
+              infra_costtime[[riprap_remove_col]][infra_costtime$Years == year],
+              #infra_costtime[[wastewater_remove_col]][infra_costtime$Years == year],
+              infra_costtime[[maintain_col]][infra_costtime$Years == year], na.rm=T)
+        
       }
       
       #seawalls

@@ -31,6 +31,11 @@ for (year in years) {
       TB_matching_rows <- clean_retreat_calcs[[yearTB_col]] == year
       RE_matching_rows <- clean_retreat_calcs[[yearRE_col]] == year
       
+      clean_retreat_calcs_area <- clean_retreat_calcs[!duplicated(clean_retreat_calcs$COTMK), ]
+      AO_matching_rows_area <- clean_retreat_calcs_area[[yearAO_col]] == year
+      TB_matching_rows_area <- clean_retreat_calcs_area[[yearTB_col]] == year
+      RE_matching_rows_area <- clean_retreat_calcs_area[[yearRE_col]] == year
+      
       ### NUM OF BUILDINGS
       
       #Count the number of AO buildings (in 2023)
@@ -166,17 +171,17 @@ for (year in years) {
       # Total area retreated in AO (sq.m.)
       arearetreat_col <- paste0("arearetreat_AO",seawall,"t",trigger)
       Retreat_Analysis[[arearetreat_col]][Retreat_Analysis$Years == year] <- 
-        ifelse(year==2023,sum(clean_retreat_calcs[["OG_PARCEL_AREA"]][AO_matching_rows], na.rm = TRUE),0) 
+        ifelse(year==2023,sum(clean_retreat_calcs_area[["OG_PARCEL_AREA"]][AO_matching_rows_area], na.rm = TRUE),0) 
       
       # Total area retreated in TB (sq.m.)
       arearetreat_col <- paste0("arearetreat_TB",seawall,"t",trigger)
       Retreat_Analysis[[arearetreat_col]][Retreat_Analysis$Years == year] <- 
-        sum(clean_retreat_calcs[["OG_PARCEL_AREA"]][TB_matching_rows], na.rm = TRUE)
+        sum(clean_retreat_calcs_area[["OG_PARCEL_AREA"]][TB_matching_rows_area], na.rm = TRUE)
       
       # Total area retreated in RE (sq.m.)
       arearetreat_col <- paste0("arearetreat_RE",seawall,"t",trigger)
       Retreat_Analysis[[arearetreat_col]][Retreat_Analysis$Years == year] <- 
-        sum(clean_retreat_calcs[["OG_PARCEL_AREA"]][RE_matching_rows], na.rm = TRUE)
+        sum(clean_retreat_calcs_area[["OG_PARCEL_AREA"]][RE_matching_rows_area], na.rm = TRUE)
       
       ### OSDS REMOVAL
       
@@ -203,9 +208,9 @@ for (year in years) {
         
         # Total area affected under each hazard (sq.m.)
         areahazard_col <- paste0("areahazard_l",hazard_type)
-        parcelhazard <- paste0("Parcel_", year, "_l", hazard_type) 
+        parcelhazard <- paste0("SA_", year, "_", hazard_type) 
         Retreat_Analysis[[areahazard_col]][Retreat_Analysis$Years == year] <- 
-          sum(clean_retreat_calcs[[parcelhazard]]*clean_retreat_calcs$OG_PARCEL_AREA, na.rm = TRUE)
+          sum(clean_retreat_calcs_area[[parcelhazard]], na.rm = TRUE)
         
         ### TOTAL VALUE, PROPERTY LOSS, TAX REV LOSS
         

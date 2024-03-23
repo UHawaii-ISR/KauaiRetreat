@@ -88,7 +88,7 @@ for (year in years) {
     column_title <- paste0("Parcel_", year, "_l", hazard_type) 
     
     # reference correct Shape_Area columns
-    shape_column_title <- paste0("SHAPE_AREA_", year, "_", hazard_type) 
+    shape_column_title <- paste0("SA_", year, "_", hazard_type) 
     
     # remaining land value
     # create land value columns after transferring land using both hazards
