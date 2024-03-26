@@ -319,7 +319,7 @@ for (year in years) {
         hwy_riprap_col <- paste0("hwyriprap",scenario,seawall,trigger)
         rd_remove_col <- paste0("rdremove",scenario,seawall,trigger)
         riprap_remove_col <- paste0("riprapremove",scenario,seawall,trigger)
-        wastewater_remove_col <- paste0("waterremove",scenario,seawall,trigger)
+        #wastewater_remove_col <- paste0("waterremove",scenario,seawall,trigger)
         maintain_col <- paste0("maintain",scenario,seawall,trigger)
         
         if(nrow(subdf)==0){
