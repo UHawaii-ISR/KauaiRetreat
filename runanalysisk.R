@@ -9,9 +9,9 @@ kekaha <- subset(clean_retreat_calcs, Community=='Kekaha') #clean_retreat_calcs[
 kapaa <- subset(clean_retreat_calcs, Community=='Kapaʻa') #clean_retreat_calcs[clean_retreat_calcs$Community == "Kapaʻa", ]
 
 #overwrite clean_retreat_calcs to selected ahupuaa/qaqc
-clean_retreat_calcs <- kapaa
-titlename <- 'Kapaʻa' # Kapaʻa Kekaha Kauaʻi  #this is for the figure label
-communityfilter <- 'Kapaʻa' #use NA if want entire island. otherwise 'Kapaʻa' 'Kekaha'  #this is for infrastructure
+clean_retreat_calcs <- allisland
+titlename <- 'Kauaʻi' # Kapaʻa Kekaha Kauaʻi  #this is for the figure label
+communityfilter <- NA #use NA if want entire island. otherwise 'Kapaʻa' 'Kekaha'  #this is for infrastructure
 
 source("C:/Users/rsett/Documents/KauaiRetreat/2retreatyearvaluetaxk.R")
 source("C:/Users/rsett/Documents/KauaiRetreat/3costsovertimek.R")
@@ -31,8 +31,8 @@ print(fig3) #all scenarios
 print(fig3mini) #just scenarios of interest to kauai
 print(resmini)
 print(fig4)
-print(fig4res)
-print(fig4infra)
+#print(fig4res)
+#print(fig4infra)
 print(fig4resinfra)
 print(figinfra)
 

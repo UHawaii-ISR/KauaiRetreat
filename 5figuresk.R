@@ -239,10 +239,10 @@ fig3mini <- ggplot(total_cost_mini, aes(fill=factor(costtype) ,y=valueMil, x=sub
         panel.spacing = unit(0,"cm"), # remove space between groups
         panel.grid.major.x = element_blank(), #remove vertical lines
         panel.grid.minor.x = element_blank(), # remove vertical lines
-        #legend.text = element_text(size = 12), #legend text size
-        #legend.background = element_rect(fill="white",colour="white"),
-        #legend.position = c(0.75,0.8), # put legend within plot
-        #legend.spacing.y = unit(0.25, 'cm'), #add space between legend lines
+        legend.text = element_text(size = 12), #legend text size
+        legend.background = element_rect(fill="white",colour="white"),
+        legend.position = c(0.75,0.8), # put legend within plot
+        legend.spacing.y = unit(0.25, 'cm'), #add space between legend lines
         text=element_text(size=16), #overall text size
         axis.title.x = element_text(size = 16), #xaxis text size
         axis.title.y = element_text(size = 16), #yaxis text size
@@ -373,7 +373,7 @@ for(i in 1:length(years)){
         
         costtime[nrow(costtime) + 1,] = c(year = year, scenario = "TB",subscenario = scenario_col,cost = totalcost)
         costtimeres[nrow(costtimeres) + 1,] = c(year = year, scenario = "TB",subscenario = scenario_col,cost = totalcostres)
-        costtimeinfra[nrow(costtimeres) + 1,] = c(year = year, scenario = "TB",subscenario = scenario_col,cost = totalcostinfra)
+        costtimeinfra[nrow(costtimeinfra) + 1,] = c(year = year, scenario = "TB",subscenario = scenario_col,cost = totalcostinfra)
         areatime[nrow(areatime) + 1,] = c(year = year, scenario = "TB",subscenario = scenario_col,area = totalarea)
         
         for(infracosttype in infracosttypes){

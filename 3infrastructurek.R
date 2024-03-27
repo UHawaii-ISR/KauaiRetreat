@@ -181,9 +181,9 @@ for(id in infraIDs){
       ao_rd <- subdf$rd[subdf$Year == 2100]
       infracommunity <- subdf$Community[1]
       
-      ao_relocate_hwy <- ifelse(!is.na(ao_removeriprap_hwy), ao_hwy - ao_removeriprap_hwy, ao_hwy)
+      ao_relocate_hwy <- ao_hwy #ifelse(!is.na(ao_removeriprap_hwy), ao_hwy - ao_removeriprap_hwy, ao_hwy) # this is for keeping seawall scenario
       ao_relocate_b <- ao_b
-      ao_remove_rd <- ifelse(!is.na(ao_removeriprap_rd), ao_rd - ao_removeriprap_rd, ao_rd)
+      ao_remove_rd <- ao_rd #ifelse(!is.na(ao_removeriprap_rd), ao_rd - ao_removeriprap_rd, ao_rd)
       
       infra_retreat <- infra_retreat %>%
         ungroup() %>%
