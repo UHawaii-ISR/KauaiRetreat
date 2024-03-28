@@ -9,9 +9,9 @@ kekaha <- subset(clean_retreat_calcs, Community=='Kekaha') #clean_retreat_calcs[
 kapaa <- subset(clean_retreat_calcs, Community=='Kapaʻa') #clean_retreat_calcs[clean_retreat_calcs$Community == "Kapaʻa", ]
 
 #overwrite clean_retreat_calcs to selected ahupuaa/qaqc
-clean_retreat_calcs <- allisland
-titlename <- 'Kauaʻi' # Kapaʻa Kekaha Kauaʻi  #this is for the figure label
-communityfilter <- NA #use NA if want entire island. otherwise 'Kapaʻa' 'Kekaha'  #this is for infrastructure
+clean_retreat_calcs <- kekaha
+titlename <- 'Kekaha' # Kapaʻa Kekaha Kauaʻi  #this is for the figure label
+communityfilter <- 'Kekaha' #use NA if want entire island. otherwise 'Kapaʻa' 'Kekaha'  #this is for infrastructure
 
 source("C:/Users/rsett/Documents/KauaiRetreat/2retreatyearvaluetaxk.R")
 source("C:/Users/rsett/Documents/KauaiRetreat/3costsovertimek.R")
@@ -20,7 +20,7 @@ source("C:/Users/rsett/Documents/KauaiRetreat/4discountedtotalcostsk.R")
 
 #define subscenarios of interest for figures
 miniscenarios <- c('AO_tXA_lfull_bv1','AO_tCE_lfull_bv1', 
-                   'TB_tCE_lWF_bv1','TB_tCE_lCE_bv1','TB_s_tXA_lWF_bv1','TB_s_tXA_lCE_bv1',
+                   'TB_tCE_lWF_bv1','TB_tCE_lCE_bv1','TB_s_tCE_lWF_bv1','TB_s_tCE_lCE_bv1',
                    'RE_tCE_lnone_bv0_chi','RE_tCE_lnone_bv0_clo','RE_s_tCE_lnone_bv0_chi','RE_s_tCE_lnone_bv0_clo',
                    'RE_tCE_lCE_bv0_chi','RE_tCE_lCE_bv0_clo','RE_s_tCE_lCE_bv0_chi','RE_s_tCE_lCE_bv0_clo', 
                    'areahazard_lCE','areahazard_lWF') 
@@ -37,10 +37,10 @@ print(fig4resinfra)
 print(figinfra)
 
 #save tables as csv
-write.csv(Retreat_Analysis, "Retreat_Analysis_kapaa.csv",row.names=F)
-write.csv(Retreat_Analysis_Total, "Retreat_Analysis_Total_kapaa.csv",row.names=F)
-write.csv(total_cost, "total_cost_kapaa.csv",row.names=F)
-write.csv(infra_costtime,'infrastructure_kapaa.csv',row.names=F)
+write.csv(Retreat_Analysis, "Retreat_Analysis_kekaha.csv",row.names=F)
+write.csv(Retreat_Analysis_Total, "Retreat_Analysis_Total_kekaha.csv",row.names=F)
+write.csv(total_cost, "total_cost_kekaha.csv",row.names=F)
+write.csv(infra_costtime,'infrastructure_kekaha.csv',row.names=F)
 
 
 
