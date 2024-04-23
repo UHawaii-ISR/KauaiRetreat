@@ -6,7 +6,7 @@ library(ggplot2)
 library(ggpubr)
 library(data.table)
 library(sf)
-setwd("F:/slr/kauai/kauai_retreat_code/")
+setwd(workdir)
 
 
 # Disable scientific notation
@@ -23,53 +23,61 @@ infrademo$Community <- as.character(infrademo$Community)
 
 levels <- c("05","11","20","32")
 buffer <- c("","b")
+triggers <- c("XA","WF","PF","CE")
 
 for(level in levels){
   for(buff in buffer){
-    #read in all shapefiles
-    hwyshp <- st_read("F:/slr/kauai/HWY_Islandwide_1/HWY/",layer=paste0("HWY_CE",level,buff))
-    hwydf <- as.data.frame(hwyshp)
-    hwydf <- hwydf %>% drop_na(id)
-    bshp<- st_read("F:/slr/kauai/Bridge_Islandwide_1/Bridge",layer=paste0("Bri_CE",level,buff))
-    bdf <- as.data.frame(bshp)
-    rdshp <- st_read("F:/slr/kauai/nonHWY_Islandwide_1/nonHWY",layer=paste0("nonHWY_CE",level,buff))
-    rddf <- as.data.frame(rdshp)
-    rddf <- rddf %>% drop_na(id)
-    rddf$id <- paste("r", rddf$id, sep="")
-    
-    year <- ifelse(level=="05",2030,ifelse(level=='11',2050,ifelse(level=='20',2075,ifelse(level=='32',2100,NA))))
-    
-    #highway
-    dfsum <- hwydf %>%
-      group_by(Community,id) %>%
-      summarise(
-        !!sym(paste0("hwy_", year, "_", buff)) := sum(!!sym(paste0('Ln_m_CE', level, buff))),
-        !!sym(paste0("seawallhwy_", year, "_", buff)) := sum(case_when(SS_FID_1 > 0 ~ !!sym(paste0('Ln_m_CE', level, buff)), TRUE ~ 0))
-      )
-    
-    infrademo <- full_join(infrademo, dfsum, by =c('ID' = 'id','Community' = 'Community'))
-    
-    #bridge
-    dfsum <- bdf %>%
-      group_by(Community,id) %>%
-      summarise(!!sym(paste0("b_",year,"_",buff)) := sum(!!sym(paste0('Ln_m_CE',level,buff))))
-    
-    infrademo <- full_join(infrademo, dfsum, by =c('ID' = 'id','Community' = 'Community'))
-    
-    #road (non-highway)
-    #column for nonHWY is "realign" 0= ignore 1= realign 2= remove
-    dfsum <- rddf %>%
-      group_by(Community,id) %>%
-      summarise(
-        !!sym(paste0("rd_", year, "_", buff)) := sum(!!sym(paste0('Ln_m_CE', level, buff))),
-        !!sym(paste0("seawallrd_", year, "_", buff)) := sum(case_when(SS_FID_1 > 0 ~ !!sym(paste0('Ln_m_CE', level, buff)), TRUE ~ 0))
-      )
-    
-    infrademo <- full_join(infrademo, dfsum, by =c('ID' = 'id','Community' = 'Community'))
-    
-    # sum the seawall columns together (from road seawalls and highway seawalls)
-    infrademo[[paste0("seawall_", year, "_", buff)]] <- rowSums(infrademo[, c(paste0("seawallrd_", year, "_", buff), 
-                                                                              paste0("seawallhwy_", year, "_", buff))], na.rm = TRUE)
+    for(trigger in triggers){
+      #read in all shapefiles
+      infrashp <- st_read(infrastructurefolder,layer=paste0(trigger,level,buff))
+      infradf <- as.data.frame(infrashp)
+      infradf <- infradf[c('Has_HWY','SS_FID','VEG','Ln_m','id')]
+      
+      #dataset metadata: 
+      #Has_HWY: 0=nonHWY, 1=HWY, 2=Bridge, 4=nonhwy that may retreat, 5=bridge in nonhwy that may retreat
+      #SS_FID: 0=does not have shoreline hardening. # = FID corresponding to seawall ID
+      #VEG: if SS_FID > 0 and veg=1 then retreat RE. if SS_FID > 0 and veg=2 then retreat TB
+      #Ln_m: length of segment in meters
+      #id: corresponds to segment. note: it is not unique (need to combine with Has-hwy ID to make it unique)
+      
+      infradf$id <- ifelse(infradf$Has_HWY == 0,paste("r", infradf$id, sep=""),infradf$Has_HWY)
+      infradf$id <- ifelse(infradf$Has_HWY == 4,paste("r", infradf$id, sep=""),infradf$Has_HWY)
+      infradf$id <- ifelse(infradf$Has_HWY == 5,paste("r", infradf$id, sep=""),infradf$Has_HWY)
+      
+      year <- ifelse(level=="05",2030,ifelse(level=='11',2050,ifelse(level=='20',2075,ifelse(level=='32',2100,NA))))
+      
+      #highway
+      dfsum <- hwydf %>%
+        group_by(Community,id) %>%
+        summarise(
+          !!sym(paste0("hwy_", year, "_", buff)) := sum(!!sym(paste0('Ln_m_CE', level, buff))),
+          !!sym(paste0("seawallhwy_", year, "_", buff)) := sum(case_when(SS_FID_1 > 0 ~ !!sym(paste0('Ln_m_CE', level, buff)), TRUE ~ 0))
+        )
+      
+      infrademo <- full_join(infrademo, dfsum, by =c('ID' = 'id','Community' = 'Community'))
+      
+      #bridge
+      dfsum <- bdf %>%
+        group_by(Community,id) %>%
+        summarise(!!sym(paste0("b_",year,"_",buff)) := sum(!!sym(paste0('Ln_m_CE',level,buff))))
+      
+      infrademo <- full_join(infrademo, dfsum, by =c('ID' = 'id','Community' = 'Community'))
+      
+      #road (non-highway)
+      #column for nonHWY is "realign" 0= ignore 1= realign 2= remove
+      dfsum <- rddf %>%
+        group_by(Community,id) %>%
+        summarise(
+          !!sym(paste0("rd_", year, "_", buff)) := sum(!!sym(paste0('Ln_m_CE', level, buff))),
+          !!sym(paste0("seawallrd_", year, "_", buff)) := sum(case_when(SS_FID_1 > 0 ~ !!sym(paste0('Ln_m_CE', level, buff)), TRUE ~ 0))
+        )
+      
+      infrademo <- full_join(infrademo, dfsum, by =c('ID' = 'id','Community' = 'Community'))
+      
+      # sum the seawall columns together (from road seawalls and highway seawalls)
+      infrademo[[paste0("seawall_", year, "_", buff)]] <- rowSums(infrademo[, c(paste0("seawallrd_", year, "_", buff), 
+                                                                                paste0("seawallhwy_", year, "_", buff))], na.rm = TRUE)
+    }
   }
 }
 
@@ -205,7 +213,7 @@ if(!is.na(communityfilter)){
 #calculate cost for eminent domain
 
 #open assessors data for full island
-kauaiassessorsshp <- st_read("F:/slr/kauai/2023_Real_Property_Tax_Data") 
+kauaiassessorsshp <- st_read(assessorsfile) 
 kauaiassessorsdf <- as.data.frame(kauaiassessorsshp)
 
 #calculate cost per area
@@ -305,7 +313,6 @@ for (year in years) {
       road_remove <- 34 #per meter
       emdom_hwy #per meter length of road
       riprap_remove <- 14764 #per meter 
-      wastewater_remove <- 5686 #** this number needs checking. and will be added once gis is provided
       maintain <- 11814 #per meter
       
       for(scenario in scenarios){

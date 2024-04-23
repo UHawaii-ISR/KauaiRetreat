@@ -4,7 +4,7 @@ library(dplyr)
 library(ggplot2)
 library(ggpubr)
 library(data.table)
-setwd("F:/slr/kauai/kauai_retreat_code/")
+setwd(workdir)
 
 
 # Disable scientific notation
@@ -35,6 +35,12 @@ for (year in years) {
       AO_matching_rows_area <- clean_retreat_calcs_area[[yearAO_col]] == year
       TB_matching_rows_area <- clean_retreat_calcs_area[[yearTB_col]] == year
       RE_matching_rows_area <- clean_retreat_calcs_area[[yearRE_col]] == year
+      
+      clean_retreat_calcs_apt <- clean_retreat_calcs[clean_retreat_calcs$apartment == 1, ]
+      clean_retreat_calcs_apt <- clean_retreat_calcs_apt[!duplicated(clean_retreat_calcs_apt$BuildingID), ]
+      AO_matching_rows_apt <- clean_retreat_calcs_apt[[yearAO_col]] == year
+      TB_matching_rows_apt <- clean_retreat_calcs_apt[[yearTB_col]] == year
+      RE_matching_rows_apt <- clean_retreat_calcs_apt[[yearRE_col]] == year
       
       ### NUM OF BUILDINGS
       
@@ -128,7 +134,8 @@ for (year in years) {
       
       # Demolition Costs ($) for AO and TB
       demolition_house <- 8000  # Demolition cost per residential house
-      demolition_apartment <- 250000 # apartment demolition cost **
+      demolition_apartment <- 5544 # apartment per unit demolition cost (per unit assuming unit is 800sqft and 9ft tall, an apartment (CPR) is 7200 cubic ft.)
+      demolition_aptfoundation <- 3 #apartment building foundation demolition cost (per sqft foundation)
 
       # sum demolition costs for AO
       demo_col <- paste0("demolition_AO",seawall,"t",trigger)
@@ -136,8 +143,10 @@ for (year in years) {
       apartments_col <- paste0("apartments_AO",seawall,"t",trigger)
       aptcount <- Retreat_Analysis[[apartments_col]][Retreat_Analysis$Years == year]
       housecount <- Retreat_Analysis[[buildings_col]][Retreat_Analysis$Years == year] -  aptcount #num houses = #buildings - #apartments
+      apartmentdemo <- sum(clean_retreat_calcs_apt[["CPR_PER_BLDG"]][AO_matching_rows_apt], na.rm = TRUE)*demolition_apartment + 
+        sum(clean_retreat_calcs_apt[["BLDG_SQFT"]][AO_matching_rows_apt], na.rm = TRUE)*demolition_aptfoundation
       Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
-        ifelse(year==2023,aptcount*demolition_apartment + housecount*demolition_house,0) 
+        ifelse(year==2023,apartmentdemo + housecount*demolition_house,0) 
       
       # Sum demolition costs for TB 
       demo_col <- paste0("demolition_TB",seawall,"t",trigger)
@@ -145,8 +154,10 @@ for (year in years) {
       apartments_col <- paste0("apartments_TB",seawall,"t",trigger)
       aptcount <- Retreat_Analysis[[apartments_col]][Retreat_Analysis$Years == year]
       housecount <- Retreat_Analysis[[buildings_col]][Retreat_Analysis$Years == year] - aptcount
+      apartmentdemo <- sum(clean_retreat_calcs_apt[["CPR_PER_BLDG"]][TB_matching_rows_apt], na.rm = TRUE)*demolition_apartment + 
+        sum(clean_retreat_calcs_apt[["BLDG_SQFT"]][TB_matching_rows_apt], na.rm = TRUE)*demolition_aptfoundation
       Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
-        aptcount*demolition_apartment + housecount*demolition_house 
+        apartmentdemo + housecount*demolition_house 
       
       # Sum clean-up costs for parcels that are RE for each year
 
@@ -160,11 +171,12 @@ for (year in years) {
       apartments_col <- paste0("apartments_RE",seawall,"t",trigger)
       aptcount <- Retreat_Analysis[[apartments_col]][Retreat_Analysis$Years == year]
       housecount <- Retreat_Analysis[[buildings_col]][Retreat_Analysis$Years == year] - aptcount
-      
+      apartmentdemo <- sum(clean_retreat_calcs_apt[["CPR_PER_BLDG"]][RE_matching_rows_apt], na.rm = TRUE)*demolition_apartment + 
+        sum(clean_retreat_calcs_apt[["BLDG_SQFT"]][RE_matching_rows_apt], na.rm = TRUE)*demolition_aptfoundation
       Retreat_Analysis[[cleanuplo_col]][Retreat_Analysis$Years == year] <- 
-        aptcount * clean_apartment + housecount * cleanlo_house 
+        apartmentdemo + housecount * cleanlo_house 
       Retreat_Analysis[[cleanuphi_col]][Retreat_Analysis$Years == year] <- 
-        aptcount * clean_apartment + housecount * cleanhi_house 
+        apartmentdemo + housecount * cleanhi_house 
       
       ### AREA RETREATED
       
@@ -183,24 +195,35 @@ for (year in years) {
       Retreat_Analysis[[arearetreat_col]][Retreat_Analysis$Years == year] <- 
         sum(clean_retreat_calcs_area[["OG_PARCEL_AREA"]][RE_matching_rows_area], na.rm = TRUE)
       
-      ### OSDS REMOVAL
+      ### OSDS & WASTEWATER REMOVAL
       
-      #** need to add a cost for non-osds homes wastewater pipe removal
+      #for non-osds homes, assume they need wastewater pipe removal
+      wastewater_remove <- 5686 
+      osds_remove <- 2000
       
-      # OSDS removal costs for AO ($)
+      # OSDS & wastewater removal costs for AO ($)
       osds_col <- paste0("osdsremoval_AO",seawall,"t",trigger)
+      wastewater_col <- paste0("wastewaterremoval_AO",seawall,"t",trigger)
       Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
-        ifelse(year==2023,sum(clean_retreat_calcs$OSDS[AO_matching_rows], na.rm = TRUE) * 2000,0)
+        ifelse(year==2023,sum(clean_retreat_calcs$OSDS[AO_matching_rows], na.rm = TRUE) * osds_remove,0)
+      Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+        ifelse(year==2023,sum(clean_retreat_calcs$WASTEWATER[AO_matching_rows], na.rm = TRUE) * wastewater_remove,0)
       
-      # Sum OSDS costs for TB ($)
+      # Sum OSDS & wastewater costs for TB ($)
       osds_col <- paste0("osdsremoval_TB",seawall,"t",trigger)
+      wastewater_col <- paste0("wastewaterremoval_TB",seawall,"t",trigger)
       Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
-        sum(clean_retreat_calcs[["OSDS"]][TB_matching_rows], na.rm = TRUE) * 2000
+        sum(clean_retreat_calcs[["OSDS"]][TB_matching_rows], na.rm = TRUE) * osds_remove
+      Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+        sum(clean_retreat_calcs[["WASTEWATER"]][TB_matching_rows], na.rm = TRUE) * wastewater_remove
       
-      # Sum OSDS costs for RE ($)
+      # Sum OSDS & wastewater costs for RE ($)
       osds_col <- paste0("osdsremoval_RE",seawall,"t",trigger)
+      wastewater_col <- paste0("wastewaterremoval_RE",seawall,"t",trigger)
       Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
-        sum(clean_retreat_calcs[["OSDS"]][RE_matching_rows], na.rm = TRUE) * 2000
+        sum(clean_retreat_calcs[["OSDS"]][RE_matching_rows], na.rm = TRUE) * osds_remove
+      Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+        sum(clean_retreat_calcs[["WASTEWATER"]][RE_matching_rows], na.rm = TRUE) * wastewater_remove
       
       for(hazard_type in hazard_types){
         

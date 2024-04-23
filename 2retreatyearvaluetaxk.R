@@ -11,7 +11,7 @@ library(dplyr)
 library(ggplot2)
 library(ggpubr)
 library(data.table)
-setwd("F:/slr/kauai/kauai_retreat_code/")
+setwd(workdir)
 
 
 # Disable scientific notation

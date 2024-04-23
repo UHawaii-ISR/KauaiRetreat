@@ -1,3 +1,16 @@
+
+
+#tell R where your files are
+workdir <- "F:/slr/kauai/kauai_retreat_code/" #where's your working directory
+assessorsfile <- "F:/slr/kauai/2023_Real_Property_Tax_Data" #original assessors file (used to calculate eminent domain)
+noncprshpfolder <- "F:/slr/kauai/Bldg_Footprints" #the folder where non-CPR bldg footprint shapefile is
+noncprshplayer <- "Buildings_Footp_XA_tmk" #layer name for non-CPR bldg footprint shapefile
+cprshpfolder <- "F:/slr/kauai/Bldg_Footprints" #the folder for CPR bldg ftprt shapefile
+cprshplayer <- "tmk_buildings_CPR"# layer name for CPR bldg ftprt shapefile
+osdsfile <- "F:/slr/kauai/OSDSv6_Exploded_ALL.csv" #where's the osds file
+seawallfile <- "F:/slr/kauai/tmk_XA_dd_Seawall" #where's the folder housing seawall shapefile
+infrastructurefolder <- "F:/slr/kauai/Alanui/Hazards" #what's the folder that has all of the infrastructure hazard files?
+
 # run full scripts
 
 source("C:/Users/rsett/Documents/KauaiRetreat/1assessorsk.R")
@@ -9,9 +22,9 @@ kekaha <- subset(clean_retreat_calcs, Community=='Kekaha') #clean_retreat_calcs[
 kapaa <- subset(clean_retreat_calcs, Community=='Kapaʻa') #clean_retreat_calcs[clean_retreat_calcs$Community == "Kapaʻa", ]
 
 #overwrite clean_retreat_calcs to selected ahupuaa/qaqc
-clean_retreat_calcs <- kekaha
-titlename <- 'Kekaha' # Kapaʻa Kekaha Kauaʻi  #this is for the figure label
-communityfilter <- 'Kekaha' #use NA if want entire island. otherwise 'Kapaʻa' 'Kekaha'  #this is for infrastructure
+clean_retreat_calcs <- kapaa
+titlename <- 'Kauaʻi' # Kapaʻa Kekaha Kauaʻi  #this is for the figure label
+communityfilter <- NA #use NA if want entire island. otherwise 'Kapaʻa' 'Kekaha'  #this is for infrastructure
 
 source("C:/Users/rsett/Documents/KauaiRetreat/2retreatyearvaluetaxk.R")
 source("C:/Users/rsett/Documents/KauaiRetreat/3costsovertimek.R")

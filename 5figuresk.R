@@ -8,7 +8,7 @@ library(scales)
 library(plotly) #https://plotly.com/r/
 
 
-setwd("F:/slr/kauai/kauai_retreat_code/")
+setwd(workdir)
 
 
 # Disable scientific notation

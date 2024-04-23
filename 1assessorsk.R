@@ -15,14 +15,15 @@
 library(dplyr)
 library(data.table)
 library(sf)
-setwd("F:/slr/kauai/kauai_retreat_code/")
+
+setwd(workdir)
 
 # Disable scientific notation
 options(scipen = 999)
 
 # Import Assessor's data and Assign data frame.  make sure TMK column cell is not in scientific notation
-assessorsshp <- st_read("F:/slr/kauai/Buildings_Footp_XA_tmk_Islandwide_1",layer="Buildings_Footp_XA_tmk") 
-assessorsshpcpr <- st_read("F:/slr/kauai/Buildings_Footp_XA_tmk_Islandwide_1",layer="Buildings_Footp_XA_tmk_CPR")
+assessorsshp <- st_read(noncprshpfolder,layer=noncprshplayer) 
+assessorsshpcpr <- st_read(cprshpfolder,layer=cprshplayer)
 assessorscpr <- as.data.frame(assessorsshpcpr)
 assessors <- as.data.frame(assessorsshp)
 
@@ -44,11 +45,14 @@ assessors <- as.data.frame(assessorsshp)
 #join the dataframes. use the building-TMK-join method1 "centroid within" for non-CPR, method2 "intersect" for CPR units
 assessors <- assessors[is.na(assessors$CPR_UNIT),]
 assessorscpr <- assessorscpr[!is.na(assessorscpr$CPR_UNIT),]
+assessorscpr <- assessorscpr[,intersect(names(assessors),names(assessorscpr))]
+assessors <- assessors[,intersect(names(assessors),names(assessorscpr))]
 assessors <- rbind(assessors,assessorscpr)
+
 
 # Import OSDS counts data frame 
 # data from here: https://github.com/cshuler/Act132_Cesspool_Prioritization/blob/main/Projected_data/OSDS_v6/Exploding_Multi_unit_TMKs/Outs/OSDSv6_Exploded_ALL.csv
-osds <- read.csv("F:/slr/kauai/OSDSv6_Exploded_ALL.csv") 
+osds <- read.csv(osdsfile) 
 
 #just keep the columns we need
 osds <- osds[, c('TMK','OSDS_QTY_calc')]
@@ -58,20 +62,21 @@ osds <- osds[, c('TMK','OSDS_QTY_calc')]
 assessors <- assessors %>%
   left_join(osds %>% select(TMK, OSDS_QTY_calc), by = "TMK",multiple='first') 
 
-#if NA in osds column, set as 0
-assessors$OSDS_QTY_calc[is.na(assessors$OSDS_QTY_calc)] <- 0
+#if NA in osds column, set wastewater as 1
+assessors$WASTEWATER[is.na(assessors$OSDS_QTY_calc)] <- 1
 
 # Clean assessor's data, only keep important columns. no issue with duplicate TMK in kauai data
 clean_assessors <- assessors[, c("PARID","COTMK","Community","CPR_UNIT","TAXCLASS",
                                  "APRBLDGMKT","ASMTBLDG","APRLANDMKT","ASMTLAND",
                                  "APRTOTMKT","ASMTTOT","TOTEXEMPT","NETTAXABLE",
-                                 "TARGET_FID","GIS_SQFT","NEAR_VEG",
+                                 "TARGET_FID","Join_Count","GIS_SQFT","NEAR_VEG",
                                  "NEAR_CE05","NEAR_CE11","NEAR_CE20","NEAR_CE32",
                                  "NEAR_PF05","NEAR_PF11","NEAR_PF20","NEAR_PF32",
                                  "NEAR_WF05","NEAR_WF11","NEAR_WF20","NEAR_WF32",
                                  "NEAR_XA05","NEAR_XA11","NEAR_XA20","NEAR_XA32",
                                  'area_og','SA_CE05','SA_CE11','SA_CE20','SA_CE32',
-                                 'SA_WF05','SA_WF11','SA_WF20','SA_WF32','OSDS_QTY_calc')]
+                                 'SA_WF05','SA_WF11','SA_WF20','SA_WF32',
+                                 'OSDS_QTY_calc','WASTEWATER')]
 
 
 #Create baseline SA_2023_[hazard] with values of 0 (for easy integration in for loops). 
@@ -84,6 +89,7 @@ clean_assessors <- clean_assessors %>%
   rename(TMK = PARID,              #new name = old name
          #NEAR_VEG = NEAR_2021,
          BuildingID = TARGET_FID,
+         CPR_PER_BLDG = Join_Count,
          BLDG_SQFT = GIS_SQFT,
          SA_2030_CE = SA_CE05,
          SA_2050_CE = SA_CE11,
@@ -168,7 +174,7 @@ clean_assessors$Current_Tax_Revenue <- case_when(
 
 
 # import seawall data & parcel hazard area
-seawallhazardshp <- st_read("F:/slr/kauai/tmk_XA_dd_Seawall") 
+seawallhazardshp <- st_read(seawallfile) 
 seawallhazarddf <- as.data.frame(seawallhazardshp)
 
 #just keep the columns we need
