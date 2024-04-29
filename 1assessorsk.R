@@ -178,25 +178,29 @@ seawallhazardshp <- st_read(seawallfile)
 seawallhazarddf <- as.data.frame(seawallhazardshp)
 
 #just keep the columns we need
-seawallhazarddf <- seawallhazarddf[, c('PARID','Direct','Indirect','SS_FID','SS_Len_m')]
+seawallhazarddf <- seawallhazarddf[, c('PARID','SS_direct','SS_FID','SS_len_m')]
+#if SS_direct: 1 = direct, 2 = indirect, 0 = no seawall
+#SS_len_m: total length of given seawallID. needs to be divided by number of TMK's that share seawall
 
 
 # Convert SLR intervals to years
 # Define the new column names
 seawallhazarddf <- seawallhazarddf %>%
   rename(TMK = PARID,
-         Seawall_Direct = Direct,
-         Seawall_Indirect = Indirect,
+         Seawall_Direct = SS_direct,
          SeawallID = SS_FID,
-         Seawall_Len_M = SS_Len_m)
-
-#if NA in seawall_direct/seawall_indirect column, replace with 0
-seawallhazarddf$Seawall_Direct[is.na(seawallhazarddf$Seawall_Direct)] <- 0
-seawallhazarddf$Seawall_Indirect[is.na(seawallhazarddf$Seawall_Indirect)] <- 0
-
+         Seawall_Len_M = SS_len_m)
 
 # Convert column names in Clean Parcel Hazard Area to uppercase
 names(seawallhazarddf) <- toupper(names(seawallhazarddf))
+
+#calculate length of seawall in front of each parcel (dividing total length evenly amongst each direct parcel)
+seawallhazarddf <- seawallhazarddf %>%
+  group_by(SEAWALLID,SEAWALL_DIRECT) %>%
+  mutate(SEAWALL_LEN_PERTMK = SEAWALL_LEN_M/n())
+#if it's an indirect seawall parcel, make sure that attributed seawall length is 0
+seawallhazarddf$SEAWALL_LEN_PERTMK <- ifelse(seawallhazarddf$SEAWALL_DIRECT == 2,0,seawallhazarddf$SEAWALL_LEN_PERTMK)
+seawallhazarddf$SEAWALL_LEN_PERTMK <- ifelse(seawallhazarddf$SEAWALL_DIRECT == 0,0,seawallhazarddf$SEAWALL_LEN_PERTMK)
 
 # Join Building Footprint with assessor's and TMK with Parcel with hazard areas
 clean_retreat_calcs <- left_join(clean_assessors, seawallhazarddf, by = c("TMK"))
@@ -205,18 +209,6 @@ clean_retreat_calcs <- left_join(clean_assessors, seawallhazarddf, by = c("TMK")
 clean_retreat_calcs <- clean_retreat_calcs %>%
   group_by(COTMK) %>%
   mutate(OG_PARCEL_AREA = sum(area_og,na.rm=T))
-
-
-
-# add regional/ahupuaa/moku filter if desired
-
-#allisland <- clean_retreat_calcs
-#kekaha <- clean_retreat_calcs[clean_retreat_calcs$Community == "Kekaha", ]
-#kapaa <- clean_retreat_calcs[clean_retreat_calcs$Community == "Kapaʻa", ]
-
-
-#overwrite clean_retreat_calcs to selected ahupuaa/qaqc
-#clean_retreat_calcs <- kapaa
 
 
 

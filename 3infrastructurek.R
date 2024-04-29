@@ -23,10 +23,17 @@ infrademo$Community <- as.character(infrademo$Community)
 
 levels <- c("05","11","20","32")
 buffer <- c("","b")
-triggers <- c("XA","WF","PF","CE")
+triggers <- c("XA","PF","CE") #,"WF"
 
-for(level in levels){
-  for(buff in buffer){
+for(buff in buffer){
+  #import veg files
+  #infrashp <- st_read(infrastructurefolder,layer=paste0("VEG23",buff))
+  #infradf <- as.data.frame(infrashp)
+  #infradf <- infradf[c('Has_HWY','SS_FID','VEG','Ln_m','id')]
+  
+  ###*** add in code as below
+  
+  for(level in levels){
     for(trigger in triggers){
       #read in all shapefiles
       infrashp <- st_read(infrastructurefolder,layer=paste0(trigger,level,buff))
@@ -40,43 +47,38 @@ for(level in levels){
       #Ln_m: length of segment in meters
       #id: corresponds to segment. note: it is not unique (need to combine with Has-hwy ID to make it unique)
       
-      infradf$id <- ifelse(infradf$Has_HWY == 0,paste("r", infradf$id, sep=""),infradf$Has_HWY)
-      infradf$id <- ifelse(infradf$Has_HWY == 4,paste("r", infradf$id, sep=""),infradf$Has_HWY)
-      infradf$id <- ifelse(infradf$Has_HWY == 5,paste("r", infradf$id, sep=""),infradf$Has_HWY)
+      infradf$id <- ifelse(infradf$Has_HWY == 0,paste("r", infradf$id, sep=""),infradf$id)
+      infradf$id <- ifelse(infradf$Has_HWY == 4,paste("r", infradf$id, sep=""),infradf$id)
+      infradf$id <- ifelse(infradf$Has_HWY == 5,paste("r", infradf$id, sep=""),infradf$id)
       
       year <- ifelse(level=="05",2030,ifelse(level=='11',2050,ifelse(level=='20',2075,ifelse(level=='32',2100,NA))))
       
-      #highway
-      dfsum <- hwydf %>%
-        group_by(Community,id) %>%
+      #reformat and summarize data
+      dfsum <- infradf %>%
+        group_by(id) %>% #,Community
         summarise(
-          !!sym(paste0("hwy_", year, "_", buff)) := sum(!!sym(paste0('Ln_m_CE', level, buff))),
-          !!sym(paste0("seawallhwy_", year, "_", buff)) := sum(case_when(SS_FID_1 > 0 ~ !!sym(paste0('Ln_m_CE', level, buff)), TRUE ~ 0))
+          #highway
+          !!sym(paste0("hwy_",trigger,"_", year, "_", buff)) := sum(Ln_m[Has_HWY == 1]),
+          !!sym(paste0("seawallhwy_",trigger,"_", year, "_", buff)) := sum(case_when(SS_FID > 0 & Has_HWY ==1 ~ Ln_m, TRUE ~ 0)),
+          #bridge
+          !!sym(paste0("b_",trigger,"_", year, "_", buff)) := sum(Ln_m[Has_HWY == 2]),
+          !!sym(paste0("seawallb_",trigger,"_", year, "_", buff)) := sum(case_when(SS_FID > 0 & Has_HWY ==2 ~ Ln_m, TRUE ~ 0)),
+          #nonhwy
+          !!sym(paste0("rd_",trigger,"_", year, "_", buff)) := sum(Ln_m[Has_HWY == 0]),
+          !!sym(paste0("seawallrd_",trigger,"_", year, "_", buff)) := sum(case_when(SS_FID > 0 & Has_HWY ==0 ~ Ln_m, TRUE ~ 0)),
+          #nonhwy may retreat
+          !!sym(paste0("rdretreat_",trigger,"_", year, "_", buff)) := sum(Ln_m[Has_HWY == 4]),
+          !!sym(paste0("seawallrdretreat_",trigger,"_", year, "_", buff)) := sum(case_when(SS_FID > 0 & Has_HWY ==4 ~ Ln_m, TRUE ~ 0)),
+          #nonhwy bridge may retreat
+          !!sym(paste0("rdbretreat_",trigger,"_", year, "_", buff)) := sum(Ln_m[Has_HWY == 5]),
+          !!sym(paste0("seawallrdbretreat_",trigger,"_", year, "_", buff)) := sum(case_when(SS_FID > 0 & Has_HWY ==5 ~ Ln_m, TRUE ~ 0))
         )
       
-      infrademo <- full_join(infrademo, dfsum, by =c('ID' = 'id','Community' = 'Community'))
-      
-      #bridge
-      dfsum <- bdf %>%
-        group_by(Community,id) %>%
-        summarise(!!sym(paste0("b_",year,"_",buff)) := sum(!!sym(paste0('Ln_m_CE',level,buff))))
-      
-      infrademo <- full_join(infrademo, dfsum, by =c('ID' = 'id','Community' = 'Community'))
-      
-      #road (non-highway)
-      #column for nonHWY is "realign" 0= ignore 1= realign 2= remove
-      dfsum <- rddf %>%
-        group_by(Community,id) %>%
-        summarise(
-          !!sym(paste0("rd_", year, "_", buff)) := sum(!!sym(paste0('Ln_m_CE', level, buff))),
-          !!sym(paste0("seawallrd_", year, "_", buff)) := sum(case_when(SS_FID_1 > 0 ~ !!sym(paste0('Ln_m_CE', level, buff)), TRUE ~ 0))
-        )
-      
-      infrademo <- full_join(infrademo, dfsum, by =c('ID' = 'id','Community' = 'Community'))
+      infrademo <- full_join(infrademo, dfsum, by =c('ID' = 'id')) #by ... ,'Community' = 'Community'
       
       # sum the seawall columns together (from road seawalls and highway seawalls)
-      infrademo[[paste0("seawall_", year, "_", buff)]] <- rowSums(infrademo[, c(paste0("seawallrd_", year, "_", buff), 
-                                                                                paste0("seawallhwy_", year, "_", buff))], na.rm = TRUE)
+      infrademo[[paste0("seawall_",trigger,"_", year, "_", buff)]] <- rowSums(infrademo[, c(paste0("seawallrd_",trigger,"_", year, "_", buff), 
+                                                                                paste0("seawallhwy_",trigger,"_", year, "_", buff))], na.rm = TRUE)
     }
   }
 }
@@ -228,20 +230,21 @@ emdom_hwy <- aveappraisedkauai*10 #this is cost per 1 meter length of road, assu
 
 #Seawall demolition
 
-#seawall infrastructure removal (seawalls in front of parks)**** are there any cases of this in kauai where I'm removing those rows?
+#seawall infrastructure removal (seawalls in front of parks)
 #If “direct” seawall for parcel, when first parcel retreats, entire seawall length is demo’d
 #If “indirect” seawall, seawall demo when road retreat/remove
 
 #seawall dataframe with just relevant columns
-seawalldemodf <- clean_retreat_calcs[,c('TMK','SEAWALL_DIRECT','SEAWALL_INDIRECT','SEAWALLID','SEAWALL_LEN_M',
+seawalldemodf <- clean_retreat_calcs[,c('TMK','SEAWALL_DIRECT','SEAWALLID','SEAWALL_LEN_M','SEAWALL_LEN_PERTMK',
                                       'year_AO_tCE','year_AO_tXA','year_AO_tWF','year_AO_tPF',
                                       'year_TB_tCE','year_TB_tXA','year_TB_tWF','year_TB_tPF',
                                       'year_RE_tCE','year_RE_tXA','year_RE_tWF','year_RE_tPF')]
 
 seawallIDs <- unique(na.omit(seawalldemodf$SEAWALLID))
+seawallIDs <- seawallIDs[seawallIDs!=0] #remove seawallID 0 because those are not seawalls
 
-seawalldemo <- data.frame(matrix(ncol=14,nrow=0))
-colnames(seawalldemo) <- c('SEAWALLID','SEAWALL_LEN_M',
+seawalldemo <- data.frame(matrix(ncol=15,nrow=0))
+colnames(seawalldemo) <- c('SEAWALLID','SEAWALL_LEN_M','SEAWALL_LEN_PERTMK',
               'year_AO_tCE','year_AO_tXA','year_AO_tWF','year_AO_tPF',
               'year_TB_tCE','year_TB_tXA','year_TB_tWF','year_TB_tPF',
               'year_RE_tCE','year_RE_tXA','year_RE_tWF','year_RE_tPF')
@@ -257,7 +260,7 @@ for (seawallid in seawallIDs) {
   #subset to just those that are direct seawall parcels
   seawallIDdir <- filter(seawallIDdf, SEAWALL_DIRECT == 1)
   
-  #if there are no direct seawall parcels, seawall is not demo'd ** should be when road is demo'd. need this data
+  #if there are no direct seawall parcels, seawall is demo'd with road
   if(nrow(seawallIDdir) == 0){
     seawalldemo <- seawalldemo %>%
       add_row(SEAWALLID = seawallid,SEAWALL_LEN_M = seawalllength,
@@ -369,51 +372,6 @@ for (year in years) {
               infra_costtime[[maintain_col]][infra_costtime$Years == year], na.rm=T)
         
       }
-      
-      #seawalls
-      demolition_seawall <- ifelse(seawall == "_",13123,0) # conditional seawall demolition depending on scenario. $4000/ft ($13123/m) for inaccessible seawall e.g. residential area)
-      
-      if(seawall == '_'){
-        yearAO_col <- paste0("year_AO",seawall,"t",trigger)
-        yearTB_col <- paste0("year_TB",seawall,"t",trigger)
-        yearRE_col <- paste0("year_RE",seawall,"t",trigger)
-        
-        AO_matching_rows <- seawalldemo[[yearAO_col]] == year
-        TB_matching_rows <- seawalldemo[[yearTB_col]] == year
-        RE_matching_rows <- seawalldemo[[yearRE_col]] == year
-
-        column_name <- paste0("SEAWALL_LEN_M")
-        
-        #AO
-        seawall_col <- paste0("seawall_AO",seawall,trigger)
-        seawallm <- sum(seawalldemo[[column_name]][AO_matching_rows], na.rm = TRUE)
-        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
-          ifelse(year==2023,seawallm*demolition_seawall,0)
-        
-        #TB
-        seawall_col <- paste0("seawall_TB",seawall,trigger)
-        seawallm <- sum(seawalldemo[[column_name]][TB_matching_rows], na.rm = TRUE)
-        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
-          seawallm*demolition_seawall
-        
-        #RE
-        seawall_col <- paste0("seawall_RE",seawall,trigger)
-        seawallm <- sum(seawalldemo[[column_name]][RE_matching_rows], na.rm = TRUE)
-        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
-          seawallm*demolition_seawall
-        
-      }
-      
-      if(seawall == '_s_'){
-        seawall_col <- paste0("seawall_AO",seawall,trigger)
-        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 0
-        
-        seawall_col <- paste0("seawall_TB",seawall,trigger)
-        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 0
-        
-        seawall_col <- paste0("seawall_RE",seawall,trigger)
-        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 0
-      }
     }
   }
 }
@@ -423,9 +381,9 @@ for (year in years) {
 
 ## QAQC infra
 
-infra_totalaffected <- aggregate(infra_retreat$riprap_hwy, by=list(infra_retreat$Year,infra_retreat$Scenario),FUN=sum,na.rm=T)
+#infra_totalaffected <- aggregate(infra_retreat$riprap_hwy, by=list(infra_retreat$Year,infra_retreat$Scenario),FUN=sum,na.rm=T)
 
-aggregate(infra_retreat$riprap_hwy, by=list(infra_retreat$Year,infra_retreat$Scenario),FUN=sum,na.rm=T)
+#aggregate(infra_retreat$riprap_hwy, by=list(infra_retreat$Year,infra_retreat$Scenario),FUN=sum,na.rm=T)
 
 
 #infra_retreat$relocate_hwy,infra_retreat$relocate_b,infra_retreat$riprap_hwy,infra_retreat$riprap_b,infra_retreat$removeriprap_hwy,

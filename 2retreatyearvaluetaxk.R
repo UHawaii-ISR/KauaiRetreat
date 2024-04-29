@@ -67,12 +67,11 @@ for(trigger in triggers){
   col_TB_s_trigger <- paste0("year_TB_s_t",trigger)
   col_RE_s_trigger <- paste0("year_RE_s_t",trigger)
   
-  seawalld <- paste0("SEAWALL_DIRECT")
-  seawalli <- paste0("SEAWALL_INDIRECT")
-  
-  clean_retreat_calcs[[col_AO_s_trigger]] <- ifelse(clean_retreat_calcs[[seawalld]]+clean_retreat_calcs[[seawalli]]>=1,NA,clean_retreat_calcs[[col_AO_trigger]])
-  clean_retreat_calcs[[col_TB_s_trigger]] <- ifelse(clean_retreat_calcs[[seawalld]]+clean_retreat_calcs[[seawalli]]>=1,NA,clean_retreat_calcs[[col_TB_trigger]])
-  clean_retreat_calcs[[col_RE_s_trigger]] <- ifelse(clean_retreat_calcs[[seawalld]]+clean_retreat_calcs[[seawalli]]>=1,NA,clean_retreat_calcs[[col_RE_trigger]])
+  seawalld <- paste0("SEAWALL_DIRECT") #if SS_direct: 1 = direct, 2 = indirect, 0 = no seawall
+
+  clean_retreat_calcs[[col_AO_s_trigger]] <- ifelse(clean_retreat_calcs[[seawalld]]>=1,NA,clean_retreat_calcs[[col_AO_trigger]])
+  clean_retreat_calcs[[col_TB_s_trigger]] <- ifelse(clean_retreat_calcs[[seawalld]]>=1,NA,clean_retreat_calcs[[col_TB_trigger]])
+  clean_retreat_calcs[[col_RE_s_trigger]] <- ifelse(clean_retreat_calcs[[seawalld]]>=1,NA,clean_retreat_calcs[[col_RE_trigger]])
 }
 
 #calculate land value & tax

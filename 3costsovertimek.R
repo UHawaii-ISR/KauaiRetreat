@@ -80,19 +80,36 @@ for (year in years) {
       ### NUM OF SEAWALLS
       
       #Count the number of AO seawalls (in 2023)
-      seawalls_col <- paste0("seawalls_AO",seawall,"t",trigger)
+      seawalls_col <- paste0("seawallnum_AO",seawall,"t",trigger)
       Retreat_Analysis[[seawalls_col]][Retreat_Analysis$Years == year] <- 
-        ifelse(year==2023,n_distinct(clean_retreat_calcs$SEAWALLID[AO_matching_rows], na.rm = TRUE),0)
+        ifelse(seawall=="_s_",0,ifelse(year==2023,n_distinct(clean_retreat_calcs$SEAWALLID[AO_matching_rows], na.rm = TRUE),0))
       
       # Count the number of TB seawalls in each year
-      seawalls_col <- paste0("seawalls_TB",seawall,"t",trigger)
+      seawalls_col <- paste0("seawallnum_TB",seawall,"t",trigger)
       Retreat_Analysis[[seawalls_col]][Retreat_Analysis$Years == year] <- 
-        n_distinct(clean_retreat_calcs$BuildingID[TB_matching_rows], na.rm = TRUE)
+        ifelse(seawall=="_s_",0,n_distinct(clean_retreat_calcs$SEAWALLID[TB_matching_rows], na.rm = TRUE))
       
       # Count the number of RE seawalls in each year
-      seawalls_col <- paste0("seawalls_RE",seawall,"t",trigger)
+      seawalls_col <- paste0("seawallnum_RE",seawall,"t",trigger)
       Retreat_Analysis[[seawalls_col]][Retreat_Analysis$Years == year] <- 
-        n_distinct(clean_retreat_calcs$BuildingID[RE_matching_rows], na.rm = TRUE)
+        ifelse(seawall=="_s_",0,n_distinct(clean_retreat_calcs$SEAWALLID[RE_matching_rows], na.rm = TRUE))
+      
+      ### LENGTH OF SEAWALLS
+      
+      #Sum the length of AO seawalls that need to demo (in 2023)
+      seawalls_col <- paste0("seawalllength_AO",seawall,"t",trigger)
+      Retreat_Analysis[[seawalls_col]][Retreat_Analysis$Years == year] <- 
+        ifelse(seawall=="_s_",0,ifelse(year==2023,sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[AO_matching_rows], na.rm = TRUE),0))
+      
+      # Sum the length of TB seawalls that need to demo in each year
+      seawalls_col <- paste0("seawalllength_TB",seawall,"t",trigger)
+      Retreat_Analysis[[seawalls_col]][Retreat_Analysis$Years == year] <- 
+        ifelse(seawall=="_s_",0,sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[TB_matching_rows], na.rm = TRUE))
+      
+      # Sum the length of RE seawalls that need to demo in each year
+      seawalls_col <- paste0("seawalllength_RE",seawall,"t",trigger)
+      Retreat_Analysis[[seawalls_col]][Retreat_Analysis$Years == year] <- 
+        ifelse(seawall=="_s_",0,sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[RE_matching_rows], na.rm = TRUE))
       
       ### NUM OF PARCELS (based on TMK8 - COTMK column)
       
@@ -136,6 +153,28 @@ for (year in years) {
       demolition_house <- 8000  # Demolition cost per residential house
       demolition_apartment <- 5544 # apartment per unit demolition cost (per unit assuming unit is 800sqft and 9ft tall, an apartment (CPR) is 7200 cubic ft.)
       demolition_aptfoundation <- 3 #apartment building foundation demolition cost (per sqft foundation)
+      demolition_seawall <- 13123 # seawall demolition $4000/ft ($13123/m) for inaccessible seawall e.g. residential area)
+      
+      #cost of seawall demolition for AO
+      seawall_col <- paste0("seawall_AO",seawall,trigger)
+      seawalllen_col <- paste0("seawalllength_AO",seawall,"t",trigger)
+      seawallm <- Retreat_Analysis[[seawalllen_col]][Retreat_Analysis$Years == year]
+      Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+        ifelse(year==2023,seawallm*demolition_seawall,0)
+      
+      #cost of seawall demolition for TB
+      seawall_col <- paste0("seawall_TB",seawall,trigger)
+      seawalllen_col <- paste0("seawalllength_AO",seawall,"t",trigger)
+      seawallm <- Retreat_Analysis[[seawalllen_col]][Retreat_Analysis$Years == year]
+      Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+        seawallm*demolition_seawall
+      
+      #cost of seawall demolition for RE
+      seawall_col <- paste0("seawall_RE",seawall,trigger)
+      seawalllen_col <- paste0("seawalllength_AO",seawall,"t",trigger)
+      seawallm <- Retreat_Analysis[[seawalllen_col]][Retreat_Analysis$Years == year]
+      Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+        seawallm*demolition_seawall
 
       # sum demolition costs for AO
       demo_col <- paste0("demolition_AO",seawall,"t",trigger)

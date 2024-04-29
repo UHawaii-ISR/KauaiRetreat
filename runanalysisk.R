@@ -8,7 +8,7 @@ noncprshplayer <- "Buildings_Footp_XA_tmk" #layer name for non-CPR bldg footprin
 cprshpfolder <- "F:/slr/kauai/Bldg_Footprints" #the folder for CPR bldg ftprt shapefile
 cprshplayer <- "tmk_buildings_CPR"# layer name for CPR bldg ftprt shapefile
 osdsfile <- "F:/slr/kauai/OSDSv6_Exploded_ALL.csv" #where's the osds file
-seawallfile <- "F:/slr/kauai/tmk_XA_dd_Seawall" #where's the folder housing seawall shapefile
+seawallfile <- "F:/slr/kauai/TMK_realign_seawalls" #where's the folder housing seawall shapefile
 infrastructurefolder <- "F:/slr/kauai/Alanui/Hazards" #what's the folder that has all of the infrastructure hazard files?
 
 # run full scripts
