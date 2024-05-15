@@ -62,14 +62,15 @@ osds <- osds[, c('TMK','OSDS_QTY_calc')]
 assessors <- assessors %>%
   left_join(osds %>% select(TMK, OSDS_QTY_calc), by = "TMK",multiple='first') 
 
-#if NA in osds column, set wastewater as 1
+#if NA in osds column, set wastewater as 1 (assume that if they don't have osds, they have wastewater)
 assessors$WASTEWATER[is.na(assessors$OSDS_QTY_calc)] <- 1
 
 # Clean assessor's data, only keep important columns. no issue with duplicate TMK in kauai data
-clean_assessors <- assessors[, c("PARID","COTMK","Community","CPR_UNIT","TAXCLASS",
+clean_assessors <- assessors[, c("PARID","COTMK","CPR_UNIT","TAXCLASS",
+                                 "Community","ahupuaa","moku","devplan_","LittrlCell","devplan_id","district","dp","ballottype",
                                  "APRBLDGMKT","ASMTBLDG","APRLANDMKT","ASMTLAND",
                                  "APRTOTMKT","ASMTTOT","TOTEXEMPT","NETTAXABLE",
-                                 "TARGET_FID","Join_Count","GIS_SQFT","NEAR_VEG",
+                                 "TARGET_FID","GIS_SQFT","NEAR_VEG",
                                  "NEAR_CE05","NEAR_CE11","NEAR_CE20","NEAR_CE32",
                                  "NEAR_PF05","NEAR_PF11","NEAR_PF20","NEAR_PF32",
                                  "NEAR_WF05","NEAR_WF11","NEAR_WF20","NEAR_WF32",
@@ -89,7 +90,7 @@ clean_assessors <- clean_assessors %>%
   rename(TMK = PARID,              #new name = old name
          #NEAR_VEG = NEAR_2021,
          BuildingID = TARGET_FID,
-         CPR_PER_BLDG = Join_Count,
+         #CPR_PER_BLDG = Join_Count,
          BLDG_SQFT = GIS_SQFT,
          SA_2030_CE = SA_CE05,
          SA_2050_CE = SA_CE11,
@@ -148,7 +149,7 @@ residential <- c("1:RESIDENTIAL", "2:VACATION RENTAL","8:HOMESTEAD","9:Residenti
 
 clean_assessors <- clean_assessors %>%
   filter( #pre nrow 856, post nrow 787
-    COTMK %in% filter(clean_assessors, substr(TMK, 9, 12) == "0000" & TAXCLASS %in% residential)$COTMK | 
+    COTMK %in% filter(clean_assessors, TAXCLASS %in% residential)$COTMK | 
       TAXCLASS %in% residential
   )
 

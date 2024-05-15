@@ -182,7 +182,7 @@ for (year in years) {
       apartments_col <- paste0("apartments_AO",seawall,"t",trigger)
       aptcount <- Retreat_Analysis[[apartments_col]][Retreat_Analysis$Years == year]
       housecount <- Retreat_Analysis[[buildings_col]][Retreat_Analysis$Years == year] -  aptcount #num houses = #buildings - #apartments
-      apartmentdemo <- sum(clean_retreat_calcs_apt[["CPR_PER_BLDG"]][AO_matching_rows_apt], na.rm = TRUE)*demolition_apartment + 
+      apartmentdemo <- sum(clean_retreat_calcs_apt[["Number_CPRbldg"]][AO_matching_rows_apt], na.rm = TRUE)*demolition_apartment + 
         sum(clean_retreat_calcs_apt[["BLDG_SQFT"]][AO_matching_rows_apt], na.rm = TRUE)*demolition_aptfoundation
       Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
         ifelse(year==2023,apartmentdemo + housecount*demolition_house,0) 
@@ -193,7 +193,7 @@ for (year in years) {
       apartments_col <- paste0("apartments_TB",seawall,"t",trigger)
       aptcount <- Retreat_Analysis[[apartments_col]][Retreat_Analysis$Years == year]
       housecount <- Retreat_Analysis[[buildings_col]][Retreat_Analysis$Years == year] - aptcount
-      apartmentdemo <- sum(clean_retreat_calcs_apt[["CPR_PER_BLDG"]][TB_matching_rows_apt], na.rm = TRUE)*demolition_apartment + 
+      apartmentdemo <- sum(clean_retreat_calcs_apt[["Number_CPRbldg"]][TB_matching_rows_apt], na.rm = TRUE)*demolition_apartment + 
         sum(clean_retreat_calcs_apt[["BLDG_SQFT"]][TB_matching_rows_apt], na.rm = TRUE)*demolition_aptfoundation
       Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
         apartmentdemo + housecount*demolition_house 
@@ -210,7 +210,7 @@ for (year in years) {
       apartments_col <- paste0("apartments_RE",seawall,"t",trigger)
       aptcount <- Retreat_Analysis[[apartments_col]][Retreat_Analysis$Years == year]
       housecount <- Retreat_Analysis[[buildings_col]][Retreat_Analysis$Years == year] - aptcount
-      apartmentdemo <- sum(clean_retreat_calcs_apt[["CPR_PER_BLDG"]][RE_matching_rows_apt], na.rm = TRUE)*demolition_apartment + 
+      apartmentdemo <- sum(clean_retreat_calcs_apt[["Number_CPRbldg"]][RE_matching_rows_apt], na.rm = TRUE)*demolition_apartment + 
         sum(clean_retreat_calcs_apt[["BLDG_SQFT"]][RE_matching_rows_apt], na.rm = TRUE)*demolition_aptfoundation
       Retreat_Analysis[[cleanuplo_col]][Retreat_Analysis$Years == year] <- 
         apartmentdemo + housecount * cleanlo_house 

@@ -24,6 +24,7 @@ kapaa <- subset(clean_retreat_calcs, Community=='Kapaʻa') #clean_retreat_calcs[
 #overwrite clean_retreat_calcs to selected ahupuaa/qaqc
 clean_retreat_calcs <- kapaa
 titlename <- 'Kauaʻi' # Kapaʻa Kekaha Kauaʻi  #this is for the figure label
+communitytype <- 'Community' #indicate the name of the community column used to filter
 communityfilter <- NA #use NA if want entire island. otherwise 'Kapaʻa' 'Kekaha'  #this is for infrastructure
 
 source("C:/Users/rsett/Documents/KauaiRetreat/2retreatyearvaluetaxk.R")
