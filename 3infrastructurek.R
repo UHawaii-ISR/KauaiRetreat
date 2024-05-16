@@ -34,8 +34,6 @@ for(buff in buffer){
   infrasdf$id <- ifelse(infrasdf$Has_HWY == 5,paste("rb", infrasdf$id, sep=""),infrasdf$id)
   
   infradf <- infrasdf[c('Has_HWY','SS_FID','VEG','Ln_m','id')]
-  infracomm <- infrasdf[c('id',"devplan_","devplan_id","district",'LittrlCell','Community',"dp","ballottype")] #'ahupuaa','moku',
-  infracomm <- infracomm[!duplicated(infracomm[,c('id')]),] #warning: if there are multiple communities for a given ID, this ignores that and picks the first row
   
   year <- 2023
   
@@ -78,8 +76,6 @@ for(buff in buffer){
       infrasdf$id <- ifelse(infrasdf$Has_HWY == 5,paste("rb", infrasdf$id, sep=""),infrasdf$id)
       
       infradf <- infrasdf[c('Has_HWY','SS_FID','VEG','Ln_m','id')] 
-      infracomm <- infrasdf[c('id',"devplan_","devplan_id","district",'LittrlCell','Community',"dp","ballottype")] #'ahupuaa','moku',
-      infracomm <- infracomm[!duplicated(infracomm[,c('id')]),] #warning: if there are multiple communities for a given ID, this ignores that and picks the first row
       
       
       year <- ifelse(level=="05",2030,ifelse(level=='11',2050,ifelse(level=='20',2075,ifelse(level=='32',2100,NA))))
@@ -108,13 +104,13 @@ for(buff in buffer){
   }
 }
 
-#import the community columns from slrxa and veg23b
+#import the community columns from slrxa32b and veg23b
 infrashp <- st_read(infrastructurefolder,layer=paste0("Road_XA32b"))
 infrasdf <- as.data.frame(infrashp)
 infrasdf$id <- ifelse(infrasdf$Has_HWY == 0,paste("r", infrasdf$id, sep=""),infrasdf$id)
 infrasdf$id <- ifelse(infrasdf$Has_HWY == 4,paste("rr", infrasdf$id, sep=""),infrasdf$id)
 infrasdf$id <- ifelse(infrasdf$Has_HWY == 5,paste("rb", infrasdf$id, sep=""),infrasdf$id)
-infracomm <- infrasdf[c('id',"devplan_","devplan_id","district",'LittrlCell','Community',"dp","ballottype")] #'ahupuaa','moku',
+infracomm <- infrasdf[c('id','ahupuaa','moku',"devplan_","devplan_id","district",'LittrlCell','Community',"dp","ballottype")] 
 infracomm <- infracomm[!duplicated(infracomm[,c('id')]),] #warning: if there are multiple communities for a given ID, this ignores that and picks the first row
 infrademo <- left_join(infrademo,infracomm,by=c('ID' = 'id'))
 
@@ -123,7 +119,7 @@ infrasdf <- as.data.frame(infrashp)
 infrasdf$id <- ifelse(infrasdf$Has_HWY == 0,paste("r", infrasdf$id, sep=""),infrasdf$id)
 infrasdf$id <- ifelse(infrasdf$Has_HWY == 4,paste("rr", infrasdf$id, sep=""),infrasdf$id)
 infrasdf$id <- ifelse(infrasdf$Has_HWY == 5,paste("rb", infrasdf$id, sep=""),infrasdf$id)
-infracomm <- infrasdf[c('id',"devplan_","devplan_id","district",'LittrlCell','Community',"dp","ballottype")] #'ahupuaa','moku',
+infracomm <- infrasdf[c('id','ahupuaa','moku',"devplan_","devplan_id","district",'LittrlCell','Community',"dp","ballottype")] 
 infracomm <- infracomm[!duplicated(infracomm[,c('id')]),] #warning: if there are multiple communities for a given ID, this ignores that and picks the first row
 names(infracomm)[1] <- 'ID'
 infrademo <- rows_update(infrademo,infracomm,by='ID')
@@ -166,8 +162,9 @@ years <- unique(na.omit(infra_retreat$Year))
 
 infra_retreat[ ,c("new_hwy","total_hwy","new_b","total_b","new_swallhwy","total_swallhwy","total_length","retreatyr",
                   "maintain_hwy","relocate_hwy","relocate_b","riprap_hwy","riprap_b","removeriprap_hwy","remove_rd","removeriprap_rd",
-                  "riprap_hwy_s","riprap_b_s","riprap_rd_s","maintain_s")] <- NA
+                  "swall_s","riprap_hwy_s","riprap_b_s","riprap_rd_s","maintain_s")] <- NA
 
+#this takes 15 minutes to run :(
 for(id in infraIDs){
   for(scenario in scenarios){
     for(trigger in triggers){
@@ -187,7 +184,7 @@ for(id in infraIDs){
         if(rdr == 0){ #if not retreating roads, transfer to $rd
           subdf$rd <- subdf$rdretreat
         }
-    
+        
       for(i in 1:length(years)){
         
         year <- years[i]
@@ -202,40 +199,57 @@ for(id in infraIDs){
         prev_b <- ifelse(year > 2023,subdf$b[subdf$Year == prevyear],0)
         new_b <- ifelse(!is.na(prev_b), b - prev_b, b)
         prev_swallhwy <- ifelse(year == 2023, subdf$seawall[subdf$Year == year], ifelse(year > 2023,subdf$total_swallhwy[subdf$Year == prevyear],0))
-        new_swall_hwy <- ifelse(year==2023, new_hwy-prev_swallhwy,new_hwy) #amount of highway that needs to be riprapped
+        new_swall_hwy <- ifelse(year==2023 & new_hwy>0, new_hwy-prev_swallhwy,new_hwy) #amount of highway that needs to be riprapped
         
         total_hwy <- sum(new_hwy,total_hwy,na.rm=T)
         total_b <- sum(new_b,total_b, na.rm=T)
-        total_swallhwy <- ifelse(year==2023, sum(prev_swallhwy, new_swallhwy, na.rm=T),sum(new_swall_hwy,total_swallhwy,na.rm=T))
-        total_swallhwy_s <-  ifelse(year==2023, sum(prev_swallhwy, new_swallhwy, na.rm=T),sum(new_swall_hwy,total_swallhwy_s,na.rm=T))
+        total_swallhwy <- ifelse(year==2023, sum(prev_swallhwy, new_swall_hwy, na.rm=T),sum(new_swall_hwy,total_swallhwy,na.rm=T))
+        total_swallhwy_s <-  ifelse(year==2023, sum(prev_swallhwy, new_swall_hwy, na.rm=T),sum(new_swall_hwy,total_swallhwy_s,na.rm=T))
         total_length <- sum(total_length, new_hwy, new_b, na.rm=T)
         
         
-        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'new_hwy'] <- new_hwy
-        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'total_hwy'] <- total_hwy
-        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'new_b'] <- new_b
-        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'total_b'] <- total_b
-        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'new_swallhwy'] <- new_swall_hwy
-        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'total_swallhwy'] <- total_swallhwy
-        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'total_length'] <- total_length
+        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                      'new_hwy'] <- new_hwy
+        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                      'total_hwy'] <- total_hwy
+        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                      'new_b'] <- new_b
+        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                      'total_b'] <- total_b
+        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                      'new_swallhwy'] <- new_swall_hwy
+        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                      'total_swallhwy'] <- total_swallhwy
+        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                      'total_length'] <- total_length
         
         #seawall-stay scenario: if there are any pre-existing seawalls on given highway ID, then there is no retreat or removal of riprap. just riprap any new affected areas
         if(sum(subdf$seawall,na.rm=T)>0){
-          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'riprap_hwy_s'] <- new_swall_hwy
-          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'riprap_b_s'] <- new_b
-          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'maintain_s'] <- total_swallhwy_s-new_swall_hwy
+          #set up seawall-stay indicator
+          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                        'swall_s'] <- 1
+          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                        'riprap_hwy_s'] <- new_swall_hwy
+          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                        'riprap_b_s'] <- new_b
+          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                        'maintain_s'] <- total_swallhwy_s-new_swall_hwy
         }
         
         #if total length is >304.8, then retreat occurs and any subsequent sections of road also immediately retreat
         #relocate_hwy and relocate_b are equal to total_hwy and total_b. seawall/riprap removed is total_swallhwy
         #total_length, total_hwy, total_swallhwy, total_b are reset
         retreatyr <- ifelse(total_length > 304.8, year, NA)
-        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'retreatyr'] <- retreatyr
+        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                      'retreatyr'] <- retreatyr
         
         if(!is.na(retreatyr)){
-          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'relocate_hwy'] <- total_hwy
-          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'relocate_b'] <- total_b
-          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'removeriprap_hwy'] <- total_swallhwy
+          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                        'relocate_hwy'] <- total_hwy
+          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                        'relocate_b'] <- total_b
+          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                        'removeriprap_hwy'] <- total_swallhwy
           
           #don't reset total length. it just continue to sum and any future affected infrastructure immediately relocated
           #total_length <- 0
@@ -244,12 +258,15 @@ for(id in infraIDs){
           total_swallhwy <- 0
         }
         
-        #if total length is <304.8 (retreat is NA), then riprap occurs. riprap_hwy and riprap_b are equal to new_riprap_hwy and new_b.
+        #if total length is <304.8 (retreat is NA), then riprap occurs. riprap_hwy and riprap_b are equal to new_hwy and new_b.
         # these lengths are also added to the running total_swallhwy to know how much riprap must later be removed
         if(is.na(retreatyr)){
-          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'riprap_hwy'] <- new_riprap_hwy
-          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'riprap_b'] <- new_b
-          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'maintain_hwy'] <- prev_swallhwy
+          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                        'riprap_hwy'] <- new_hwy
+          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                        'riprap_b'] <- new_b
+          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                        'maintain_hwy'] <- prev_swallhwy
           
           total_swallhwy <- total_swallhwy + new_hwy + new_b
         }
@@ -259,14 +276,22 @@ for(id in infraIDs){
         prev_rd <- ifelse(year > 2023,subdf$rd[subdf$Year == prevyear],0)
         new_rd <- ifelse(!is.na(prev_rd), rd - prev_rd, rd)
         prev_swallrd <- ifelse(year == 2023, subdf$seawall[subdf$Year == year], 0) #amount of highway that has riprap that needs to be removed
+        new_swall_rd <- ifelse(year==2023 & new_rd>0, new_rd-prev_swallrd,new_rd) #amount of highway that needs to be riprapped
         
-        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'remove_rd'] <- new_rd       
-        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'removeriprap_rd'] <- prev_swallrd 
+        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                      'remove_rd'] <- new_rd       
+        infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                      'removeriprap_rd'] <- prev_swallrd 
         
         #seawall-stay scenario: if there are any pre-existing seawalls on given highway ID, then there is no retreat or removal of riprap. just riprap any new affected areas
         if(sum(subdf$seawall,na.rm=T)>0){
-          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'riprap_rd_s'] <- new_rd
-          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & Trigger == trigger & rdret == rdr, 'maintain_s'] <- prev_rd
+          #set up seawall-stay indicator
+          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                        'swall_s'] <- 1
+          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                        'riprap_rd_s'] <- new_swall_rd
+          infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
+                        'maintain_s'] <- prev_rd
         }
         
       }
@@ -332,10 +357,8 @@ infra_costtime <- data.frame(
 for (year in years) {
   for(seawall in seawalls){
     for(trigger in triggers){
-      ### ADD ANOTHER FOR LOOP FOR RDRET
-      
-      #### FOR SEAWALL SCENARIO: FIRST SUM VALUES & COSTS IN SEAWALL COLUMNS, THEN FOR ROWS WHERE THERE IS NO VALUE IN SEAWALL COLUMN, CONTINUE CALCULATION AS BELOW
-      
+      for(rdr in rdret){
+
       #highways, bridges, roads
       bridge_reloc <- 337992 #per meter retreat    
       bridge_riprap <- 71910 #per meter retrofit
@@ -349,17 +372,16 @@ for (year in years) {
       
       for(scenario in scenarios){
         subdf <- subset(infra_retreat, Scenario == scenario & Year == year & Trigger == trigger & rdret == rdr)
-        infrastructure_col <- paste0("infrastructure_",scenario,seawall,trigger)
-        b_reloc_col <- paste0("bridgerelocate",scenario,seawall,trigger)
-        b_retrofit_col <- paste0("bridgeretrofit",scenario,seawall,trigger)
-        hwy_reloc_col <- paste0("hwyrelocate",scenario,seawall,trigger)
-        water_reloc_col <- paste0("waterrelocate",scenario,seawall,trigger)
-        emdom_col <- paste0("emdom",scenario,seawall,trigger)
-        hwy_riprap_col <- paste0("hwyriprap",scenario,seawall,trigger)
-        rd_remove_col <- paste0("rdremove",scenario,seawall,trigger)
-        riprap_remove_col <- paste0("riprapremove",scenario,seawall,trigger)
-        #wastewater_remove_col <- paste0("waterremove",scenario,seawall,trigger)
-        maintain_col <- paste0("maintain",scenario,seawall,trigger)
+        infrastructure_col <- paste0("infrastructure_",scenario,seawall,trigger,"_rdr",rdr)
+        b_reloc_col <- paste0("bridgerelocate",scenario,seawall,trigger,"_rdr",rdr)
+        b_retrofit_col <- paste0("bridgeretrofit",scenario,seawall,trigger,"_rdr",rdr)
+        hwy_reloc_col <- paste0("hwyrelocate",scenario,seawall,trigger,"_rdr",rdr)
+        water_reloc_col <- paste0("waterrelocate",scenario,seawall,trigger,"_rdr",rdr)
+        emdom_col <- paste0("emdom",scenario,seawall,trigger,"_rdr",rdr)
+        hwy_riprap_col <- paste0("hwyriprap",scenario,seawall,trigger,"_rdr",rdr)
+        rd_remove_col <- paste0("rdremove",scenario,seawall,trigger,"_rdr",rdr)
+        riprap_remove_col <- paste0("riprapremove",scenario,seawall,trigger,"_rdr",rdr)
+        maintain_col <- paste0("maintain",scenario,seawall,trigger,"_rdr",rdr)
         
         if(nrow(subdf)==0){
           infra_costtime[[b_reloc_col]][infra_costtime$Years == year] <- 0
@@ -370,11 +392,24 @@ for (year in years) {
           infra_costtime[[hwy_riprap_col]][infra_costtime$Years == year] <- 0
           infra_costtime[[rd_remove_col]][infra_costtime$Years == year] <- 0
           infra_costtime[[riprap_remove_col]][infra_costtime$Years == year] <- 0
-          #infra_costtime[[wastewater_remove_col]][infra_costtime$Years == year] <- 0
           infra_costtime[[maintain_col]][infra_costtime$Years == year] <- 0
           
           
-        } else{
+        } if(seawall == "_s_"){ #seawall-stay scenario
+          subdf <- subdf %>%
+            mutate(across(maintain_hwy:removeriprap_rd, ~ if_else(swall_s > 0, 0, .))) #set 0's for relocating columns since these rows will stay behind the seawall
+          
+          infra_costtime[[b_reloc_col]][infra_costtime$Years == year] <- sum(subdf$relocate_b,na.rm=T)*bridge_reloc
+          infra_costtime[[b_retrofit_col]][infra_costtime$Years == year] <- (sum(subdf$riprap_b,na.rm=T)+sum(subdf$riprap_b_s,na.rm=T))*bridge_riprap
+          infra_costtime[[hwy_reloc_col]][infra_costtime$Years == year] <- sum(subdf$relocate_hwy,na.rm=T)*highway_reloc
+          infra_costtime[[water_reloc_col]][infra_costtime$Years == year] <- sum(subdf$relocate_hwy,na.rm=T)*water_reloc
+          infra_costtime[[emdom_col]][infra_costtime$Years == year] <- sum(subdf$relocate_hwy,na.rm=T)*emdom_hwy
+          infra_costtime[[hwy_riprap_col]][infra_costtime$Years == year] <- (sum(subdf$riprap_hwy,na.rm=T)+sum(subdf$riprap_hwy_s,na.rm=T)+sum(subdf$riprap_rd_s,na.rm=T))*highway_riprap
+          infra_costtime[[rd_remove_col]][infra_costtime$Years == year] <- sum(subdf$remove_rd,na.rm=T)*road_remove
+          infra_costtime[[riprap_remove_col]][infra_costtime$Years == year] <- sum(subdf$removeriprap_rd,na.rm=T)*riprap_remove
+          infra_costtime[[maintain_col]][infra_costtime$Years == year] <- (sum(subdf$maintain_hwy,na.rm=T)+sum(subdf$maintain_s,na.rm=T))*maintain
+          
+        } else{ 
           infra_costtime[[b_reloc_col]][infra_costtime$Years == year] <- sum(subdf$relocate_b,na.rm=T)*bridge_reloc
           infra_costtime[[b_retrofit_col]][infra_costtime$Years == year] <- sum(subdf$riprap_b,na.rm=T)*bridge_riprap
           infra_costtime[[hwy_reloc_col]][infra_costtime$Years == year] <- sum(subdf$relocate_hwy,na.rm=T)*highway_reloc
@@ -383,7 +418,6 @@ for (year in years) {
           infra_costtime[[hwy_riprap_col]][infra_costtime$Years == year] <- sum(subdf$riprap_hwy,na.rm=T)*highway_riprap
           infra_costtime[[rd_remove_col]][infra_costtime$Years == year] <- sum(subdf$remove_rd,na.rm=T)*road_remove
           infra_costtime[[riprap_remove_col]][infra_costtime$Years == year] <- sum(subdf$removeriprap_rd,na.rm=T)*riprap_remove
-          #infra_costtime[[wastewater_remove_col]][infra_costtime$Years == year] <- sum(subdf$removewater,na.rm=T)*wastewater_remove
           infra_costtime[[maintain_col]][infra_costtime$Years == year] <- sum(subdf$maintain_hwy,na.rm=T)*maintain
           
         }
@@ -397,9 +431,8 @@ for (year in years) {
               infra_costtime[[hwy_riprap_col]][infra_costtime$Years == year],
               infra_costtime[[rd_remove_col]][infra_costtime$Years == year],
               infra_costtime[[riprap_remove_col]][infra_costtime$Years == year],
-              #infra_costtime[[wastewater_remove_col]][infra_costtime$Years == year],
               infra_costtime[[maintain_col]][infra_costtime$Years == year], na.rm=T)
-        
+      }
       }
     }
   }
