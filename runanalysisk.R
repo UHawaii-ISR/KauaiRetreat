@@ -34,10 +34,15 @@ source("C:/Users/rsett/Documents/KauaiRetreat/3infrastructurek.R")
 source("C:/Users/rsett/Documents/KauaiRetreat/4discountedtotalcostsk.R")
 
 #define subscenarios of interest for figures
+# miniscenarios <- c('AO_tXA_lfull_bv1','AO_tCE_lfull_bv1', 
+#                    'TB_tCE_lWF_bv1','TB_tCE_lCE_bv1','TB_s_tCE_lWF_bv1','TB_s_tCE_lCE_bv1',
+#                    'RE_tCE_lnone_bv0_chi','RE_tCE_lnone_bv0_clo','RE_s_tCE_lnone_bv0_chi','RE_s_tCE_lnone_bv0_clo',
+#                    'RE_tCE_lCE_bv0_chi','RE_tCE_lCE_bv0_clo','RE_s_tCE_lCE_bv0_chi','RE_s_tCE_lCE_bv0_clo', 
+#                    'areahazard_lCE','areahazard_lWF') 
+
 miniscenarios <- c('AO_tXA_lfull_bv1','AO_tCE_lfull_bv1', 
-                   'TB_tCE_lWF_bv1','TB_tCE_lCE_bv1','TB_s_tCE_lWF_bv1','TB_s_tCE_lCE_bv1',
-                   'RE_tCE_lnone_bv0_chi','RE_tCE_lnone_bv0_clo','RE_s_tCE_lnone_bv0_chi','RE_s_tCE_lnone_bv0_clo',
-                   'RE_tCE_lCE_bv0_chi','RE_tCE_lCE_bv0_clo','RE_s_tCE_lCE_bv0_chi','RE_s_tCE_lCE_bv0_clo', 
+                   'TB_tCE_lWF_bv1','TB_tCE_lCE_bv1',
+                   'RE_tCE_lnone_bv0_chi','RE_tCE_lCE_bv0_chi',
                    'areahazard_lCE','areahazard_lWF') 
 source("C:/Users/rsett/Documents/KauaiRetreat/5figuresk.R")
 
@@ -55,9 +60,9 @@ print(figinfra)
 write.csv(Retreat_Analysis, "Retreat_Analysis_kekaha.csv",row.names=F)
 write.csv(Retreat_Analysis_Total, "Retreat_Analysis_Total_kekaha.csv",row.names=F)
 write.csv(total_cost, "total_cost_kekaha.csv",row.names=F)
-write.csv(infra_costtime,'infrastructure_kekaha.csv',row.names=F)
+write.csv(infra_costtime,'infrastructure_kauai.csv',row.names=F)
 
-
-
+#infra qaqc
+write.csv(infra_retreat,'infrastructure_id_kauai.csv',row.names=F)
 
 

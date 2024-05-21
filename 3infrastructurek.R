@@ -178,11 +178,11 @@ for(id in infraIDs){
         
         #set up road retreat scenario: if retreating residential road, transfer values in $rdretreat to $hwy and $rdbretreat to $b. if not retreating, transfer to $rd
         if(rdr == 1){ #if retreating residential road, transfer values in $rdretreat to $hwy and $rdbretreat to $b
-          subdf$hwy <- subdf$rdretreat
-          subdf$b <- subdf$rdbretreat
+          subdf$hwy <- subdf$hwy + subdf$rdretreat
+          subdf$b <- subdf$b + subdf$rdbretreat
         }
         if(rdr == 0){ #if not retreating roads, transfer to $rd
-          subdf$rd <- subdf$rdretreat
+          subdf$rd <- subdf$rd + subdf$rdretreat
         }
         
       for(i in 1:length(years)){
@@ -224,7 +224,7 @@ for(id in infraIDs){
                       'total_length'] <- total_length
         
         #seawall-stay scenario: if there are any pre-existing seawalls on given highway ID, then there is no retreat or removal of riprap. just riprap any new affected areas
-        if(sum(subdf$seawall,na.rm=T)>0){
+        if(!grepl('r',id) & sum(subdf$seawall,na.rm=T)>0){
           #set up seawall-stay indicator
           infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
                         'swall_s'] <- 1
@@ -284,7 +284,7 @@ for(id in infraIDs){
                       'removeriprap_rd'] <- prev_swallrd 
         
         #seawall-stay scenario: if there are any pre-existing seawalls on given highway ID, then there is no retreat or removal of riprap. just riprap any new affected areas
-        if(sum(subdf$seawall,na.rm=T)>0){
+        if(grepl('r',id) & sum(subdf$seawall,na.rm=T)>0){
           #set up seawall-stay indicator
           infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
                         'swall_s'] <- 1
@@ -311,7 +311,7 @@ for(id in infraIDs){
         
         infra_retreat <- infra_retreat %>%
           ungroup() %>%
-          add_row(ID=id,Year=2023,Community=infracommunity,Scenario='AO',retreatyr=2023,relocate_hwy=ao_relocate_hwy,relocate_b=ao_relocate_b,remove_rd=ao_remove_rd,
+          add_row(ID=id,Community=infracommunity,Trigger = trigger,Year=2023,Scenario='AO',rdret = rdr,retreatyr=2023,relocate_hwy=ao_relocate_hwy,relocate_b=ao_relocate_b,remove_rd=ao_remove_rd,
                   removeriprap_hwy=ao_removeriprap_hwy,removeriprap_rd=NA) %>% 
           group_by(ID, Scenario) 
       }
@@ -395,7 +395,7 @@ for (year in years) {
           infra_costtime[[maintain_col]][infra_costtime$Years == year] <- 0
           
           
-        } if(seawall == "_s_"){ #seawall-stay scenario
+        } else if(seawall == "_s_"){ #seawall-stay scenario
           subdf <- subdf %>%
             mutate(across(maintain_hwy:removeriprap_rd, ~ if_else(swall_s > 0, 0, .))) #set 0's for relocating columns since these rows will stay behind the seawall
           

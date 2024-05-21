@@ -42,37 +42,38 @@ total_cost <- setNames(data.frame(matrix(ncol = 10, nrow = 0)), c('management','
 for(trigger in triggers){
   for(hazard_type in hazard_types){
     for(seawall in seawalls){
-      totalval_col <- paste0("Total_Value_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
-      demo_col <- paste0("demolition_AO",seawall,"t",trigger)
-      osds_col <- paste0("osdsremoval_AO",seawall,"t",trigger)
-      seawall_col <- paste0("seawall_AO",seawall,trigger)
-      infra_col <- paste0("infrastructure_AO",seawall,trigger)
-      taxrevloss_col <- paste0("Total_TaxRev_Loss_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
-      privproploss_col <- paste0("Priv_Prop_Loss_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
-      scenario_col <- paste0("AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
-      
-      cost_summary[[scenario_col]] <- c(sum(Retreat_Analysis_Total[[totalval_col]],Retreat_Analysis_Total[[demo_col]],Retreat_Analysis_Total[[osds_col]]),
-                                        Retreat_Analysis_Total[[seawall_col]],
-                                        Retreat_Analysis_Total[[infra_col]],
-                                        Retreat_Analysis_Total[[taxrevloss_col]],
-                                        Retreat_Analysis_Total[[privproploss_col]])
-      
-      total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
-                                            costtype = "Land and dwelling retreat public cost", 
-                                            value = sum(Retreat_Analysis_Total[[totalval_col]],Retreat_Analysis_Total[[demo_col]],Retreat_Analysis_Total[[osds_col]]))
-      total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
-                                            costtype = "Ambiguous-payer cost", 
-                                            value = Retreat_Analysis_Total[[seawall_col]])
-      total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
-                                            costtype = "Infrastructure retreat cost", 
-                                            value = Retreat_Analysis_Total[[infra_col]])
-      total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
-                                            costtype = "Tax revenue loss", 
-                                            value = Retreat_Analysis_Total[[taxrevloss_col]])
-      total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
-                                            costtype = "Private property value loss", 
-                                            value = Retreat_Analysis_Total[[privproploss_col]])
-      
+      for(rdr in rdret){
+        totalval_col <- paste0("Total_Value_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+        demo_col <- paste0("demolition_AO",seawall,"t",trigger)
+        osds_col <- paste0("osdsremoval_AO",seawall,"t",trigger)
+        seawall_col <- paste0("seawall_AO",seawall,trigger)
+        infra_col <- paste0("infrastructure_AO",seawall,trigger,"_rdr",rdr)
+        taxrevloss_col <- paste0("Total_TaxRev_Loss_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+        privproploss_col <- paste0("Priv_Prop_Loss_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+        scenario_col <- paste0("AO",seawall,"t",trigger,"_l",hazard_type,"_bv1","_rdr",rdr)
+        
+        cost_summary[[scenario_col]] <- c(sum(Retreat_Analysis_Total[[totalval_col]],Retreat_Analysis_Total[[demo_col]],Retreat_Analysis_Total[[osds_col]]),
+                                          Retreat_Analysis_Total[[seawall_col]],
+                                          Retreat_Analysis_Total[[infra_col]],
+                                          Retreat_Analysis_Total[[taxrevloss_col]],
+                                          Retreat_Analysis_Total[[privproploss_col]])
+        
+        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
+                                              costtype = "Land and dwelling retreat public cost", 
+                                              value = sum(Retreat_Analysis_Total[[totalval_col]],Retreat_Analysis_Total[[demo_col]],Retreat_Analysis_Total[[osds_col]]))
+        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
+                                              costtype = "Ambiguous-payer cost", 
+                                              value = Retreat_Analysis_Total[[seawall_col]])
+        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
+                                              costtype = "Infrastructure retreat cost", 
+                                              value = Retreat_Analysis_Total[[infra_col]])
+        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
+                                              costtype = "Tax revenue loss", 
+                                              value = Retreat_Analysis_Total[[taxrevloss_col]])
+        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
+                                              costtype = "Private property value loss", 
+                                              value = Retreat_Analysis_Total[[privproploss_col]])
+      }
     }
   }
 }
@@ -82,36 +83,38 @@ for(trigger in triggers){
   for(hazard_type in hazard_types){
     for(bval in bvals){
       for(seawall in seawalls){
-        totalval_col <- paste0("Total_Value_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
-        demo_col <- paste0("demolition_TB",seawall,"t",trigger)
-        osds_col <- paste0("osdsremoval_TB",seawall,"t",trigger)
-        seawall_col <- paste0("seawall_TB",seawall,trigger)
-        infra_col <- paste0("infrastructure_TB",seawall,trigger)
-        taxrevloss_col <- paste0("Total_TaxRev_Loss_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
-        privproploss_col <- paste0("Priv_Prop_Loss_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
-        scenario_col <- paste0("TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
-        
-        cost_summary[[scenario_col]] <- c(sum(Retreat_Analysis_Total[[totalval_col]],Retreat_Analysis_Total[[demo_col]],Retreat_Analysis_Total[[osds_col]]),
-                                          Retreat_Analysis_Total[[seawall_col]],
-                                          Retreat_Analysis_Total[[infra_col]],
-                                          Retreat_Analysis_Total[[taxrevloss_col]],
-                                          Retreat_Analysis_Total[[privproploss_col]])
-        
-        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "TB",trigger = trigger,hazard = hazard_type,bval = bval, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
-                                              costtype = "Land and dwelling retreat public cost", 
-                                              value = sum(Retreat_Analysis_Total[[totalval_col]],Retreat_Analysis_Total[[demo_col]],Retreat_Analysis_Total[[osds_col]]))
-        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "TB",trigger = trigger,hazard = hazard_type,bval = bval, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
-                                              costtype = "Ambiguous-payer cost", 
-                                              value = Retreat_Analysis_Total[[seawall_col]])
-        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "TB",trigger = trigger,hazard = hazard_type,bval = bval, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
-                                              costtype = "Infrastructure retreat cost", 
-                                              value = Retreat_Analysis_Total[[infra_col]])
-        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "TB",trigger = trigger,hazard = hazard_type,bval = bval, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
-                                              costtype = "Tax revenue loss", 
-                                              value = Retreat_Analysis_Total[[taxrevloss_col]])
-        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "TB",trigger = trigger,hazard = hazard_type,bval = bval, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
-                                              costtype = "Private property value loss", 
-                                              value = Retreat_Analysis_Total[[privproploss_col]])
+        for(rdr in rdret){
+          totalval_col <- paste0("Total_Value_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+          demo_col <- paste0("demolition_TB",seawall,"t",trigger)
+          osds_col <- paste0("osdsremoval_TB",seawall,"t",trigger)
+          seawall_col <- paste0("seawall_TB",seawall,trigger)
+          infra_col <- paste0("infrastructure_TB",seawall,trigger,"_rdr",rdr)
+          taxrevloss_col <- paste0("Total_TaxRev_Loss_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+          privproploss_col <- paste0("Priv_Prop_Loss_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+          scenario_col <- paste0("TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval,"_rdr",rdr)
+          
+          cost_summary[[scenario_col]] <- c(sum(Retreat_Analysis_Total[[totalval_col]],Retreat_Analysis_Total[[demo_col]],Retreat_Analysis_Total[[osds_col]]),
+                                            Retreat_Analysis_Total[[seawall_col]],
+                                            Retreat_Analysis_Total[[infra_col]],
+                                            Retreat_Analysis_Total[[taxrevloss_col]],
+                                            Retreat_Analysis_Total[[privproploss_col]])
+          
+          total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "TB",trigger = trigger,hazard = hazard_type,bval = bval, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
+                                                costtype = "Land and dwelling retreat public cost", 
+                                                value = sum(Retreat_Analysis_Total[[totalval_col]],Retreat_Analysis_Total[[demo_col]],Retreat_Analysis_Total[[osds_col]]))
+          total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "TB",trigger = trigger,hazard = hazard_type,bval = bval, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
+                                                costtype = "Ambiguous-payer cost", 
+                                                value = Retreat_Analysis_Total[[seawall_col]])
+          total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "TB",trigger = trigger,hazard = hazard_type,bval = bval, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
+                                                costtype = "Infrastructure retreat cost", 
+                                                value = Retreat_Analysis_Total[[infra_col]])
+          total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "TB",trigger = trigger,hazard = hazard_type,bval = bval, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
+                                                costtype = "Tax revenue loss", 
+                                                value = Retreat_Analysis_Total[[taxrevloss_col]])
+          total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "TB",trigger = trigger,hazard = hazard_type,bval = bval, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
+                                                costtype = "Private property value loss", 
+                                                value = Retreat_Analysis_Total[[privproploss_col]])
+        }
       }
       
     }
@@ -125,35 +128,37 @@ for(trigger in triggers){
   for(hazard_type in hazard_types){
     for(cleanup in cleanups){
       for(seawall in seawalls){
-        totalval_col <- paste0("Total_Value_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
-        cleanup_col <- paste0("cleanup",cleanup,"_RE",seawall,"t",trigger) 
-        infra_col <- paste0("infrastructure_RE",seawall,trigger)
-        taxrevloss_col <- paste0("Total_TaxRev_Loss_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
-        privproploss_col <- paste0("Priv_Prop_Loss_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
-        seawall_col <- paste0("seawall_RE",seawall,trigger)
-        scenario_col <- paste0("RE",seawall,"t",trigger,"_l",hazard_type,"_bv0_c",cleanup)
-        
-        cost_summary[[scenario_col]] <- c(Retreat_Analysis_Total[[totalval_col]],
-                                          sum(Retreat_Analysis_Total[[cleanup_col]],Retreat_Analysis_Total[[seawall_col]]),
-                                          Retreat_Analysis_Total[[infra_col]],
-                                          Retreat_Analysis_Total[[taxrevloss_col]],
-                                          Retreat_Analysis_Total[[privproploss_col]])
-        
-        total_cost[nrow(total_cost) + 1,] = c(management = "Unmanaged",scenario = "RE",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = cleanup, seawall = seawall, subscenario = scenario_col, 
-                                              costtype = "Land and dwelling retreat public cost", 
-                                              value = Retreat_Analysis_Total[[totalval_col]])
-        total_cost[nrow(total_cost) + 1,] = c(management = "Unmanaged",scenario = "RE",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = cleanup, seawall = seawall, subscenario = scenario_col, 
-                                              costtype = "Ambiguous-payer cost", 
-                                              value = sum(Retreat_Analysis_Total[[cleanup_col]],Retreat_Analysis_Total[[seawall_col]]))
-        total_cost[nrow(total_cost) + 1,] = c(management = "Unmanaged",scenario = "RE",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = cleanup, seawall = seawall, subscenario = scenario_col, 
-                                              costtype = "Infrastructure retreat cost", 
-                                              value = Retreat_Analysis_Total[[infra_col]])
-        total_cost[nrow(total_cost) + 1,] = c(management = "Unmanaged",scenario = "RE",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = cleanup, seawall = seawall, subscenario = scenario_col, 
-                                              costtype = "Tax revenue loss", 
-                                              value = Retreat_Analysis_Total[[taxrevloss_col]])
-        total_cost[nrow(total_cost) + 1,] = c(management = "Unmanaged",scenario = "RE",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = cleanup, seawall = seawall, subscenario = scenario_col, 
-                                              costtype = "Private property value loss", 
-                                              value = Retreat_Analysis_Total[[privproploss_col]])
+        for(rdr in rdret){
+          totalval_col <- paste0("Total_Value_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+          cleanup_col <- paste0("cleanup",cleanup,"_RE",seawall,"t",trigger) 
+          infra_col <- paste0("infrastructure_RE",seawall,trigger,"_rdr",rdr)
+          taxrevloss_col <- paste0("Total_TaxRev_Loss_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+          privproploss_col <- paste0("Priv_Prop_Loss_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+          seawall_col <- paste0("seawall_RE",seawall,trigger)
+          scenario_col <- paste0("RE",seawall,"t",trigger,"_l",hazard_type,"_bv0_c",cleanup,"_rdr",rdr)
+          
+          cost_summary[[scenario_col]] <- c(Retreat_Analysis_Total[[totalval_col]],
+                                            sum(Retreat_Analysis_Total[[cleanup_col]],Retreat_Analysis_Total[[seawall_col]]),
+                                            Retreat_Analysis_Total[[infra_col]],
+                                            Retreat_Analysis_Total[[taxrevloss_col]],
+                                            Retreat_Analysis_Total[[privproploss_col]])
+          
+          total_cost[nrow(total_cost) + 1,] = c(management = "Unmanaged",scenario = "RE",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = cleanup, seawall = seawall, subscenario = scenario_col, 
+                                                costtype = "Land and dwelling retreat public cost", 
+                                                value = Retreat_Analysis_Total[[totalval_col]])
+          total_cost[nrow(total_cost) + 1,] = c(management = "Unmanaged",scenario = "RE",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = cleanup, seawall = seawall, subscenario = scenario_col, 
+                                                costtype = "Ambiguous-payer cost", 
+                                                value = sum(Retreat_Analysis_Total[[cleanup_col]],Retreat_Analysis_Total[[seawall_col]]))
+          total_cost[nrow(total_cost) + 1,] = c(management = "Unmanaged",scenario = "RE",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = cleanup, seawall = seawall, subscenario = scenario_col, 
+                                                costtype = "Infrastructure retreat cost", 
+                                                value = Retreat_Analysis_Total[[infra_col]])
+          total_cost[nrow(total_cost) + 1,] = c(management = "Unmanaged",scenario = "RE",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = cleanup, seawall = seawall, subscenario = scenario_col, 
+                                                costtype = "Tax revenue loss", 
+                                                value = Retreat_Analysis_Total[[taxrevloss_col]])
+          total_cost[nrow(total_cost) + 1,] = c(management = "Unmanaged",scenario = "RE",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = cleanup, seawall = seawall, subscenario = scenario_col, 
+                                                costtype = "Private property value loss", 
+                                                value = Retreat_Analysis_Total[[privproploss_col]])
+        }
       }
     }
   }
@@ -191,7 +196,7 @@ total_cost$costtype <- factor(total_cost$costtype, levels =
 fig3 <- ggplot(total_cost, aes(fill=factor(costtype) ,y=valueMil, x=subscenario)) + 
   geom_bar(position="stack", stat="identity", width= 0.7, colour="grey", linewidth=0.2) +
   scale_fill_manual(values = c('Private property value loss'='#F5938D','Ambiguous-payer cost'='#b55ef1','Tax revenue loss'='#B3C5F1',
-                               'Infrastructure retreat cost'='#658EF3','Land and dwelling retreat public cost'='#1953E3')) + 
+                               'Land and dwelling retreat public cost'='#658EF3','Infrastructure retreat cost'='#1953E3')) + 
   xlab('Retreat Approach')+
   ylab('Cost ($2023,mil)') +
   ggtitle(paste0(titlename)) +
