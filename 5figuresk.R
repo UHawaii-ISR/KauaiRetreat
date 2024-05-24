@@ -6,6 +6,9 @@ library(ggpubr)
 library(data.table)
 library(scales)
 library(plotly) #https://plotly.com/r/
+library(treemap)
+library(RColorBrewer)
+library(treemapify)
 
 
 setwd(workdir)
@@ -191,7 +194,7 @@ total_cost$trigger <- factor(total_cost$trigger, levels =triggers)
 total_cost$scenario <- factor(total_cost$scenario, levels = c('AO','TB','RE'))
 total_cost$costtype <- factor(total_cost$costtype, levels = 
                                 c('Private property value loss','Ambiguous-payer cost','Tax revenue loss',
-                                  'Infrastructure retreat cost','Land and dwelling retreat public cost'))
+                                  'Land and dwelling retreat public cost','Infrastructure retreat cost'))
 
 fig3 <- ggplot(total_cost, aes(fill=factor(costtype) ,y=valueMil, x=subscenario)) + 
   geom_bar(position="stack", stat="identity", width= 0.7, colour="grey", linewidth=0.2) +
@@ -222,17 +225,13 @@ fig3 <- ggplot(total_cost, aes(fill=factor(costtype) ,y=valueMil, x=subscenario)
 
 
 
-#plot just scenarios of interest to kauai
-# miniscenarios <- c('AO_tXA_lCE_bv1','AO_tCE_lCE_bv1', #**this should be full value for land. 'AO_tXA_lfull_bv1','AO_tCE_lfull_bv1' need a new scenario lfull and lnone
-#                    'TB_tCE_lWF_bv1','TB_tCE_lCE_bv1','TB_s_tXA_lWF_bv1','TB_s_tXA_lCE_bv1',
-#                    'RE_tCE_lCE_bv0_chi','RE_tCE_lCE_bv0_clo','RE_s_tCE_lCE_bv0_chi','RE_s_tCE_lCE_bv0_clo', #** 'RE_tCE_lnone_bv0','RE_s_tCE_lnone_bv0'
-#                    'areahazard_lCE','areahazard_lWF') 
+
 total_cost_mini <- subset(total_cost, subscenario %in% miniscenarios)
 
 fig3mini <- ggplot(total_cost_mini, aes(fill=factor(costtype) ,y=valueMil, x=subscenario)) + 
   geom_bar(position="stack", stat="identity", width= 0.7, colour="grey", linewidth=0.2) +
   scale_fill_manual(values = c('Private property value loss'='#F5938D','Ambiguous-payer cost'='#b55ef1','Tax revenue loss'='#B3C5F1',
-                               'Infrastructure retreat cost'='#658EF3','Land and dwelling retreat public cost'='#1953E3')) + 
+                               'Land and dwelling retreat public cost'='#658EF3','Infrastructure retreat cost'='#1953E3')) + 
   xlab('Retreat Approach')+
   ylab('Cost ($2023,mil)') +
   ggtitle(paste0(titlename)) +
@@ -262,7 +261,7 @@ res_cost_mini <- subset(total_cost_mini, costtype != 'Infrastructure retreat cos
 resmini <- ggplot(res_cost_mini, aes(fill=factor(costtype) ,y=valueMil, x=subscenario)) + 
   geom_bar(position="stack", stat="identity", width= 0.7, colour="grey", linewidth=0.2) +
   scale_fill_manual(values = c('Private property value loss'='#F5938D','Ambiguous-payer cost'='#b55ef1','Tax revenue loss'='#B3C5F1',
-                               'Land and dwelling retreat public cost'='#1953E3')) + 
+                               'Land and dwelling retreat public cost'='#658EF3')) + 
   xlab('Retreat Approach')+
   ylab('Cost ($2023,mil)') +
   ggtitle(paste0(titlename, " - residential-costs only")) +
@@ -286,7 +285,8 @@ resmini <- ggplot(res_cost_mini, aes(fill=factor(costtype) ,y=valueMil, x=subsce
 
 
 
-#plot of only infrastructure costs
+#median home costs
+nrow(clean_retreat_calcs) #number of single-family homes (non-CPR'd parcels)
 
 
 
@@ -309,30 +309,32 @@ infracosttypes <- c('bridgerelocate','bridgeretrofit','hwyrelocate','hwyrelocate
 for(trigger in triggers){
   for(hazard_type in hazard_types){
     for(seawall in seawalls){
-    scenario_col <- paste0("AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
-    arearetreat_col <- paste0("arearetreat_AO",seawall,"t",trigger)
-    
-    costtime[nrow(costtime) + 1,] = c(year = 2023, scenario = "AO",subscenario = scenario_col,
-                                      cost = cost_summary[[scenario_col]][cost_summary$CostTypes == "Total costs and losses"])
-    costtimeres[nrow(costtimeres) + 1,] = c(year = 2023, scenario = "AO",subscenario = scenario_col,
-                                      cost = (cost_summary[[scenario_col]][cost_summary$CostTypes == "Total costs and losses"] - 
-                                        cost_summary[[scenario_col]][cost_summary$CostTypes == "Infrastructure retreat cost"]))
-    costtimeinfra[nrow(costtimeinfra) + 1,] = c(year = 2023, scenario = "AO",subscenario = scenario_col,
-                                            cost = cost_summary[[scenario_col]][cost_summary$CostTypes == "Infrastructure retreat cost"])
-    
-
-      for(infracosttype in infracosttypes){
-        infratype_col <- paste0(infracosttype,"AO",seawall,trigger)
+      for(rdr in rdret){
+        scenario_col <- paste0("AO",seawall,"t",trigger,"_l",hazard_type,"_bv1","_rdr",rdr)
+        arearetreat_col <- paste0("arearetreat_AO",seawall,"t",trigger)
         
-        costtimeinfradetail[nrow(costtimeinfradetail) + 1,] = c(year = 2023, scenario = "AO",subscenario = scenario_col,
-                                                                costtype = infracosttype,
-                                                                cost = infra_costtime[[infratype_col]][infra_costtime$Years == 2023]/ 1000000)
-      }
+        costtime[nrow(costtime) + 1,] = c(year = 2023, scenario = "AO",subscenario = scenario_col,
+                                          cost = cost_summary[[scenario_col]][cost_summary$CostTypes == "Total costs and losses"])
+        costtimeres[nrow(costtimeres) + 1,] = c(year = 2023, scenario = "AO",subscenario = scenario_col,
+                                          cost = (cost_summary[[scenario_col]][cost_summary$CostTypes == "Total costs and losses"] - 
+                                            cost_summary[[scenario_col]][cost_summary$CostTypes == "Infrastructure retreat cost"]))
+        costtimeinfra[nrow(costtimeinfra) + 1,] = c(year = 2023, scenario = "AO",subscenario = scenario_col,
+                                                cost = cost_summary[[scenario_col]][cost_summary$CostTypes == "Infrastructure retreat cost"])
+        
     
-    for(year in years){
-      areatime[nrow(areatime) + 1,] = c(year = year, scenario = "AO",subscenario = scenario_col,
-                                        area = Retreat_Analysis[[arearetreat_col]][Retreat_Analysis$Years == 2023])
-    }
+          for(infracosttype in infracosttypes){
+            infratype_col <- paste0(infracosttype,"AO",seawall,trigger,"_rdr",rdr)
+            
+            costtimeinfradetail[nrow(costtimeinfradetail) + 1,] = c(year = 2023, scenario = "AO",subscenario = scenario_col,
+                                                                    costtype = infracosttype,
+                                                                    cost = infra_costtime[[infratype_col]][infra_costtime$Years == 2023]/ 1000000)
+          }
+        
+        for(year in years){
+          areatime[nrow(areatime) + 1,] = c(year = year, scenario = "AO",subscenario = scenario_col,
+                                            area = Retreat_Analysis[[arearetreat_col]][Retreat_Analysis$Years == 2023])
+        }
+      }
     }
   }
 }
@@ -343,58 +345,58 @@ for(i in 1:length(years)){
     for(hazard_type in hazard_types){
       for(bval in bvals){
         for(seawall in seawalls){
-        scenario_col <- paste0("TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
-        totalval_col <- paste0("Total_Value_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
-        demo_col <- paste0("demolition_TB",seawall,"t",trigger)
-        osds_col <- paste0("osdsremoval_TB",seawall,"t",trigger)
-        infra_col <- paste0("infrastructure_TB",seawall,trigger)
-        privproploss_col <- paste0("Priv_Prop_Loss_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
-        taxrevloss_col <- paste0("Total_TaxRev_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
-        arearetreat_col <- paste0("arearetreat_TB",seawall,"t",trigger)
-        scenario_col <- paste0("TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
-        year <- years[i]
-        prevyear <- years[i-1]
-        
-        totalcost <- ifelse(year==2023,0,as.numeric(costtime$cost[costtime$subscenario == scenario_col & costtime$year == prevyear])) +
-          ((sum(as.numeric(Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[taxrevloss_col]][Retreat_Analysis$Years == year])+
-                  as.numeric(Retreat_Analysis[[infra_col]][Retreat_Analysis$Years == year]))) / 
-             DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000 
-        totalcostres <- ifelse(year==2023,0,as.numeric(costtimeres$cost[costtimeres$subscenario == scenario_col & costtimeres$year == prevyear])) +
-          ((sum(as.numeric(Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[taxrevloss_col]][Retreat_Analysis$Years == year]))) / 
-             DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000 
-        totalcostinfra <- ifelse(year==2023,0,as.numeric(costtimeinfra$cost[costtimeinfra$subscenario == scenario_col & costtimeinfra$year == prevyear])) +
-          ((sum(as.numeric(Retreat_Analysis[[infra_col]][Retreat_Analysis$Years == year]))) / 
-             DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000 
-        totalarea <- ifelse(year==2023,0,as.numeric(areatime$area[areatime$subscenario == scenario_col & areatime$year == prevyear])) +
-          Retreat_Analysis[[arearetreat_col]][Retreat_Analysis$Years == year]
-        
-        costtime[nrow(costtime) + 1,] = c(year = year, scenario = "TB",subscenario = scenario_col,cost = totalcost)
-        costtimeres[nrow(costtimeres) + 1,] = c(year = year, scenario = "TB",subscenario = scenario_col,cost = totalcostres)
-        costtimeinfra[nrow(costtimeinfra) + 1,] = c(year = year, scenario = "TB",subscenario = scenario_col,cost = totalcostinfra)
-        areatime[nrow(areatime) + 1,] = c(year = year, scenario = "TB",subscenario = scenario_col,area = totalarea)
-        
-        for(infracosttype in infracosttypes){
-          infratype_col <- paste0(infracosttype,"TB",seawall,trigger)
-          
-          totalcosttypeinfra <- ifelse(year==2023,0,
-                                       as.numeric(costtimeinfradetail$cost[costtimeinfradetail$subscenario == scenario_col & 
-                                                                             costtimeinfradetail$year == prevyear & 
-                                                                             costtimeinfradetail$costtype == infracosttype])) +
-            ((sum(as.numeric(infra_costtime[[infratype_col]][infra_costtime$Years == year]))) / 
-               DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000
-          
-          costtimeinfradetail[nrow(costtimeinfradetail) + 1,] = c(year = year, scenario = "TB",subscenario = scenario_col,
-                                                                  costtype = infracosttype,cost = totalcosttypeinfra)
-        }
-        
+          for(rdr in rdret){
+            scenario_col <- paste0("TB",seawall,"t",trigger,"_l",hazard_type,"_bv1","_rdr",rdr)
+            totalval_col <- paste0("Total_Value_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+            demo_col <- paste0("demolition_TB",seawall,"t",trigger)
+            osds_col <- paste0("osdsremoval_TB",seawall,"t",trigger)
+            infra_col <- paste0("infrastructure_TB",seawall,trigger,"_rdr",rdr)
+            privproploss_col <- paste0("Priv_Prop_Loss_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+            taxrevloss_col <- paste0("Total_TaxRev_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+            arearetreat_col <- paste0("arearetreat_TB",seawall,"t",trigger)
+            year <- years[i]
+            prevyear <- years[i-1]
+            
+            totalcost <- ifelse(year==2023,0,as.numeric(costtime$cost[costtime$subscenario == scenario_col & costtime$year == prevyear])) +
+              ((sum(as.numeric(Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year]) +
+                      as.numeric(Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year]) +
+                      as.numeric(Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year]) +
+                      as.numeric(Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year]) +
+                      as.numeric(Retreat_Analysis[[taxrevloss_col]][Retreat_Analysis$Years == year])+
+                      as.numeric(Retreat_Analysis[[infra_col]][Retreat_Analysis$Years == year]))) / 
+                 DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000 
+            totalcostres <- ifelse(year==2023,0,as.numeric(costtimeres$cost[costtimeres$subscenario == scenario_col & costtimeres$year == prevyear])) +
+              ((sum(as.numeric(Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year]) +
+                      as.numeric(Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year]) +
+                      as.numeric(Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year]) +
+                      as.numeric(Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year]) +
+                      as.numeric(Retreat_Analysis[[taxrevloss_col]][Retreat_Analysis$Years == year]))) / 
+                 DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000 
+            totalcostinfra <- ifelse(year==2023,0,as.numeric(costtimeinfra$cost[costtimeinfra$subscenario == scenario_col & costtimeinfra$year == prevyear])) +
+              ((sum(as.numeric(Retreat_Analysis[[infra_col]][Retreat_Analysis$Years == year]))) / 
+                 DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000 
+            totalarea <- ifelse(year==2023,0,as.numeric(areatime$area[areatime$subscenario == scenario_col & areatime$year == prevyear])) +
+              Retreat_Analysis[[arearetreat_col]][Retreat_Analysis$Years == year]
+            
+            costtime[nrow(costtime) + 1,] = c(year = year, scenario = "TB",subscenario = scenario_col,cost = totalcost)
+            costtimeres[nrow(costtimeres) + 1,] = c(year = year, scenario = "TB",subscenario = scenario_col,cost = totalcostres)
+            costtimeinfra[nrow(costtimeinfra) + 1,] = c(year = year, scenario = "TB",subscenario = scenario_col,cost = totalcostinfra)
+            areatime[nrow(areatime) + 1,] = c(year = year, scenario = "TB",subscenario = scenario_col,area = totalarea)
+            
+            for(infracosttype in infracosttypes){
+              infratype_col <- paste0(infracosttype,"TB",seawall,trigger,"_rdr",rdr)
+              
+              totalcosttypeinfra <- ifelse(year==2023,0,
+                                           as.numeric(costtimeinfradetail$cost[costtimeinfradetail$subscenario == scenario_col & 
+                                                                                 costtimeinfradetail$year == prevyear & 
+                                                                                 costtimeinfradetail$costtype == infracosttype])) +
+                ((sum(as.numeric(infra_costtime[[infratype_col]][infra_costtime$Years == year]))) / 
+                   DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000
+              
+              costtimeinfradetail[nrow(costtimeinfradetail) + 1,] = c(year = year, scenario = "TB",subscenario = scenario_col,
+                                                                      costtype = infracosttype,cost = totalcosttypeinfra)
+            }
+          }
         }
       }
     }
@@ -407,53 +409,55 @@ for(i in 1:length(years)){
     for(hazard_type in hazard_types){
       for(cleanup in cleanups){
         for(seawall in seawalls){
-        scenario_col <- paste0("RE",seawall,"t",trigger,"_l",hazard_type,"_bv0_c",cleanup)
-        totalval_col <- paste0("Total_Value_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
-        cleanup_col <- paste0("cleanup",cleanup,"_RE",seawall,"t",trigger) 
-        infra_col <- paste0("infrastructure_RE",seawall,trigger)
-        privproploss_col <- paste0("Priv_Prop_Loss_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
-        taxrevloss_col <- paste0("Total_TaxRev_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
-        arearetreat_col <- paste0("arearetreat_RE",seawall,"t",trigger)
-        
-        year <- years[i]
-        prevyear <- years[i-1]
-        
-        totalcost <- ifelse(year==2023,0,as.numeric(costtime$cost[costtime$subscenario == scenario_col & costtime$year == prevyear])) +
-          ((sum(as.numeric(Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[cleanup_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[taxrevloss_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[infra_col]][Retreat_Analysis$Years == year]))) / 
-             DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000
-        totalcostres <- ifelse(year==2023,0,as.numeric(costtimeres$cost[costtimeres$subscenario == scenario_col & costtimeres$year == prevyear])) +
-          ((sum(as.numeric(Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[cleanup_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year]) +
-                  as.numeric(Retreat_Analysis[[taxrevloss_col]][Retreat_Analysis$Years == year]))) / 
-             DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000
-        totalcostinfra <- ifelse(year==2023,0,as.numeric(costtimeinfra$cost[costtimeinfra$subscenario == scenario_col & costtimeinfra$year == prevyear])) +
-          ((sum(as.numeric(Retreat_Analysis[[infra_col]][Retreat_Analysis$Years == year]))) / 
-             DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000 
-        totalarea <- ifelse(year==2023,0,as.numeric(areatime$area[areatime$subscenario == scenario_col & areatime$year == prevyear])) +
-          Retreat_Analysis[[arearetreat_col]][Retreat_Analysis$Years == year]
-        
-        costtime[nrow(costtime) + 1,] = c(year = year, scenario = "RE",subscenario = scenario_col,cost = totalcost)
-        costtimeres[nrow(costtimeres) + 1,] = c(year = year, scenario = "RE",subscenario = scenario_col,cost = totalcostres)
-        costtimeinfra[nrow(costtimeinfra) + 1,] = c(year = year, scenario = "RE",subscenario = scenario_col,cost = totalcostinfra)
-        areatime[nrow(areatime) + 1,] = c(year = year, scenario = "RE",subscenario = scenario_col,area = totalarea)
-        
-        for(infracosttype in infracosttypes){
-          infratype_col <- paste0(infracosttype,"RE",seawall,trigger)
-          
-          totalcosttypeinfra <- ifelse(year==2023,0,as.numeric(costtimeinfradetail$cost[costtimeinfradetail$subscenario == scenario_col & 
-                                                                                          costtimeinfradetail$year == prevyear & 
-                                                                                          costtimeinfradetail$costtype == infracosttype])) +
-            ((sum(as.numeric(infra_costtime[[infratype_col]][infra_costtime$Years == year]))) / 
-               DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000
-          
-          costtimeinfradetail[nrow(costtimeinfradetail) + 1,] = c(year = year, scenario = "RE",subscenario = scenario_col,
-                                                                  costtype = infracosttype,cost = totalcosttypeinfra)
-        }
+          for(rdr in rdret){
+            scenario_col <- paste0("RE",seawall,"t",trigger,"_l",hazard_type,"_bv0_c",cleanup,"_rdr",rdr)
+            totalval_col <- paste0("Total_Value_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+            cleanup_col <- paste0("cleanup",cleanup,"_RE",seawall,"t",trigger) 
+            infra_col <- paste0("infrastructure_RE",seawall,trigger,"_rdr",rdr)
+            privproploss_col <- paste0("Priv_Prop_Loss_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+            taxrevloss_col <- paste0("Total_TaxRev_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+            arearetreat_col <- paste0("arearetreat_RE",seawall,"t",trigger)
+            
+            year <- years[i]
+            prevyear <- years[i-1]
+            
+            totalcost <- ifelse(year==2023,0,as.numeric(costtime$cost[costtime$subscenario == scenario_col & costtime$year == prevyear])) +
+              ((sum(as.numeric(Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year]) +
+                      as.numeric(Retreat_Analysis[[cleanup_col]][Retreat_Analysis$Years == year]) +
+                      as.numeric(Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year]) +
+                      as.numeric(Retreat_Analysis[[taxrevloss_col]][Retreat_Analysis$Years == year]) +
+                      as.numeric(Retreat_Analysis[[infra_col]][Retreat_Analysis$Years == year]))) / 
+                 DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000
+            totalcostres <- ifelse(year==2023,0,as.numeric(costtimeres$cost[costtimeres$subscenario == scenario_col & costtimeres$year == prevyear])) +
+              ((sum(as.numeric(Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year]) +
+                      as.numeric(Retreat_Analysis[[cleanup_col]][Retreat_Analysis$Years == year]) +
+                      as.numeric(Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year]) +
+                      as.numeric(Retreat_Analysis[[taxrevloss_col]][Retreat_Analysis$Years == year]))) / 
+                 DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000
+            totalcostinfra <- ifelse(year==2023,0,as.numeric(costtimeinfra$cost[costtimeinfra$subscenario == scenario_col & costtimeinfra$year == prevyear])) +
+              ((sum(as.numeric(Retreat_Analysis[[infra_col]][Retreat_Analysis$Years == year]))) / 
+                 DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000 
+            totalarea <- ifelse(year==2023,0,as.numeric(areatime$area[areatime$subscenario == scenario_col & areatime$year == prevyear])) +
+              Retreat_Analysis[[arearetreat_col]][Retreat_Analysis$Years == year]
+            
+            costtime[nrow(costtime) + 1,] = c(year = year, scenario = "RE",subscenario = scenario_col,cost = totalcost)
+            costtimeres[nrow(costtimeres) + 1,] = c(year = year, scenario = "RE",subscenario = scenario_col,cost = totalcostres)
+            costtimeinfra[nrow(costtimeinfra) + 1,] = c(year = year, scenario = "RE",subscenario = scenario_col,cost = totalcostinfra)
+            areatime[nrow(areatime) + 1,] = c(year = year, scenario = "RE",subscenario = scenario_col,area = totalarea)
+            
+            for(infracosttype in infracosttypes){
+              infratype_col <- paste0(infracosttype,"RE",seawall,trigger,"_rdr",rdr)
+              
+              totalcosttypeinfra <- ifelse(year==2023,0,as.numeric(costtimeinfradetail$cost[costtimeinfradetail$subscenario == scenario_col & 
+                                                                                              costtimeinfradetail$year == prevyear & 
+                                                                                              costtimeinfradetail$costtype == infracosttype])) +
+                ((sum(as.numeric(infra_costtime[[infratype_col]][infra_costtime$Years == year]))) / 
+                   DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]) / 1000000
+              
+              costtimeinfradetail[nrow(costtimeinfradetail) + 1,] = c(year = year, scenario = "RE",subscenario = scenario_col,
+                                                                      costtype = infracosttype,cost = totalcosttypeinfra)
+            }
+          }
         }
       }
     }
@@ -564,6 +568,36 @@ figinfra <- ggplot(costtimeinfradetail_mini,aes(x=year,y=cost,group=subscenario,
   xlab("Year")+
   facet_wrap(~scenario,ncol=1)+
   ggtitle(titlename)
+
+
+
+
+
+
+### pie chart / tree map
+
+tm <- read.csv("retreat_costs.csv", stringsAsFactors = FALSE)
+
+treemap(dtf = tm,
+        index = c("group", "subgroup"),
+        vSize = "cost",
+        vColor = "group",
+        align.labels=list(
+          c("left", "top"), 
+          c("right", "bottom")
+        ),     
+        border.col = "white",
+        fontsize.labels= 8,
+        overlap.labels=0,
+        inflate.labels=F)
+
+ggplot2::ggplot(tm,aes(area=cost,fill=group,
+                       label=paste(subgroup,percent,sep ="\n"), 
+                       subgroup=subgroup))+ 
+  treemapify::geom_treemap(layout="squarified")+ 
+  geom_treemap_text(place = "centre",size = 9)+
+  geom_treemap_subgroup_border(colour = "white", size = 5)+
+  scale_fill_brewer("Cost types",palette = "Set2")
 
 
 
