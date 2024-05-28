@@ -76,7 +76,7 @@ for(trigger in triggers){
 
 #calculate land value & tax
 years <- c("2023", "2030","2050","2075","2100")  
-hazard_types <- c("CE","WF",'full','none')
+hazard_types <- c("CE","WF","PF","XA",'full','none')
 
 #calculate land value based on percent exposure to hazard
 for (year in years) {
@@ -94,7 +94,7 @@ for (year in years) {
     land_assess_col <- paste0("Land_Assess_", year, "_l", hazard_type) 
     land_apr_col <- paste0("Land_Appraise_", year, "_l", hazard_type) 
     
-    if(hazard_type == 'CE' | hazard_type == 'WF'){
+    if(hazard_type == 'CE' | hazard_type == 'WF'| hazard_type == 'XA' | hazard_type == 'PF'){
       # create columns and fill with percentages of parcel within hazard zones (divide area in hazard zones by original parcel area)
       clean_retreat_calcs[[column_title]] <- clean_retreat_calcs[[shape_column_title]] / clean_retreat_calcs$OG_PARCEL_AREA 
       
@@ -134,7 +134,7 @@ for (i in 1:length(yearsTB)) {
     column_title1 <- paste0("Parcel_", yearAve1, "_l", hazard_type) 
     column_title2 <- paste0("Parcel_", yearAve2, "_l", hazard_type)
     
-    if(hazard_type == 'CE' | hazard_type == 'WF'){
+    if(hazard_type == 'CE' | hazard_type == 'WF'| hazard_type == 'XA' | hazard_type == 'PF'){
       # create columns and fill with percentages of parcel within hazard zones (divide area in hazard zones by original parcel area)
       clean_retreat_calcs[[column_title]] <- (clean_retreat_calcs[[column_title1]] +  clean_retreat_calcs[[column_title2]])/2
       

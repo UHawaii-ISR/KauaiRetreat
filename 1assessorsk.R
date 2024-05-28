@@ -77,6 +77,8 @@ clean_assessors <- assessors[, c("PARID","COTMK","CPR_UNIT","TAXCLASS",
                                  "NEAR_XA05","NEAR_XA11","NEAR_XA20","NEAR_XA32",
                                  'area_og','SA_CE05','SA_CE11','SA_CE20','SA_CE32',
                                  'SA_WF05','SA_WF11','SA_WF20','SA_WF32',
+                                 'SA_XA05','SA_XA11','SA_XA20','SA_XA32',
+                                 'SA_PF05','SA_PF11','SA_PF20','SA_PF32',
                                  'OSDS_QTY_calc','WASTEWATER')]
 
 
@@ -84,6 +86,8 @@ clean_assessors <- assessors[, c("PARID","COTMK","CPR_UNIT","TAXCLASS",
 #All are assigned 0 as this is our baseline (no parcels have lost value yet, assessors value is that of current "original" parcel area)
 clean_assessors$SA_2023_WF <- 0
 clean_assessors$SA_2023_CE <- 0
+clean_assessors$SA_2023_PF <- 0
+clean_assessors$SA_2023_XA <- 0
 
 # rename columns
 clean_assessors <- clean_assessors %>%
@@ -100,6 +104,14 @@ clean_assessors <- clean_assessors %>%
          SA_2050_WF = SA_WF11,
          SA_2075_WF = SA_WF20,
          SA_2100_WF = SA_WF32,
+         SA_2030_XA = SA_XA05,
+         SA_2050_XA = SA_XA11,
+         SA_2075_XA = SA_XA20,
+         SA_2100_XA = SA_XA32,
+         SA_2030_PF = SA_PF05,
+         SA_2050_PF = SA_PF11,
+         SA_2075_PF = SA_PF20,
+         SA_2100_PF = SA_PF32,
          OSDS = OSDS_QTY_calc)
 
 

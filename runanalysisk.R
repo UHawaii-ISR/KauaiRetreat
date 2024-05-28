@@ -4,12 +4,12 @@
 workdir <- "F:/slr/kauai/kauai_retreat_code/" # your working directory
 assessorsfile <- "F:/slr/kauai/2023_Real_Property_Tax_Data" #original assessors file (used to calculate eminent domain)
 noncprshpfolder <- "F:/slr/kauai/Bldg_Footprints" #the folder where non-CPR bldg footprint shapefile is
-noncprshplayer <- "Buildings_XA_nonCPR" #layer name for non-CPR bldg footprint shapefile
+noncprshplayer <- "Buildings_XA" #layer name for non-CPR bldg footprint shapefile
 cprshpfolder <- "F:/slr/kauai/Bldg_Footprints" #the folder for CPR bldg ftprt shapefile
 cprshplayer <- "Buildings_XA_CPR"# layer name for CPR bldg ftprt shapefile
 osdsfile <- "F:/slr/kauai/OSDSv6_Exploded_ALL.csv" #the osds file
 seawallfile <- "F:/slr/kauai/TMK_realign_seawalls" #the folder with seawall shapefile
-infrastructurefolder <- "F:/slr/kauai/Alanui/Hazards" #the folder that has all of the infrastructure hazard files
+infrastructurefolder <- "F:/slr/kauai/Alanui" #the folder that has all of the infrastructure hazard files
 emdomfile <- "F:/slr/kauai/slrxa-adj" #folder with only parcels that are SLRXA-adjacent
 
 
@@ -80,7 +80,7 @@ write.csv(medhome,'medianhome_kauai.csv')
 write.csv(total_cost_mini,'medianhome_costs.csv',row.names=F)
 
 #infra qaqc
-#write.csv(infra_retreat,'infrastructure_id_kauai.csv',row.names=F)
+write.csv(infra_retreat,'infrastructure_id_kauai.csv',row.names=F)
 
 
 
