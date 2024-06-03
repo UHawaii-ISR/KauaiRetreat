@@ -70,7 +70,7 @@ clean_assessors <- assessors[, c("PARID","COTMK","CPR_UNIT","TAXCLASS",
                                  "Community","ahupuaa","moku","devplan_","LittrlCell","devplan_id","district","dp","ballottype",
                                  "APRBLDGMKT","ASMTBLDG","APRLANDMKT","ASMTLAND",
                                  "APRTOTMKT","ASMTTOT","TOTEXEMPT","NETTAXABLE",
-                                 "TARGET_FID","GIS_SQFT","NEAR_VEG",
+                                 "TARGET_FID","GIS_SQFT","NEAR__VEG",
                                  "NEAR_CE05","NEAR_CE11","NEAR_CE20","NEAR_CE32",
                                  "NEAR_PF05","NEAR_PF11","NEAR_PF20","NEAR_PF32",
                                  "NEAR_WF05","NEAR_WF11","NEAR_WF20","NEAR_WF32",
@@ -92,7 +92,7 @@ clean_assessors$SA_2023_XA <- 0
 # rename columns
 clean_assessors <- clean_assessors %>%
   rename(TMK = PARID,              #new name = old name
-         #NEAR_VEG = NEAR_2021,
+         NEAR_VEG = NEAR__VEG,
          BuildingID = TARGET_FID,
          #CPR_PER_BLDG = Join_Count,
          BLDG_SQFT = GIS_SQFT,

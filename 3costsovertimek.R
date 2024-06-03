@@ -65,17 +65,17 @@ for (year in years) {
       apartments_col <- paste0("apartments_AO",seawall,"t",trigger)
       apt_rows <- clean_retreat_calcs[["apartment"]] ==1
       Retreat_Analysis[[apartments_col]][Retreat_Analysis$Years == year] <- 
-        ifelse(year==2023,n_distinct(clean_retreat_calcs$BuildingID[AO_matching_rows][apt_rows], na.rm = TRUE),0)
+        ifelse(year==2023,n_distinct(clean_retreat_calcs_apt$BuildingID[AO_matching_rows_apt], na.rm = TRUE),0)
       
       # Count the number of TB apartments in each year
       apartments_col <- paste0("apartments_TB",seawall,"t",trigger)
       Retreat_Analysis[[apartments_col]][Retreat_Analysis$Years == year] <- 
-        n_distinct(clean_retreat_calcs$BuildingID[TB_matching_rows][apt_rows], na.rm = TRUE)
+        n_distinct(clean_retreat_calcs_apt$BuildingID[TB_matching_rows_apt], na.rm = TRUE)
       
       # Count the number of RE apartments in each year
       apartments_col <- paste0("apartments_RE",seawall,"t",trigger)
       Retreat_Analysis[[apartments_col]][Retreat_Analysis$Years == year] <- 
-        n_distinct(clean_retreat_calcs$BuildingID[RE_matching_rows][apt_rows], na.rm = TRUE)
+        n_distinct(clean_retreat_calcs_apt$BuildingID[RE_matching_rows_apt], na.rm = TRUE)
       
       ### NUM OF SEAWALLS
       

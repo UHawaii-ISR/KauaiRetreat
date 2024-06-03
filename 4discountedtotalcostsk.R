@@ -363,8 +363,10 @@ for(trigger in triggers){
 for(trigger in triggers){
   for(seawall in seawalls){
     osds_col <- paste0("osdsremoval_AO",seawall,"t",trigger)
+    wastewater_col <- paste0("wastewaterremoval_AO",seawall,"t",trigger)
     
     Retreat_Analysis_Total[[osds_col]] <- sum(Retreat_Analysis[osds_col])
+    Retreat_Analysis_Total[[wastewater_col]] <- sum(Retreat_Analysis[wastewater_col])
   }
 }
 
@@ -374,6 +376,7 @@ for(scenario in scenarios){
   for(trigger in triggers){
     for(seawall in seawalls){
       osds_col <- paste0("osdsremoval_",scenario,seawall,"t",trigger)
+      wastewater_col <- paste0("wastewaterremoval_",scenario,seawall,"t",trigger)
       
       # Calculate the discounted clean-up costs for each year
       discounted_osds_costs <- sapply(years, function(year) {
@@ -383,19 +386,28 @@ for(scenario in scenarios){
         # Calculate the low end and high end of the range of discounted clean-up costs
         osds <- Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] / discount_rate
       })
+      discounted_water_costs <- sapply(years, function(year) {
+        # Retrieve the discount rate for the current year from DiscountRate26 data frame
+        discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+        
+        # Calculate the low end and high end of the range of discounted clean-up costs
+        water <- Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] / discount_rate
+      })
       
       # Sum up all discounted demolition costs
       total_discounted_osds_costs <- sum(discounted_osds_costs)  
+      total_discounted_water_costs <- sum(discounted_water_costs)  
       
       # add to dataframe
       Retreat_Analysis_Total[[osds_col]] <- total_discounted_osds_costs
+      Retreat_Analysis_Total[[wastewater_col]] <- total_discounted_water_costs
+      
     }
   }
 }
 
 
 # Infrastructure & Seawall Retreat Cost 
-infrastructure_total <- data.frame(init = c(NA))
 
 #AO
 for(trigger in triggers){
@@ -403,9 +415,27 @@ for(trigger in triggers){
     for(rdr in rdret){
       seawall_col <- paste0("seawall_AO",seawall,trigger)
       infrastructure_col <- paste0("infrastructure_AO",seawall,trigger,"_rdr",rdr)
+      b_reloc_col <- paste0("bridgerelocateAO",seawall,trigger,"_rdr",rdr)
+      b_retrofit_col <- paste0("bridgeretrofitAO",seawall,trigger,"_rdr",rdr)
+      hwy_reloc_col <- paste0("hwyrelocateAO",seawall,trigger,"_rdr",rdr)
+      water_reloc_col <- paste0("waterrelocateAO",seawall,trigger,"_rdr",rdr)
+      emdom_col <- paste0("emdomAO",seawall,trigger,"_rdr",rdr)
+      hwy_riprap_col <- paste0("hwyriprapAO",seawall,trigger,"_rdr",rdr)
+      rd_remove_col <- paste0("rdremoveAO",seawall,trigger,"_rdr",rdr)
+      riprap_remove_col <- paste0("riprapremoveAO",seawall,trigger,"_rdr",rdr)
+      maintain_col <- paste0("maintainAO",seawall,trigger,"_rdr",rdr)
       
       Retreat_Analysis_Total[[seawall_col]] <- sum(Retreat_Analysis[seawall_col])
       Retreat_Analysis_Total[[infrastructure_col]] <- sum(Retreat_Analysis[infrastructure_col])
+      Retreat_Analysis_Total[[b_reloc_col]] <- sum(Retreat_Analysis[b_reloc_col])
+      Retreat_Analysis_Total[[b_retrofit_col]] <- sum(Retreat_Analysis[b_retrofit_col])
+      Retreat_Analysis_Total[[hwy_reloc_col]] <- sum(Retreat_Analysis[hwy_reloc_col])
+      Retreat_Analysis_Total[[water_reloc_col]] <- sum(Retreat_Analysis[water_reloc_col])
+      Retreat_Analysis_Total[[emdom_col]] <- sum(Retreat_Analysis[emdom_col])
+      Retreat_Analysis_Total[[hwy_riprap_col]] <- sum(Retreat_Analysis[hwy_riprap_col])
+      Retreat_Analysis_Total[[rd_remove_col]] <- sum(Retreat_Analysis[rd_remove_col])
+      Retreat_Analysis_Total[[riprap_remove_col]] <- sum(Retreat_Analysis[riprap_remove_col])
+      Retreat_Analysis_Total[[maintain_col]] <- sum(Retreat_Analysis[maintain_col])
     }
   }
 }
@@ -418,31 +448,35 @@ for(scenario in scenarios){
       for(rdr in rdret){
         seawall_col <- paste0("seawall_",scenario,seawall,trigger)
         infrastructure_col <- paste0("infrastructure_",scenario,seawall,trigger,"_rdr",rdr)
+        b_reloc_col <- paste0("bridgerelocate",scenario,seawall,trigger,"_rdr",rdr)
+        b_retrofit_col <- paste0("bridgeretrofit",scenario,seawall,trigger,"_rdr",rdr)
+        hwy_reloc_col <- paste0("hwyrelocate",scenario,seawall,trigger,"_rdr",rdr)
+        water_reloc_col <- paste0("waterrelocate",scenario,seawall,trigger,"_rdr",rdr)
+        emdom_col <- paste0("emdom",scenario,seawall,trigger,"_rdr",rdr)
+        hwy_riprap_col <- paste0("hwyriprap",scenario,seawall,trigger,"_rdr",rdr)
+        rd_remove_col <- paste0("rdremove",scenario,seawall,trigger,"_rdr",rdr)
+        riprap_remove_col <- paste0("riprapremove",scenario,seawall,trigger,"_rdr",rdr)
+        maintain_col <- paste0("maintain",scenario,seawall,trigger,"_rdr",rdr)
         
-        # Calculate the discounted costs for each year
-        discounted_seawall_costs <- sapply(years, function(year) {
-          # Retrieve the discount rate for the current year from DiscountRate26 data frame
-          discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
-          
-          # Calculate the sum discounted costs
-          seawall <- Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] / discount_rate
-        })
-        discounted_infra_costs <- sapply(years, function(year) {
-          # Retrieve the discount rate for the current year from DiscountRate26 data frame
-          discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
-          
-          # Calculate the sum discounted costs
-          infra <- Retreat_Analysis[[infrastructure_col]][Retreat_Analysis$Years == year] / discount_rate
-        })
-  
-        # Sum up all discounted demolition costs
-        total_discounted_seawall_costs <- sum(discounted_seawall_costs)  
-        total_discounted_infra_costs <- sum(discounted_infra_costs) 
+        columns <- c(seawall_col,infrastructure_col,b_reloc_col,b_retrofit_col,hwy_reloc_col,water_reloc_col,
+                     emdom_col,hwy_riprap_col,rd_remove_col,riprap_remove_col,maintain_col)
         
-        # add to dataframe
-        Retreat_Analysis_Total[[seawall_col]] <- total_discounted_seawall_costs
-        Retreat_Analysis_Total[[infrastructure_col]] <- total_discounted_infra_costs
-      
+        for(column in columns){
+          # Calculate the discounted costs for each year
+          discounted_costs <- sapply(years, function(year) {
+            # Retrieve the discount rate for the current year from DiscountRate26 data frame
+            discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+            
+            # Calculate the sum discounted costs
+            seawall <- Retreat_Analysis[[column]][Retreat_Analysis$Years == year] / discount_rate
+          })
+          
+          # Sum up all discounted demolition costs
+          total_discounted_costs <- sum(discounted_costs)
+          
+          # add to dataframe
+          Retreat_Analysis_Total[[column]] <- total_discounted_costs
+        }
       }
     }
   }
