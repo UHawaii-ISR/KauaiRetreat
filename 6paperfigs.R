@@ -2,16 +2,21 @@ library(ggplot2)
 library(ggpubr)
 library(ggrepel)
 
-#beach cost plot
-#TB total cost y axis
-#small bars = Littoral cell
-#big bars = district
 
 source("C:/Users/rsett/Documents/KauaiRetreat/1assessorsk.R")
 source("C:/Users/rsett/Documents/KauaiRetreat/1infrastructurek.R") #takes 15 min to run this code
 allisland <- clean_retreat_calcs
 allinfra <- infra_retreat
-beaches <- unique(allisland$LittrlCell) # 37 distinct 
+
+beachboundaries <- read.csv('F:/slr/kauai/kauai_retreat_code/cosmos_newb.csv')
+allisland <- allisland %>%
+  left_join(beachboundaries, by = c('LittrlCell'='Cosmos'))
+allinfra <- allinfra %>%
+  left_join(beachboundaries, by = c('LittrlCell'='Cosmos'))
+beaches <- unique(allisland$NewB) # 37 distinct #LittrlCell
+beaches <- beaches[!is.na(beaches)]
+
+#beach cost plot
 
 scen <- c('AO','TB','RE','AO','TB','RE')
 sw <- c('_','_','_','_','_','_')
@@ -22,17 +27,27 @@ road <- c('1','1','1','1','1','1')
 clean <- c(NA,NA,'hi',NA,NA,'hi') 
 
 #calculate cost per beach
-beachdf <- setNames(data.frame(matrix(ncol = 10, nrow = 0)), c('scenario','trigger','beach','district',
+beachdf <- setNames(data.frame(matrix(ncol = 17, nrow = 0)), c('scenario','trigger','beach','beachname','district',
                                                                 'land_dwelling_cost','ambiguous_cost','infrastructure_cost',
-                                                                'tax_revenue_loss','private_property_value_loss','total_cost'))
+                                                                'tax_revenue_loss','private_property_value_loss','total_cost',
+                                                               'average_value','average_value_cpr','number_buildings','number_apartments','number_CPR',
+                                                               'length_highway'))
 #calculate CE/PF per beach over time
 cepfbeach <- setNames(data.frame(matrix(ncol = 4, nrow = 0)), c('beach','year','trigger','area'))
 cepfhazard_types <- c('CE','PF')
 years <- c(2023,2026,2030,2040,2050,2062,2075,2087,2100)
 
 for(beach in beaches){
-  clean_retreat_calcs <- allisland[allisland$LittrlCell==beach,]
-  infra_retreat <- allinfra[allinfra$LittrlCell==beach,] 
+  clean_retreat_calcs <- allisland[allisland$NewB==beach,]  #LittrlCell
+  infra_retreat <- allinfra[allinfra$NewB==beach,] #LittrlCell
+  
+  #median home/cpr value calculation
+  houses <- subset(clean_retreat_calcs, Number_CPRbldg == 1) 
+  houses <- subset(houses, NEAR_CE32 == 0 | NEAR_PF32 == 0)
+  medhomeval <- apply(houses[c('APRTOTMKT')],2,median,na.rm=T)[[1]]
+  cprs <- subset(clean_retreat_calcs, Number_CPRbldg> 1)
+  cprs <- subset(cprs, NEAR_CE32 == 0 | NEAR_PF32 == 0)
+  medcprval <- apply(cprs[c('APRTOTMKT')],2,median,na.rm=T)[[1]]
   
   source("C:/Users/rsett/Documents/KauaiRetreat/2retreatyearvaluetaxk.R")
   source("C:/Users/rsett/Documents/KauaiRetreat/3costsovertimek.R")
@@ -49,11 +64,17 @@ for(beach in beaches){
     infra_col <- paste0("infrastructure_",scen[i],sw[i],trig[i],"_rdr",road[i])
     taxrevloss_col <- paste0("Total_TaxRev_Loss_",scen[i],sw[i],"t",trig[i],"_l",land[i],"_bv",build[i])
     privproploss_col <- paste0("Priv_Prop_Loss_",scen[i],sw[i],"t",trig[i],"_l",land[i],"_bv",build[i])
+    buildings_col <- paste0('buildings_',scen[i],sw[i],"t",trig[i])
+    apartments_col <- paste0("apartments_",scen[i],sw[i],"t",trig[i])
+    CPRunits_col <- paste0("CPRunits_",scen[i],sw[i],"t",trig[i])
+    hwylength_col <- paste0("hwylength",scen[i],sw[i],trig[i],"_rdr",road[i])
     
     beachdistricts <- unique(infra_retreat$district)
     beachdistricts <- beachdistricts[!is.na(beachdistricts)]
+    beachname <- unique(infra_retreat$Hawaiian.Name)
+    beachname <- beachname[!is.na(beachname)]
     
-    beachdf[nrow(beachdf) + 1,] = c(scenario = scen[i], trigger = trig[i],beach = beach, district = toString(beachdistricts),
+    beachdf[nrow(beachdf) + 1,] = c(scenario = scen[i], trigger = trig[i],beach = beach, beachname = toString(beachname), district = toString(beachdistricts),
                                       land_dwelling_cost = ifelse(is.na(clean[i]),
                                                                   sum(Retreat_Analysis_Total[[totalval_col]],Retreat_Analysis_Total[[demo_col]],Retreat_Analysis_Total[[seawall_col]],
                                                                       Retreat_Analysis_Total[[osds_col]],Retreat_Analysis_Total[[wastewater_col]],na.rm=T),
@@ -63,7 +84,10 @@ for(beach in beaches){
                                       infrastructure_cost = Retreat_Analysis_Total[[infra_col]],
                                       tax_revenue_loss = Retreat_Analysis_Total[[taxrevloss_col]],
                                       private_property_value_loss = Retreat_Analysis_Total[[privproploss_col]],
-                                      total_cost = NA)
+                                      total_cost = NA, median_value = medhomeval, median_value_cpr = medcprval,
+                                    number_buildings = Retreat_Analysis_Total[[buildings_col]],number_apartments = Retreat_Analysis_Total[[apartments_col]],
+                                    number_CPR = Retreat_Analysis_Total[[CPRunits_col]],length_highway = Retreat_Analysis_Total[[hwylength_col]]
+                                    )
     
   }
   
@@ -82,9 +106,9 @@ for(beach in beaches){
   }
 }
 
-beachdf[, 5:9] <- apply(beachdf[, 5:9], 2, function(x) as.numeric(as.character(x)))
+beachdf[, 6:10] <- apply(beachdf[, 6:10], 2, function(x) as.numeric(as.character(x)))
 beachdf[, 3] <- as.numeric(beachdf$beach)
-beachdf$total_cost <- rowSums(beachdf[5:9])
+beachdf$total_cost <- rowSums(beachdf[6:10])
 beachdf$residential_cost <- beachdf$total_cost - beachdf$infrastructure_cost
 
 #keep only most-prevalent hazard costs
@@ -188,7 +212,9 @@ figcepf + geom_line(data=cepfbeachdf[cepfbeachdf$beach %in% beachegce,], color='
 
 
 
-
+#export tables
+write.csv(cepfbeach,'cepfbeach.csv')
+write.csv(beachdf,'beachdf.csv')
 
 
 

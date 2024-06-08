@@ -28,11 +28,20 @@ for(scenario in scenarios){
   }
   for(seawall in seawalls){
     for(trigger in triggers){
+      apartments_col <- paste0("apartments_",scenario,seawall,"t",trigger)
       buildings_col <- paste0("buildings_",scenario,seawall,"t",trigger)
+      CPRunits_col <- paste0("CPRunits_",scenario,seawall,"t",trigger)
       parcel_col <- paste0("parcels8_",scenario,seawall,"t",trigger)
       
+      Retreat_Analysis_Total[[apartments_col]] <- sum(Retreat_Analysis[apartments_col],na.rm=T)
       Retreat_Analysis_Total[[buildings_col]] <- sum(Retreat_Analysis[buildings_col],na.rm=T)
+      Retreat_Analysis_Total[[CPRunits_col]] <- sum(Retreat_Analysis[CPRunits_col],na.rm=T)
       Retreat_Analysis_Total[[parcel_col]] <- sum(Retreat_Analysis[parcel_col],na.rm=T)
+      for(rdr in rdret){
+        hwylength_col <- paste0("hwylength",scenario,seawall,trigger,"_rdr",rdr)
+        
+        Retreat_Analysis_Total[[hwylength_col]] <- sum(Retreat_Analysis[parcel_col],na.rm=T)
+      }
     }
   }
 }

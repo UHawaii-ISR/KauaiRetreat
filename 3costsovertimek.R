@@ -77,6 +77,20 @@ for (year in years) {
       Retreat_Analysis[[apartments_col]][Retreat_Analysis$Years == year] <- 
         n_distinct(clean_retreat_calcs_apt$BuildingID[RE_matching_rows_apt], na.rm = TRUE)
       
+      ### NUM OF CPR UNITS
+      
+      CPRunits_col <- paste0("CPRunits_AO",seawall,"t",trigger)
+      Retreat_Analysis[[CPRunits_col]][Retreat_Analysis$Years == year] <- 
+        ifelse(year==2023,sum(clean_retreat_calcs_apt$Number_CPRbldg[AO_matching_rows_apt], na.rm = TRUE),0)
+      
+      CPRunits_col <- paste0("CPRunits_TB",seawall,"t",trigger)
+      Retreat_Analysis[[CPRunits_col]][Retreat_Analysis$Years == year] <- 
+        sum(clean_retreat_calcs_apt$Number_CPRbldg[TB_matching_rows_apt], na.rm = TRUE)
+
+      CPRunits_col <- paste0("CPRunits_RE",seawall,"t",trigger)
+      Retreat_Analysis[[CPRunits_col]][Retreat_Analysis$Years == year] <- 
+        sum(clean_retreat_calcs_apt$Number_CPRbldg[RE_matching_rows_apt], na.rm = TRUE)
+      
       ### NUM OF SEAWALLS
       
       #Count the number of AO seawalls (in 2023)
