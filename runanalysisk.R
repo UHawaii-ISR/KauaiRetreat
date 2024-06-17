@@ -3,13 +3,13 @@
 #tell R where your files are
 workdir <- "F:/slr/kauai/kauai_retreat_code/" # your working directory
 assessorsfile <- "F:/slr/kauai/2023_Real_Property_Tax_Data" #original assessors file (used to calculate eminent domain)
-noncprshpfolder <- "F:/slr/kauai/Bldg_Footprints" #the folder where non-CPR bldg footprint shapefile is
+noncprshpfolder <- "F:/slr/kauai/CosmosTiff" #the folder where non-CPR bldg footprint shapefile is
 noncprshplayer <- "Buildings_XA_nonCPR" # "Buildings_XA" #layer name for non-CPR bldg footprint shapefile
-cprshpfolder <- "F:/slr/kauai/Bldg_Footprints" #the folder for CPR bldg ftprt shapefile
-cprshplayer <- "Buildings_XA_CPR_1" # "Buildings_XA_CPR"# layer name for CPR bldg ftprt shapefile
+cprshpfolder <- "F:/slr/kauai/CosmosTiff" #the folder for CPR bldg ftprt shapefile
+cprshplayer <- "Buildings_XA_CPR" # "Buildings_XA_CPR"# layer name for CPR bldg ftprt shapefile
 osdsfile <- "F:/slr/kauai/OSDSv6_Exploded_ALL.csv" #the osds file
 seawallfile <- "F:/slr/kauai/TMK_realign_seawalls" #the folder with seawall shapefile
-infrastructurefolder <- "F:/slr/kauai/Alanui" #the folder that has all of the infrastructure hazard files
+infrastructurefolder <- "F:/slr/kauai/CosmosTiff" #the folder that has all of the infrastructure hazard files
 emdomfile <- "F:/slr/kauai/slrxa-adj" #folder with only parcels that are SLRXA-adjacent
 
 
@@ -64,15 +64,15 @@ miniscenarios <- c('AO_tCE_lfull_bv1_rdr1',#'AO_tCE_lfull_bv1_rdr0',
 source("C:/Users/rsett/Documents/KauaiRetreat/5figuresk.R")
 
 #view figures of interest
-print(fig3) #all scenarios
 print(fig3mini) #just scenarios of interest to kauai
 print(fig4)
 print(figpie)
-#print(resmini)
-#print(fig4res)
-#print(fig4infra)
-#print(fig4resinfra)
-#print(figinfra)
+
+ggsave('fig3_kauai.png',bg='white',fig3mini,width=7,height=5,dpi=300,units='in')
+ggsave('fig4_kauai.png', fig4, bg='transparent',width=6,height=6.5,dpi=300,units='in')
+ggsave('treemap_kauai.png', figpie, bg='transparent',width=8.5,height=4.5,dpi=300,units='in')
+write.csv(tm,'treemap_kauai.csv')
+
 
 #save tables as csv
 write.csv(Retreat_Analysis, paste0("Retreat_Analysis_",titlename,".csv"),row.names=F)

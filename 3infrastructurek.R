@@ -120,7 +120,7 @@ for (year in years) {
           infra_costtime[[rd_remove_col]][infra_costtime$Years == year] <- sum(subdf$remove_rd,na.rm=T)*road_remove
           infra_costtime[[riprap_remove_col]][infra_costtime$Years == year] <- sum(subdf$removeriprap_rd,subdf$removeriprap_hwy,na.rm=T)*riprap_remove
           infra_costtime[[maintain_col]][infra_costtime$Years == year] <- sum(subdf$maintain_hwy,na.rm=T)*maintain
-          infra_costtime[[hwylength_col]][infra_costtime$Years == year] <- sum(subdf$relocate_hwy,na.rm=T)+sum(subdf$riprap_hwy,na.rm=T)
+          infra_costtime[[hwylength_col]][infra_costtime$Years == year] <- sum(subdf$relocate_hwy,na.rm=T) #+sum(subdf$riprap_hwy,na.rm=T)
           
         }
         

@@ -40,7 +40,7 @@ for(scenario in scenarios){
       for(rdr in rdret){
         hwylength_col <- paste0("hwylength",scenario,seawall,trigger,"_rdr",rdr)
         
-        Retreat_Analysis_Total[[hwylength_col]] <- sum(Retreat_Analysis[parcel_col],na.rm=T)
+        Retreat_Analysis_Total[[hwylength_col]] <- sum(Retreat_Analysis[hwylength_col],na.rm=T)
       }
     }
   }

@@ -110,7 +110,7 @@ infrasdf <- as.data.frame(infrashp)
 infrasdf$id <- ifelse(infrasdf$Has_HWY == 0,paste("r", infrasdf$id, sep=""),infrasdf$id)
 infrasdf$id <- ifelse(infrasdf$Has_HWY == 4,paste("rr", infrasdf$id, sep=""),infrasdf$id)
 infrasdf$id <- ifelse(infrasdf$Has_HWY == 5,paste("rb", infrasdf$id, sep=""),infrasdf$id)
-infracomm <- infrasdf[c('id','ahupuaa','moku',"devplan_","devplan_id","district",'LittrlCell','Community',"dp","ballottype")] 
+infracomm <- infrasdf[c('id','ahupuaa','moku',"devplan_","devplan_id","district",'LittrlCell','NewB','Community',"dp","ballottype")] 
 infracomm <- infracomm[!duplicated(infracomm[,c('id')]),] #warning: if there are multiple communities for a given ID, this ignores that and picks the first row
 infrademo <- left_join(infrademo,infracomm,by=c('ID' = 'id'))
 
@@ -119,7 +119,7 @@ infrasdf <- as.data.frame(infrashp)
 infrasdf$id <- ifelse(infrasdf$Has_HWY == 0,paste("r", infrasdf$id, sep=""),infrasdf$id)
 infrasdf$id <- ifelse(infrasdf$Has_HWY == 4,paste("rr", infrasdf$id, sep=""),infrasdf$id)
 infrasdf$id <- ifelse(infrasdf$Has_HWY == 5,paste("rb", infrasdf$id, sep=""),infrasdf$id)
-infracomm <- infrasdf[c('id','ahupuaa','moku',"devplan_","devplan_id","district",'LittrlCell','Community',"dp","ballottype")] 
+infracomm <- infrasdf[c('id','ahupuaa','moku',"devplan_","devplan_id","district",'LittrlCell','NewB','Community',"dp","ballottype")] 
 infracomm <- infracomm[!duplicated(infracomm[,c('id')]),] #warning: if there are multiple communities for a given ID, this ignores that and picks the first row
 names(infracomm)[1] <- 'ID'
 infrademo <- rows_update(infrademo,infracomm,by='ID')
@@ -129,19 +129,19 @@ infrademo <- rows_update(infrademo,infracomm,by='ID')
 
 #calculate infrastructure affected over time
 infra_retreat <- infrademo %>%
-  select(ID,Community,LittrlCell,district, 
+  select(ID,Community,LittrlCell,NewB,district, 
          starts_with("hwy_"), starts_with("b_"), starts_with("rd_"),starts_with("rdretreat_"),
          starts_with("rdbretreat_"),starts_with("seawall")) %>%
-  pivot_longer(cols = -c(ID,Community,LittrlCell,district), names_to = c(".value", "Trigger","Year", "Scenario"), names_sep = "_") %>%
+  pivot_longer(cols = -c(ID,Community,LittrlCell,NewB,district), names_to = c(".value", "Trigger","Year", "Scenario"), names_sep = "_") %>%
   mutate(Scenario = ifelse(grepl("b$", Scenario), "TB", "RE"),
          Year = as.numeric(gsub("hwy_|b_|rd_", "", Year))
   ) %>%
-  arrange(Community,LittrlCell,district,ID, Scenario, Year) %>%
-  group_by(Community,LittrlCell,district,ID, Scenario) 
+  arrange(Community,LittrlCell,NewB,district,ID, Scenario, Year) %>%
+  group_by(Community,LittrlCell,NewB,district,ID, Scenario) 
 
 #add veg values to trigger values
 infra_retreat <- infra_retreat %>%
-  group_by(ID, Community,LittrlCell,district, Trigger, Scenario) %>%
+  group_by(ID, Community,LittrlCell,NewB,district, Trigger, Scenario) %>%
   mutate(
     hwy = ifelse(Year == 2023, hwy, sum(hwy[Year == 2023], na.rm = TRUE) + ifelse(is.na(hwy), 0, hwy)),
     b = ifelse(Year == 2023, b, sum(b[Year == 2023], na.rm = TRUE) + ifelse(is.na(b), 0, b)),
@@ -304,6 +304,7 @@ for(id in infraIDs){
           infracommunity <- subdf$Community[1]
           infralittrlcell <- subdf$LittrlCell[1]
           infradistrict <- subdf$district[1]
+          infrabeach <- subdf$NewB[1]
           
           ao_relocate_hwy <- ao_hwy 
           ao_relocate_b <- ao_b
@@ -311,7 +312,7 @@ for(id in infraIDs){
           
           infra_retreat <- infra_retreat %>%
             ungroup() %>%
-            add_row(ID=id,Community=infracommunity,LittrlCell=infralittrlcell,district=infradistrict,
+            add_row(ID=id,Community=infracommunity,LittrlCell=infralittrlcell,district=infradistrict,NewB=infrabeach,
                     Trigger = trigger,Year=2023,Scenario='AO',rdret = rdr,retreatyr=2023,relocate_hwy=ao_relocate_hwy,
                     relocate_b=ao_relocate_b,remove_rd=ao_remove_rd,
                     removeriprap_hwy=ao_removeriprap_hwy,removeriprap_rd=NA) %>% 

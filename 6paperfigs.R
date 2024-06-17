@@ -1,6 +1,7 @@
 library(ggplot2)
 library(ggpubr)
 library(ggrepel)
+library(dplyr)
 
 
 source("C:/Users/rsett/Documents/KauaiRetreat/1assessorsk.R")
@@ -8,26 +9,30 @@ source("C:/Users/rsett/Documents/KauaiRetreat/1infrastructurek.R") #takes 15 min
 allisland <- clean_retreat_calcs
 allinfra <- infra_retreat
 
-beachboundaries <- read.csv('F:/slr/kauai/kauai_retreat_code/cosmos_newb.csv')
-allisland <- allisland %>%
-  left_join(beachboundaries, by = c('LittrlCell'='Cosmos'))
-allinfra <- allinfra %>%
-  left_join(beachboundaries, by = c('LittrlCell'='Cosmos'))
-beaches <- unique(allisland$NewB) # 37 distinct #LittrlCell
-beaches <- beaches[!is.na(beaches)]
+# beachboundaries <- read.csv('F:/slr/kauai/kauai_retreat_code/cosmos_newb.csv')
+# allisland <- allisland %>%
+#   left_join(beachboundaries, by = c('LittrlCell'='Cosmos'))
+# allinfra <- allinfra %>%
+#   left_join(beachboundaries, by = c('LittrlCell'='Cosmos'))
+#tmkbeaches <- unique(allisland$NewB) 
+#infrabeaches <- unique(allinfra$NewB)
+#beaches <- c(tmkbeaches,infrabeaches)
+beaches <- c(1:40)
+# beaches <- unique(beaches)
+# beaches <- beaches[!is.na(beaches)]
 
 #beach cost plot
 
-scen <- c('AO','TB','RE','AO','TB','RE')
-sw <- c('_','_','_','_','_','_')
-trig <- c('CE','CE','CE','PF','PF','PF')
-land <- c('full','CE','CE','full','PF','PF')
-build <- c('1','1','0','1','1','0')
-road <- c('1','1','1','1','1','1')
-clean <- c(NA,NA,'hi',NA,NA,'hi') 
+scen <- c('AO','TB','RE')
+sw <- c('_','_','_')
+trig <- c('CE','CE','CE')
+land <- c('full','CE','CE')
+build <- c('1','1','0')
+road <- c('1','1','1')
+clean <- c(NA,NA,'hi') 
 
 #calculate cost per beach
-beachdf <- setNames(data.frame(matrix(ncol = 17, nrow = 0)), c('scenario','trigger','beach','beachname','district',
+beachdf <- setNames(data.frame(matrix(ncol = 16, nrow = 0)), c('scenario','trigger','beach','district',
                                                                 'land_dwelling_cost','ambiguous_cost','infrastructure_cost',
                                                                 'tax_revenue_loss','private_property_value_loss','total_cost',
                                                                'average_value','average_value_cpr','number_buildings','number_apartments','number_CPR',
@@ -54,7 +59,7 @@ for(beach in beaches){
   source("C:/Users/rsett/Documents/KauaiRetreat/3infrastructurek.R") 
   source("C:/Users/rsett/Documents/KauaiRetreat/4discountedtotalcostsk.R")
   
-  for(i in 1:6){
+  for(i in 1:3){
     totalval_col <- paste0("Total_Value_",scen[i],sw[i],"t",trig[i],"_l",land[i],"_bv",build[i])
     demo_col <- paste0("demolition_",scen[i],sw[i],"t",trig[i])
     osds_col <- paste0("osdsremoval_",scen[i],sw[i],"t",trig[i])
@@ -71,10 +76,8 @@ for(beach in beaches){
     
     beachdistricts <- unique(infra_retreat$district)
     beachdistricts <- beachdistricts[!is.na(beachdistricts)]
-    beachname <- unique(infra_retreat$Hawaiian.Name)
-    beachname <- beachname[!is.na(beachname)]
     
-    beachdf[nrow(beachdf) + 1,] = c(scenario = scen[i], trigger = trig[i],beach = beach, beachname = toString(beachname), district = toString(beachdistricts),
+    beachdf[nrow(beachdf) + 1,] = c(scenario = scen[i], trigger = trig[i],beach = beach,district = toString(beachdistricts),
                                       land_dwelling_cost = ifelse(is.na(clean[i]),
                                                                   sum(Retreat_Analysis_Total[[totalval_col]],Retreat_Analysis_Total[[demo_col]],Retreat_Analysis_Total[[seawall_col]],
                                                                       Retreat_Analysis_Total[[osds_col]],Retreat_Analysis_Total[[wastewater_col]],na.rm=T),
@@ -106,17 +109,24 @@ for(beach in beaches){
   }
 }
 
-beachdf[, 6:10] <- apply(beachdf[, 6:10], 2, function(x) as.numeric(as.character(x)))
+beachdf[, 5:9] <- apply(beachdf[, 5:9], 2, function(x) as.numeric(as.character(x)))
 beachdf[, 3] <- as.numeric(beachdf$beach)
-beachdf$total_cost <- rowSums(beachdf[6:10])
+beachdf$total_cost <- rowSums(beachdf[5:9])
 beachdf$residential_cost <- beachdf$total_cost - beachdf$infrastructure_cost
 
 #keep only most-prevalent hazard costs
-beachesdf <- beachdf %>%
-  group_by(scenario, beach) %>%
-  filter(total_cost == max(total_cost))
+# beachesdf <- beachdf %>%
+#   group_by(scenario, beach) %>%
+#   filter(total_cost == max(total_cost))
 #remove '0' beaches
-beachesdf <- beachesdf[beachesdf$beach != 0,]
+beachesdf <- beachdf[beachdf$beach != 0,]
+
+#calculate cost per beach length
+beachlengthdf <- read.csv('F:/slr/kauai/CosmosTiff/Cosmos_to_Tiff.csv')
+beachlengthdf = beachlengthdf[!duplicated(beachlengthdf$NewB),] #get rid of duplicates in NewB column
+beachesdf <- beachesdf %>%
+     left_join(beachlengthdf, by = c('beach' ='NewB'))
+beachesdf$costperlength <- beachesdf$total_cost / beachesdf$Len_m
 
 # A: total cost
 figbeachA <- ggplot(beachesdf, aes(y=total_cost, x=factor(beach))) + 
@@ -139,11 +149,17 @@ figbeachC <- ggplot(beachesdf, aes(y=residential_cost, x=factor(beach))) +
   xlab('beach ID')+
   ylab('residential cost')+
   theme_minimal() 
-#ADD D: Cost per beach length (standardized)
+#D: Cost per beach length (standardized)
+figbeachD <- ggplot(beachesdf, aes(y=costperlength, x=factor(beach))) + 
+  geom_bar(stat='identity',position='dodge')+
+  facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
+  xlab('beach ID')+
+  ylab('cost per length (m)')+
+  theme_minimal() 
   
-figbeach <- ggarrange(figbeachA,figbeachB,figbeachC,
-                  labels=c("A","B","C"),
-                  ncol=1,nrow=3,
+figbeach <- ggarrange(figbeachA,figbeachB,figbeachC,figbeachD,
+                  labels=c("A","B","C","D"),
+                  ncol=1,nrow=4,
                   align="v")
 
 
@@ -152,56 +168,224 @@ figbeach <- ggarrange(figbeachA,figbeachB,figbeachC,
 
 
 # spike plot
-figspike <- ggplot(beachesdf, aes(y=total_cost, x=factor(beach))) + 
+
+#prep df
+beachspike <- beachesdf[beachesdf$scenario =='TB',] #plot only TB
+empty_bar <- 7
+to_add <- matrix(NA, empty_bar, ncol(beachspike))
+colnames(to_add) <- colnames(beachspike)
+beachspike <- rbind(beachspike, to_add)
+beachspike <- beachspike %>% bind_rows(slice(., 1:3)) %>% slice(-(1:3))
+beachspike$id <- seq(1, nrow(beachspike))
+beachspike$district <- ifelse(beachspike$beach %in% 1:10, 'North Shore Kauai',
+                              ifelse(beachspike$beach %in% 11:17, 'Kapaa-Wailua',
+                                     ifelse(beachspike$beach %in% 18:21,'Lihue',
+                                            ifelse(beachspike$beach %in% 22:27,'Koloa-Poipu',
+                                                   ifelse(beachspike$beach %in% 28:30,'Hanapepe-Eleele',
+                                                          ifelse(beachspike$beach %in% 31:40,'Waimea-Kekaha',NA))))))
+label_data <- beachspike
+number_of_bar <- nrow(label_data)
+angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar  
+label_data$hjust <- ifelse( angle < -90, 1, 0)
+label_data$angle <- ifelse(angle < -90, angle+180, angle)
+
+
+figspike <- ggplot(beachspike, aes(y=costperlength, x=factor(id),fill=district)) + 
   geom_bar(stat='identity',position='dodge')+
   xlab('beach ID')+
   ylab('total cost')+
   theme_minimal() +
   theme(
+    plot.background = element_rect(fill='transparent', color=NA),
     axis.title=element_blank(),
     axis.text=element_blank(),
-    panel.grid=element_blank()
+    panel.grid=element_blank(),
+    panel.border = element_blank(),
+    legend.position='none'
   )+
   coord_polar(start=0)+
-  ylim(-1000000000,max(beachesdf$total_cost)) + #negative space for inner circle
-  facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
-  geom_text(aes(label=beach, vjust=1))
-
+  ylim(-500000,max(beachspike$costperlength)) + #negative space for inner circle
+  #facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
+  geom_text(data=label_data,aes(x=id,y=costperlength+10000,label=Hawaiian.Name,hjust=hjust),angle= label_data$angle)
+ggsave('figspike.png', figspike, bg='transparent',width=5,height=5,dpi=300,units='in')
 #add coloring by category
+#spotlights: kekaha (34), wailua (17), moloaa (11), poipu (24), haena (1)
 
 
 
 
 
+#spike spotlights
+#kekaha (34)
+spotlt_kekaha <- beachspike[beachspike$beach ==34,]
+spotlt_kekaha <- spotlt_kekaha[!is.na(spotlt_kekaha$beach),]
+spotlt_kekaha <- setNames(as.data.frame(t(spotlt_kekaha[-1])), spotlt_kekaha[[1]])
+names(spotlt_kekaha) <- c('cost')
+spotlt_kekaha <- spotlt_kekaha %>% tibble::rownames_to_column(var = "costtype")
+beachname <- spotlt_kekaha$cost[spotlt_kekaha$costtype == 'Hawaiian.Name']
+spotlt_kekaha<- spotlt_kekaha[spotlt_kekaha$costtype %in% c('infrastructure_cost','residential_cost'),]
+spotlt_kekaha$Hawaiian.Name <- beachname
+figspotlt_kekaha <- ggplot(spotlt_kekaha,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
+  geom_bar(position='stack',stat='identity',width=0.7)+
+  scale_fill_manual(values=c('grey','grey43'))+
+  geom_text(aes(label=scales::comma(as.numeric(cost))),size = 3, position = position_stack(vjust = 0.5))+
+  scale_y_continuous(breaks=seq(0,1000000000,250000000),labels=scales::dollar_format(prefix='$',suffix='M',scale = 1e-6))+
+  theme_minimal() +
+  ylab('Cost')+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        legend.position="none")+
+  expand_limits(y = 1000000000)+
+  coord_flip()
+ggsave('figspotlt_kekaha.png', figspotlt_kekaha, bg='transparent',width=7.5,height=1,dpi=300,units='in')
+
+#wailua(17)
+spotlt_wailua <- beachspike[beachspike$beach ==17,]
+spotlt_wailua <- spotlt_wailua[!is.na(spotlt_wailua$beach),]
+spotlt_wailua <- setNames(as.data.frame(t(spotlt_wailua[-1])), spotlt_wailua[[1]])
+names(spotlt_wailua) <- c('cost')
+spotlt_wailua <- spotlt_wailua %>% tibble::rownames_to_column(var = "costtype")
+beachname <- spotlt_wailua$cost[spotlt_wailua$costtype == 'Hawaiian.Name']
+spotlt_wailua<- spotlt_wailua[spotlt_wailua$costtype %in% c('infrastructure_cost','residential_cost'),]
+spotlt_wailua$Hawaiian.Name <- beachname
+figspotlt_wailua <- ggplot(spotlt_wailua,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
+  geom_bar(position='stack',stat='identity',width=0.7)+
+  scale_fill_manual(values=c('grey','grey43'))+
+  geom_text_repel(aes(label=scales::comma(as.numeric(cost))),size = 3, position = position_stack(vjust = 0.5))+
+  scale_y_continuous(breaks=seq(0,1000000000,250000000),labels=scales::dollar_format(prefix='$',suffix='M',scale = 1e-6))+
+  theme_minimal() +
+  ylab('Cost')+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        legend.position="none")+
+  expand_limits(y = 1000000000)+
+  coord_flip()
+ggsave('figspotlt_wailua.png', figspotlt_wailua, bg='transparent',width=7.5,height=1,dpi=300,units='in')
+
+#moloaa (11)
+spotlt_moloaa <- beachspike[beachspike$beach ==11,]
+spotlt_moloaa <- spotlt_moloaa[!is.na(spotlt_moloaa$beach),]
+spotlt_moloaa <- setNames(as.data.frame(t(spotlt_moloaa[-1])), spotlt_moloaa[[1]])
+names(spotlt_moloaa) <- c('cost')
+spotlt_moloaa <- spotlt_moloaa %>% tibble::rownames_to_column(var = "costtype")
+beachname <- spotlt_moloaa$cost[spotlt_moloaa$costtype == 'Hawaiian.Name']
+spotlt_moloaa<- spotlt_moloaa[spotlt_moloaa$costtype %in% c('infrastructure_cost','residential_cost'),]
+spotlt_moloaa$Hawaiian.Name <- beachname
+figspotlt_moloaa <- ggplot(spotlt_moloaa,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
+  geom_bar(position='stack',stat='identity',width=0.7)+
+  scale_fill_manual(values=c('grey','grey43'))+
+  geom_text_repel(aes(label=scales::comma(as.numeric(cost))),size = 3, position = position_stack(vjust = 0.5))+
+  scale_y_continuous(breaks=seq(0,1000000000,250000000),labels=scales::dollar_format(prefix='$',suffix='M',scale = 1e-6))+
+  theme_minimal() +
+  ylab('Cost')+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        legend.position="none")+
+  expand_limits(y = 1000000000)+
+  coord_flip()
+ggsave('figspotlt_moloaa.png', figspotlt_moloaa, bg='transparent',width=7.5,height=1,dpi=300,units='in')
+
+#poipu (24)
+spotlt_poipu <- beachspike[beachspike$beach ==24,]
+spotlt_poipu <- spotlt_poipu[!is.na(spotlt_poipu$beach),]
+spotlt_poipu <- setNames(as.data.frame(t(spotlt_poipu[-1])), spotlt_poipu[[1]])
+names(spotlt_poipu) <- c('cost')
+spotlt_poipu <- spotlt_poipu %>% tibble::rownames_to_column(var = "costtype")
+beachname <- spotlt_poipu$cost[spotlt_poipu$costtype == 'Hawaiian.Name']
+spotlt_poipu<- spotlt_poipu[spotlt_poipu$costtype %in% c('infrastructure_cost','residential_cost'),]
+spotlt_poipu$Hawaiian.Name <- beachname
+figspotlt_poipu <- ggplot(spotlt_poipu,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
+  geom_bar(position='stack',stat='identity',width=0.7)+
+  scale_fill_manual(values=c('grey','grey43'))+
+  geom_text_repel(aes(label=scales::comma(as.numeric(cost))),size = 3, position = position_stack(vjust = 0.5))+
+  scale_y_continuous(breaks=seq(0,1000000000,250000000),labels=scales::dollar_format(prefix='$',suffix='M',scale = 1e-6))+
+  theme_minimal() +
+  ylab('Cost')+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        legend.position="none")+
+  expand_limits(y = 1000000000)+
+  coord_flip()
+ggsave('figspotlt_poipu.png', figspotlt_poipu, bg='transparent',width=7.5,height=1,dpi=300,units='in')
+
+#haena (1)
+spotlt_haena <- beachspike[beachspike$beach ==1,]
+spotlt_haena <- spotlt_haena[!is.na(spotlt_haena$beach),]
+spotlt_haena <- setNames(as.data.frame(t(spotlt_haena[-1])), spotlt_haena[[1]])
+names(spotlt_haena) <- c('cost')
+spotlt_haena <- spotlt_haena %>% tibble::rownames_to_column(var = "costtype")
+beachname <- spotlt_haena$cost[spotlt_haena$costtype == 'Hawaiian.Name']
+spotlt_haena<- spotlt_haena[spotlt_haena$costtype %in% c('infrastructure_cost','residential_cost'),]
+spotlt_haena$Hawaiian.Name <- beachname
+figspotlt_haena <- ggplot(spotlt_haena,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
+  geom_bar(position='stack',stat='identity',width=0.7)+
+  scale_fill_manual(values=c('grey','grey43'))+
+  geom_text_repel(aes(label=scales::comma(as.numeric(cost))),size = 3, position = position_stack(vjust = 0.5))+
+  scale_y_continuous(breaks=seq(0,1000000000,250000000),labels=scales::dollar_format(prefix='$',suffix='M',scale = 1e-6))+
+  theme_minimal() +
+  ylab('Cost')+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        legend.position="none")+
+  expand_limits(y = 1000000000)+
+  coord_flip()
+ggsave('figspotlt_haena.png', figspotlt_haena, bg='transparent',width=7.5,height=1,dpi=300,units='in')
+
+#anini (7)
+spotlt_anini <- beachspike[beachspike$beach ==7,]
+spotlt_anini <- spotlt_anini[!is.na(spotlt_anini$beach),]
+spotlt_anini <- setNames(as.data.frame(t(spotlt_anini[-1])), spotlt_anini[[1]])
+names(spotlt_anini) <- c('cost')
+spotlt_anini <- spotlt_anini %>% tibble::rownames_to_column(var = "costtype")
+beachname <- spotlt_anini$cost[spotlt_anini$costtype == 'Hawaiian.Name']
+spotlt_anini<- spotlt_anini[spotlt_anini$costtype %in% c('infrastructure_cost','residential_cost'),]
+spotlt_anini$Hawaiian.Name <- beachname
+figspotlt_anini <- ggplot(spotlt_anini,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
+  geom_bar(position='stack',stat='identity',width=0.7)+
+  scale_fill_manual(values=c('grey','grey43'))+
+  geom_text_repel(aes(label=scales::comma(as.numeric(cost))),size = 3, position = position_stack(vjust = 0.5))+
+  scale_y_continuous(breaks=seq(0,1000000000,250000000),labels=scales::dollar_format(prefix='$',suffix='M',scale = 1e-6))+
+  theme_minimal() +
+  ylab('Cost')+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        legend.position="none")+
+  expand_limits(y = 1000000000)+
+  coord_flip()
+ggsave('figspotlt_anini.png', figspotlt_anini, bg='transparent',width=7.5,height=1,dpi=300,units='in')
 
 
-# CE/PF over time plot
-beachesdf$combo <- paste0(beachesdf$beach,beachesdf$trigger)
-combos <- unique(beachesdf$combo) 
-cepfbeach$combo <- paste0(cepfbeach$beach,cepfbeach$trigger)
-cepfbeachdf <- cepfbeach %>%
-  filter(
-    combo %in% combos
-  )
+
+# CE over time plot
+# beachesdf$combo <- paste0(beachesdf$beach,beachesdf$trigger)
+# combos <- unique(beachesdf$combo) 
+# cepfbeach$combo <- paste0(cepfbeach$beach,cepfbeach$trigger)
+# cepfbeachdf <- cepfbeach %>%
+#   filter(
+#     combo %in% combos
+#   )
 cepfbeachdf$area <- as.numeric(cepfbeachdf$area)
 cepfbeachdf$year <- as.numeric(cepfbeachdf$year)
-beachegce <- c('41','80')
-beachegpf <- c('10')
-cepfbeachdf <- cepfbeachdf %>%
+beachegce <- c('1','7','11','17','24','34')
+cebeachdf <- cepfbeachdf[cepfbeachdf$trigger == 'CE',]
+cebeachdf <- cebeachdf %>%
   rowwise() %>%
-  mutate(label = case_when(beach %in% beachegce && year == 2100 ~ beach,
-                            beach %in% beachegpf && year == 2100 ~ beach))
+  mutate(label = case_when(beach %in% beachegce && year == 2100 ~ beach))
 
-figcepf <- ggplot(cepfbeachdf, aes(x=year,y=area,group=beach,color=trigger))+
+figcepf <- ggplot(cebeachdf, aes(x=year,y=area,group=beach))+
   geom_line(aes(color=trigger),alpha=0.5,linewidth=1)+
-  scale_color_manual(name="Hazard",labels=c("CE","PF"),
-                     values=c("#FADD21","#2E9FDF"))+ 
+  scale_color_manual(values=c("#FADD21"))+ 
   theme_bw()+
   scale_y_continuous(name=expression("Total area retreated "~(m^2)),labels = scales::comma)+
   xlab("Year")
 
-figcepf + geom_line(data=cepfbeachdf[cepfbeachdf$beach %in% beachegce,], color='#E7B800',linewidth=1.3)+
-  geom_line(data=cepfbeachdf[cepfbeachdf$beach %in% beachegpf,], color='#05A1FB',linewidth=1.3)+
+figcepf + geom_line(data=cebeachdf[cebeachdf$beach %in% beachegce,], color='#E7B800',linewidth=1.3)+
   geom_label_repel(aes(label=label),nudge_x = 1,na.rm=T,show.legend=F)
 
 
@@ -214,7 +398,7 @@ figcepf + geom_line(data=cepfbeachdf[cepfbeachdf$beach %in% beachegce,], color='
 
 #export tables
 write.csv(cepfbeach,'cepfbeach.csv')
-write.csv(beachdf,'beachdf.csv')
+write.csv(beachesdf,'beachdf.csv')
 
 
 

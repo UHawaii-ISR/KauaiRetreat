@@ -67,10 +67,10 @@ assessors$WASTEWATER[is.na(assessors$OSDS_QTY_calc)] <- 1
 
 # Clean assessor's data, only keep important columns. no issue with duplicate TMK in kauai data
 clean_assessors <- assessors[, c("PARID","COTMK","CPR_UNIT","TAXCLASS",
-                                 "Community","ahupuaa","moku","devplan_","LittrlCell","devplan_id","district","dp","ballottype",
+                                 "Community","ahupuaa","moku","devplan_","LittrlCell","devplan_id","district","dp","ballottype","NewB",
                                  "APRBLDGMKT","ASMTBLDG","APRLANDMKT","ASMTLAND",
                                  "APRTOTMKT","ASMTTOT","TOTEXEMPT","NETTAXABLE",
-                                 "TARGET_FID","GIS_SQFT","NEAR__VEG",
+                                 "TARGET_FID","GIS_SQFT","NEAR_VEG",
                                  "NEAR_CE05","NEAR_CE11","NEAR_CE20","NEAR_CE32",
                                  "NEAR_PF05","NEAR_PF11","NEAR_PF20","NEAR_PF32",
                                  "NEAR_WF05","NEAR_WF11","NEAR_WF20","NEAR_WF32",
@@ -92,7 +92,7 @@ clean_assessors$SA_2023_XA <- 0
 # rename columns
 clean_assessors <- clean_assessors %>%
   rename(TMK = PARID,              #new name = old name
-         NEAR_VEG = NEAR__VEG,
+         #NEAR_VEG = NEAR__VEG,
          BuildingID = TARGET_FID,
          #CPR_PER_BLDG = Join_Count,
          BLDG_SQFT = GIS_SQFT,
@@ -137,7 +137,8 @@ clean_assessors <- clean_assessors %>%
          (BLDG_SQFT > 300 & NEAR_VEG == min(NEAR_VEG)))
   ) %>%
   ungroup()
-
+#as an extra precaution, make sure there are no duplicates of TMK's that happen to have buildings equally far from veg
+clean_assessors = clean_assessors[!duplicated(clean_assessors$TMK),] 
 
 # Calculate current assessed tax revenue ($)
 

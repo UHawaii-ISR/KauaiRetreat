@@ -273,7 +273,6 @@ fig3mini <- ggplot(total_cost_mini, aes(fill=factor(costtype) ,y=valueMil, x=sub
 # add geom_errorbar(aes(ymax = yield + SE, ymin = yield - SE), position = dodge, width = 0.2)
 
 
-
 #plot of non-infrastructure costs
 res_cost_mini <- subset(total_cost_mini, costtype != 'Infrastructure retreat cost')
 resmini <- ggplot(res_cost_mini, aes(fill=factor(costtype) ,y=valueMil, x=subscenario)) + 
@@ -524,15 +523,15 @@ lpc_seg <- ggplot(costtime_mini,aes(x=year,y=cost,group=subscenario,color=scenar
   #geom_errorbar(aes(ymin = min.cost, ymax = max.cost), width = 0.9,alpha=0.4)+
   geom_point(shape=15,size=4)+
   theme_bw()+
-  scale_color_manual(name="Retreat approach",labels=c("AO","TB","RE"),
+  scale_color_manual(name="Retreat approach",labels=c("All-at-once","Threshold-based","Reactive"),
                      values=c("#75bf67", "#2E9FDF", "#FC4E07"))+ #,"#E7B800"
-  scale_y_continuous(name="Cumulative total cost ($2023, millions)",labels = label_number(scale = 1))+
+  scale_y_continuous(name="Cumulative total cost ($2023, millions)",labels = scales::label_number(scale = 1))+
   xlab("Year") 
 
 lpb <- ggplot(areatime_mini, aes(x=year,y=area, group=subscenario,color=scenario))+
   #geom_smooth(aes(color=retreat.scenario),linewidth=1.5,se=F)+
   geom_line(aes(color=scenario),linewidth=1.5)+
-  scale_color_manual(name="Retreat approach",labels=c("AO","TB","RE","CE","WF"),
+  scale_color_manual(name="Retreat approach",labels=c("All-at-once","Threshold-based","Reactive","Coastal erosion","Wave flooding"),
                      values=c("#75bf67", "#2E9FDF", "#FC4E07","grey","#E7B800"))+ 
   theme_bw()+
   scale_y_continuous(name=expression("Total area retreated "~(m^2)),labels = scales::comma)+
@@ -544,6 +543,7 @@ fig4 <- ggarrange(lpc_seg,lpb,
                   align="v")
 fig4 <- annotate_figure(fig4,top=text_grob(titlename))
 print(fig4)
+
 #export as pdf: 7in x 6in. remove duplicate legend. export pdf to image
 
 fig4res <- ggplot(costtimeres_mini,aes(x=year,y=cost,group=subscenario,color=scenario))+
@@ -667,10 +667,9 @@ figpie <- ggplot(tm,aes(area=cost,fill=group,
                              'Land and dwelling retreat public cost'='#658EF3','Infrastructure retreat cost'='#1953E3'),
                     limits = c('Private Property Value Loss','Ambiguous','Tax revenue loss','Land and dwelling retreat public cost','Infrastructure retreat cost')) + 
   ggtitle(paste0(titlename))+
-  facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
-  theme(legend.position="bottom",strip.text.x = element_text(size = 15),panel.spacing=unit(1,"lines"))
-
-
+  facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3,labeller = as_labeller( c('AO'='All-at-once','TB'='Threshold-based','RE'='Reactive'))) +
+  theme(legend.position="bottom",strip.text.x = element_text(size = 15),panel.spacing=unit(1,"lines"),legend.title=element_blank())
+print(figpie)
 
 
 
