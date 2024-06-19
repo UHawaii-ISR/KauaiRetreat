@@ -156,6 +156,9 @@ clean_assessors = clean_assessors[!duplicated(clean_assessors$TMK),]
 
 #remove TMK's that are not residential, but keep non-res those that are in CPR'd building with res
 
+#fix this specific row - beach park that is incorrectly labeled as 'residential investor'
+clean_assessors$TAXCLASS[clean_assessors$TMK == 180080430000] <- '6:CONSERVATION'
+
 #Filter TMK8 ending in 0000 general parcel. If residential, keep all CPR’s within
 #If CPR but no 0000 parcel, only keep those that are residential
 residential <- c("1:RESIDENTIAL", "2:VACATION RENTAL","8:HOMESTEAD","9:Residential Investor","10:Commercialized Home Use") 

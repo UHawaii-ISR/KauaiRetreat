@@ -39,6 +39,8 @@ beachdf <- setNames(data.frame(matrix(ncol = 16, nrow = 0)), c('scenario','trigg
                                                                'length_highway'))
 #calculate CE/PF per beach over time
 cepfbeach <- setNames(data.frame(matrix(ncol = 4, nrow = 0)), c('beach','year','trigger','area'))
+cepfparcel <- setNames(data.frame(matrix(ncol = 4, nrow = 0)), c('beach','year','trigger','numparcels'))
+cepfroad <- setNames(data.frame(matrix(ncol = 4, nrow = 0)), c('beach','year','trigger','lengthroad'))
 cepfhazard_types <- c('CE','PF')
 years <- c(2023,2026,2030,2040,2050,2062,2075,2087,2100)
 
@@ -95,16 +97,25 @@ for(beach in beaches){
   }
   
   #calculate erosion/passive flooding over time
-  for(i in 1:length(years)){
+  for(j in 1:length(years)){
     for(hazard_type in cepfhazard_types){
       areahazard_col <- paste0("areahazard_l",hazard_type)
-      year <- years[i]
-      prevyear <- years[i-1]
+      parcels_col <- paste0("parcelcpr_TB_t",hazard_type)
+      hwylength_col <- paste0("hwylengthTB_",hazard_type,"_rdr1")
+      
+      year <- years[j]
+      prevyear <- years[j-1]
       
       totalarea <- ifelse(year==2023,0,as.numeric(cepfbeach$area[cepfbeach$beach == beach & cepfbeach$trigger == hazard_type & cepfbeach$year == prevyear])) +
         Retreat_Analysis[[areahazard_col]][Retreat_Analysis$Years == year]
+      totalparcel <- ifelse(year==2023,0,as.numeric(cepfparcel$numparcels[cepfparcel$beach == beach & cepfparcel$trigger == hazard_type & cepfparcel$year == prevyear])) +
+        Retreat_Analysis[[parcels_col]][Retreat_Analysis$Years == year]
+      totalroad <- ifelse(year==2023,0,as.numeric(cepfroad$lengthroad[cepfroad$beach == beach & cepfroad$trigger == hazard_type & cepfroad$year == prevyear])) +
+        Retreat_Analysis[[hwylength_col]][Retreat_Analysis$Years == year]
       
       cepfbeach[nrow(cepfbeach) + 1,] = c(beach = beach,year = year,trigger = hazard_type, area = totalarea)
+      cepfparcel[nrow(cepfparcel) + 1,] = c(beach = beach,year = year,trigger = hazard_type, numparcels = totalparcel)
+      cepfroad[nrow(cepfroad) + 1,] = c(beach = beach,year = year,trigger = hazard_type, lengthroad = totalroad)
     }
   }
 }
@@ -120,6 +131,7 @@ beachdf$residential_cost <- beachdf$total_cost - beachdf$infrastructure_cost
 #   filter(total_cost == max(total_cost))
 #remove '0' beaches
 beachesdf <- beachdf[beachdf$beach != 0,]
+beachesdf <- beachesdf[beachesdf$trigger == 'CE',]
 
 #calculate cost per beach length
 beachlengthdf <- read.csv('F:/slr/kauai/CosmosTiff/Cosmos_to_Tiff.csv')
@@ -128,34 +140,51 @@ beachesdf <- beachesdf %>%
      left_join(beachlengthdf, by = c('beach' ='NewB'))
 beachesdf$costperlength <- beachesdf$total_cost / beachesdf$Len_m
 
+#categorize by residential type, color by infrastructure affected
+restype <- read.csv('F:/slr/kauai/CosmosTiff/beachrestype.csv')
+beachesdf <- beachesdf %>%
+  left_join(restype, by = c('beach' ='NewB'))
+beachesdf$ResType <- factor(beachesdf$ResType, levels=c('Non-Impacted Development','Infrastructure','Low-Density Residential',
+                                                        'Low-Density Residential and Resort','High-Density Residential and Resort','Resort'))
+
 # A: total cost
-figbeachA <- ggplot(beachesdf, aes(y=total_cost, x=factor(beach))) + 
+figbeachA <- ggplot(beachesdf, aes(y=total_cost, x=as.factor(beach))) + 
   geom_bar(stat='identity',position='dodge')+
-  facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
-  xlab('beach ID')+
-  ylab('total cost')+
-  theme_minimal() 
+  #facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
+  #facet_wrap(~ResType, strip.position = "bottom",scales='free_x',ncol=5,space='free_x')+
+  facet_grid(~ResType,space='free_x',scales='free_x',switch='both')+
+  xlab('Beach ID')+
+  ylab('Total cost')+
+  scale_y_continuous(label=comma)+
+  theme_classic() +
+  theme(strip.placement = "outside")
 # B: infrastructure cost
 figbeachB <- ggplot(beachesdf, aes(y=infrastructure_cost, x=factor(beach))) + 
   geom_bar(stat='identity',position='dodge')+
-  facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
-  xlab('beach ID')+
-  ylab('infrastructure cost')+
-  theme_minimal() 
+  #facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
+  facet_grid(~ResType,space='free_x',scales='free_x',switch='both')+
+  xlab('Beach ID')+
+  ylab('Infrastructure cost')+
+  scale_y_continuous(label=comma)+
+  theme_classic() 
 # C: residential cost
 figbeachC <- ggplot(beachesdf, aes(y=residential_cost, x=factor(beach))) + 
   geom_bar(stat='identity',position='dodge')+
-  facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
-  xlab('beach ID')+
-  ylab('residential cost')+
-  theme_minimal() 
+  #facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
+  facet_grid(~ResType,space='free_x',scales='free_x',switch='both')+
+  xlab('Beach ID')+
+  ylab('Residential cost')+
+  scale_y_continuous(label=comma)+
+  theme_classic() 
 #D: Cost per beach length (standardized)
 figbeachD <- ggplot(beachesdf, aes(y=costperlength, x=factor(beach))) + 
   geom_bar(stat='identity',position='dodge')+
-  facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
-  xlab('beach ID')+
-  ylab('cost per length (m)')+
-  theme_minimal() 
+  #facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
+  facet_grid(~ResType,space='free_x',scales='free_x',switch='both')+
+  xlab('Beach ID')+
+  ylab('Cost per length (m)')+
+  scale_y_continuous(label=comma)+
+  theme_classic() 
   
 figbeach <- ggarrange(figbeachA,figbeachB,figbeachC,figbeachD,
                   labels=c("A","B","C","D"),
@@ -206,7 +235,7 @@ figspike <- ggplot(beachspike, aes(y=costperlength, x=factor(id),fill=district))
   coord_polar(start=0)+
   ylim(-500000,max(beachspike$costperlength)) + #negative space for inner circle
   #facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
-  geom_text(data=label_data,aes(x=id,y=costperlength+10000,label=Hawaiian.Name,hjust=hjust),angle= label_data$angle)
+  geom_text(data=label_data,aes(x=id,y=costperlength+10000,label=Hawaiian.Name,hjust=hjust),angle= label_data$angle,size=3)
 ggsave('figspike.png', figspike, bg='transparent',width=5,height=5,dpi=300,units='in')
 #add coloring by category
 #spotlights: kekaha (34), wailua (17), moloaa (11), poipu (24), haena (1)
@@ -228,7 +257,7 @@ spotlt_kekaha$Hawaiian.Name <- beachname
 figspotlt_kekaha <- ggplot(spotlt_kekaha,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
   geom_bar(position='stack',stat='identity',width=0.7)+
   scale_fill_manual(values=c('grey','grey43'))+
-  geom_text(aes(label=scales::comma(as.numeric(cost))),size = 3, position = position_stack(vjust = 0.5))+
+  geom_text(aes(label=scales::comma(round(as.numeric(cost),-3))),size = 3, position = position_stack(vjust = 0.5))+
   scale_y_continuous(breaks=seq(0,1000000000,250000000),labels=scales::dollar_format(prefix='$',suffix='M',scale = 1e-6))+
   theme_minimal() +
   ylab('Cost')+
@@ -252,7 +281,7 @@ spotlt_wailua$Hawaiian.Name <- beachname
 figspotlt_wailua <- ggplot(spotlt_wailua,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
   geom_bar(position='stack',stat='identity',width=0.7)+
   scale_fill_manual(values=c('grey','grey43'))+
-  geom_text_repel(aes(label=scales::comma(as.numeric(cost))),size = 3, position = position_stack(vjust = 0.5))+
+  geom_text_repel(aes(label=scales::comma(round(as.numeric(cost),-3))),size = 3, position = position_stack(vjust = 0.5))+
   scale_y_continuous(breaks=seq(0,1000000000,250000000),labels=scales::dollar_format(prefix='$',suffix='M',scale = 1e-6))+
   theme_minimal() +
   ylab('Cost')+
@@ -276,7 +305,7 @@ spotlt_moloaa$Hawaiian.Name <- beachname
 figspotlt_moloaa <- ggplot(spotlt_moloaa,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
   geom_bar(position='stack',stat='identity',width=0.7)+
   scale_fill_manual(values=c('grey','grey43'))+
-  geom_text_repel(aes(label=scales::comma(as.numeric(cost))),size = 3, position = position_stack(vjust = 0.5))+
+  geom_text_repel(aes(label=scales::comma(round(as.numeric(cost),-3))),size = 3, position = position_stack(vjust = 0.5))+
   scale_y_continuous(breaks=seq(0,1000000000,250000000),labels=scales::dollar_format(prefix='$',suffix='M',scale = 1e-6))+
   theme_minimal() +
   ylab('Cost')+
@@ -300,7 +329,7 @@ spotlt_poipu$Hawaiian.Name <- beachname
 figspotlt_poipu <- ggplot(spotlt_poipu,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
   geom_bar(position='stack',stat='identity',width=0.7)+
   scale_fill_manual(values=c('grey','grey43'))+
-  geom_text_repel(aes(label=scales::comma(as.numeric(cost))),size = 3, position = position_stack(vjust = 0.5))+
+  geom_text_repel(aes(label=scales::comma(round(as.numeric(cost),-3))),size = 3, position = position_stack(vjust = 0.5))+
   scale_y_continuous(breaks=seq(0,1000000000,250000000),labels=scales::dollar_format(prefix='$',suffix='M',scale = 1e-6))+
   theme_minimal() +
   ylab('Cost')+
@@ -324,7 +353,7 @@ spotlt_haena$Hawaiian.Name <- beachname
 figspotlt_haena <- ggplot(spotlt_haena,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
   geom_bar(position='stack',stat='identity',width=0.7)+
   scale_fill_manual(values=c('grey','grey43'))+
-  geom_text_repel(aes(label=scales::comma(as.numeric(cost))),size = 3, position = position_stack(vjust = 0.5))+
+  geom_text_repel(aes(label=scales::comma(round(as.numeric(cost),-3))),size = 3, position = position_stack(vjust = 0.5))+
   scale_y_continuous(breaks=seq(0,1000000000,250000000),labels=scales::dollar_format(prefix='$',suffix='M',scale = 1e-6))+
   theme_minimal() +
   ylab('Cost')+
@@ -348,7 +377,7 @@ spotlt_anini$Hawaiian.Name <- beachname
 figspotlt_anini <- ggplot(spotlt_anini,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
   geom_bar(position='stack',stat='identity',width=0.7)+
   scale_fill_manual(values=c('grey','grey43'))+
-  geom_text_repel(aes(label=scales::comma(as.numeric(cost))),size = 3, position = position_stack(vjust = 0.5))+
+  geom_text_repel(aes(label=scales::comma(round(as.numeric(cost),-3))),size = 3, position = position_stack(vjust = 0.5))+
   scale_y_continuous(breaks=seq(0,1000000000,250000000),labels=scales::dollar_format(prefix='$',suffix='M',scale = 1e-6))+
   theme_minimal() +
   ylab('Cost')+
@@ -360,6 +389,22 @@ figspotlt_anini <- ggplot(spotlt_anini,aes(x=Hawaiian.Name, y=as.numeric(cost),f
   coord_flip()
 ggsave('figspotlt_anini.png', figspotlt_anini, bg='transparent',width=7.5,height=1,dpi=300,units='in')
 
+#legend
+figspotlt_legend <- ggplot(spotlt_anini,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
+  geom_bar(position='stack',stat='identity',width=0.7)+
+  scale_fill_manual(values=c('grey','grey43'),labels=c('Infrastructure cost','Residential cost'))+
+  geom_text_repel(aes(label=scales::comma(round(as.numeric(cost),-3))),size = 3, position = position_stack(vjust = 0.5))+
+  scale_y_continuous(breaks=seq(0,1000000000,250000000),labels=scales::dollar_format(prefix='$',suffix='M',scale = 1e-6))+
+  theme_minimal() +
+  ylab('Cost')+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        legend.title=element_blank())+
+  expand_limits(y = 1000000000)
+legend <- cowplot::get_legend(figspotlt_legend)
+grid.newpage()
+grid.draw(legend)
 
 
 # CE over time plot
@@ -370,23 +415,58 @@ ggsave('figspotlt_anini.png', figspotlt_anini, bg='transparent',width=7.5,height
 #   filter(
 #     combo %in% combos
 #   )
-cepfbeachdf$area <- as.numeric(cepfbeachdf$area)
-cepfbeachdf$year <- as.numeric(cepfbeachdf$year)
+
+cepfbeach$area <- as.numeric(cepfbeach$area)
+cepfbeach$year <- as.numeric(cepfbeach$year)
+cepfparcel$numparcels <- as.numeric(cepfparcel$numparcels)
+cepfparcel$year <- as.numeric(cepfparcel$year)
+cepfroad$lengthroad <- as.numeric(cepfroad$lengthroad)
+cepfroad$year <- as.numeric(cepfroad$year)
+cebeachdf <- cepfbeach[cepfbeach$trigger == 'CE',]
+ceparcel <- cepfparcel[cepfparcel$trigger == 'CE',]
+ceroad <- cepfroad[cepfroad$trigger == 'CE',]
 beachegce <- c('1','7','11','17','24','34')
-cebeachdf <- cepfbeachdf[cepfbeachdf$trigger == 'CE',]
 cebeachdf <- cebeachdf %>%
   rowwise() %>%
   mutate(label = case_when(beach %in% beachegce && year == 2100 ~ beach))
+ceparcel <- ceparcel %>%
+  rowwise() %>%
+  mutate(label = case_when(beach %in% beachegce && year == 2100 ~ beach))
+ceroad <- ceroad %>%
+  rowwise() %>%
+  mutate(label = case_when(beach %in% beachegce && year == 2100 ~ beach))
 
-figcepf <- ggplot(cebeachdf, aes(x=year,y=area,group=beach))+
+figceA <- ggplot(cebeachdf, aes(x=year,y=area,group=beach))+
   geom_line(aes(color=trigger),alpha=0.5,linewidth=1)+
-  scale_color_manual(values=c("#FADD21"))+ 
+  scale_color_manual(values=c("#989898"))+ 
   theme_bw()+
   scale_y_continuous(name=expression("Total area retreated "~(m^2)),labels = scales::comma)+
-  xlab("Year")
-
-figcepf + geom_line(data=cebeachdf[cebeachdf$beach %in% beachegce,], color='#E7B800',linewidth=1.3)+
-  geom_label_repel(aes(label=label),nudge_x = 1,na.rm=T,show.legend=F)
+  xlab("Year") +
+  geom_line(data=cebeachdf[cebeachdf$beach %in% beachegce,], color='#585858',linewidth=1.3)+
+  geom_label_repel(aes(label=label),nudge_x = 1,na.rm=T,show.legend=F)+
+  theme(legend.position="none")
+figceB <- ggplot(ceparcel, aes(x=year,y=as.numeric(numparcels),group=beach))+
+  geom_line(aes(color=trigger),alpha=0.5,linewidth=1)+
+  scale_color_manual(values=c("#989898"))+ 
+  theme_bw()+
+  ylab("Total parcels retreated")+
+  xlab("Year") +
+  geom_line(data=ceparcel[ceparcel$beach %in% beachegce,], color='#585858',linewidth=1.3)+
+  geom_label_repel(aes(label=label),nudge_x = 1,na.rm=T,show.legend=F)+
+  theme(legend.position="none")
+figceC <- ggplot(ceroad, aes(x=year,y=as.numeric(lengthroad),group=beach))+
+  geom_line(aes(color=trigger),alpha=0.5,linewidth=1)+
+  scale_color_manual(values=c("#989898"))+ 
+  theme_bw()+
+  ylab("Total road length retreated (m)")+
+  xlab("Year") +
+  geom_line(data=ceroad[ceroad$beach %in% beachegce,], color='#585858',linewidth=1.3)+
+  geom_label_repel(aes(label=label),nudge_x = 1,na.rm=T,show.legend=F)+
+  theme(legend.position="none")
+figce <- ggarrange(figceA,figceB,figceC,
+                      labels=c("A","B","C"),
+                      ncol=1,nrow=3,
+                      align="v")
 
 
 #https://htmlcolorcodes.com/
