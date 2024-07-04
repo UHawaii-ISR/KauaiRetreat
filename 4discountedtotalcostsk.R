@@ -39,8 +39,12 @@ for(scenario in scenarios){
       Retreat_Analysis_Total[[parcel_col]] <- sum(Retreat_Analysis[parcel_col],na.rm=T)
       for(rdr in rdret){
         hwylength_col <- paste0("hwylength",scenario,seawall,trigger,"_rdr",rdr)
+        hwyripraplen_col <- paste0("hwyripraplen",scenario,seawall,trigger,"_rdr",rdr) #total highway riprap length
+        rdremovelen_col <- paste0("rdremovelen",scenario,seawall,trigger,"_rdr",rdr) #total highway riprap length
         
         Retreat_Analysis_Total[[hwylength_col]] <- sum(Retreat_Analysis[hwylength_col],na.rm=T)
+        Retreat_Analysis_Total[[hwyripraplen_col]] <- sum(Retreat_Analysis[hwyripraplen_col],na.rm=T)
+        Retreat_Analysis_Total[[rdremovelen_col]] <- sum(Retreat_Analysis[rdremovelen_col],na.rm=T)
       }
     }
   }

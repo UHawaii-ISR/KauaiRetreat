@@ -23,8 +23,8 @@ allinfra <- infra_retreat
 # apply regional/ahupuaa/moku filter if desired
 # community filters: 'ahupuaa','moku',"devplan_","devplan_id","district",'LittrlCell','Community',"dp","ballottype"
 communitytype <- 'Community' #indicate the name of the community column used to filter
-communityfilter <- 'Kekaha' #use NA if want entire island. otherwise 'Kapaʻa' 'Kekaha'  
-titlename <- 'Kekaha' # Kapaʻa Kekaha Kauaʻi  #this is for the figure label
+communityfilter <- 'Kapaʻa' #use NA if want entire island. otherwise 'Kapaʻa' 'Kekaha'  
+titlename <- 'Kapaʻa' # Kapaʻa Kekaha Kauaʻi  #this is for the figure label
 
 #filter both clean_retreat_calcs and infra_retreat
 kekaha <- allisland[allisland[[communitytype]]==communityfilter,] 
@@ -50,7 +50,7 @@ medianhome$TMK <- modhome$TMK
 medhome <- left_join(modhome,medianhome,by='TMK')
 
 #overwrite clean_retreat_calcs to selected ahupuaa/qaqc
-clean_retreat_calcs <- kekaha
+clean_retreat_calcs <- kapaa
 infra_retreat <- allinfra[allinfra[[communitytype]]==communityfilter,] 
 
 source("C:/Users/rsett/Documents/KauaiRetreat/2retreatyearvaluetaxk.R")
@@ -70,7 +70,7 @@ print(figpie)
 
 ggsave('fig3_kekaha.png',bg='white',fig3mini,width=7,height=5,dpi=300,units='in')
 ggsave('fig4_kekaha.png', fig4, bg='transparent',width=6,height=6.5,dpi=300,units='in')
-ggsave('treemap_kekaha.png', figpie, bg='transparent',width=8.5,height=4.5,dpi=300,units='in')
+ggsave('treemap_kauai.png', figpie, bg='transparent',width=8.5,height=4.5,dpi=300,units='in')
 write.csv(tm,'treemap_kekaha.csv')
 
 

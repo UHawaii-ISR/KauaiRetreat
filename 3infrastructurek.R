@@ -79,6 +79,9 @@ for (year in years) {
         riprap_remove_col <- paste0("riprapremove",scenario,seawall,trigger,"_rdr",rdr)
         maintain_col <- paste0("maintain",scenario,seawall,trigger,"_rdr",rdr)
         hwylength_col <- paste0("hwylength",scenario,seawall,trigger,"_rdr",rdr) #total highway length affected 
+        hwyripraplen_col <- paste0("hwyripraplen",scenario,seawall,trigger,"_rdr",rdr) #total highway riprap length
+        rdremovelen_col <- paste0("rdremovelen",scenario,seawall,trigger,"_rdr",rdr) #total highway riprap length
+        
         
         if(nrow(subdf)==0){
           infra_costtime[[b_reloc_col]][infra_costtime$Years == year] <- 0
@@ -91,6 +94,8 @@ for (year in years) {
           infra_costtime[[riprap_remove_col]][infra_costtime$Years == year] <- 0
           infra_costtime[[maintain_col]][infra_costtime$Years == year] <- 0
           infra_costtime[[hwylength_col]][infra_costtime$Years == year] <- 0
+          infra_costtime[[hwyripraplen_col]][infra_costtime$Years == year] <- 0
+          infra_costtime[[rdremovelen_col]][infra_costtime$Years == year] <- 0
           
           
         } else if(seawall == "_s_"){ #seawall-stay scenario
@@ -108,7 +113,9 @@ for (year in years) {
           infra_costtime[[rd_remove_col]][infra_costtime$Years == year] <- sum(subdf$remove_rd,na.rm=T)*road_remove
           infra_costtime[[riprap_remove_col]][infra_costtime$Years == year] <- sum(subdf$removeriprap_rd,subdf$removeriprap_hwy,na.rm=T)*riprap_remove
           infra_costtime[[maintain_col]][infra_costtime$Years == year] <- (sum(subdf$maintain_hwy,na.rm=T)+sum(subdf$maintain_s,na.rm=T))*maintain
-          infra_costtime[[hwylength_col]][infra_costtime$Years == year] <- sum(subdf$relocate_hwy,na.rm=T) #+sum(subdf$riprap_hwy,na.rm=T)
+          infra_costtime[[hwylength_col]][infra_costtime$Years == year] <- sum(subdf$relocate_hwy,na.rm=T) 
+          infra_costtime[[hwyripraplen_col]][infra_costtime$Years == year] <- sum(subdf$riprap_hwy,na.rm=T) 
+          infra_costtime[[rdremovelen_col]][infra_costtime$Years == year] <- sum(subdf$remove_rd,na.rm=T) 
           
         } else{ 
           infra_costtime[[b_reloc_col]][infra_costtime$Years == year] <- sum(subdf$relocate_b,na.rm=T)*bridge_reloc
@@ -120,7 +127,9 @@ for (year in years) {
           infra_costtime[[rd_remove_col]][infra_costtime$Years == year] <- sum(subdf$remove_rd,na.rm=T)*road_remove
           infra_costtime[[riprap_remove_col]][infra_costtime$Years == year] <- sum(subdf$removeriprap_rd,subdf$removeriprap_hwy,na.rm=T)*riprap_remove
           infra_costtime[[maintain_col]][infra_costtime$Years == year] <- sum(subdf$maintain_hwy,na.rm=T)*maintain
-          infra_costtime[[hwylength_col]][infra_costtime$Years == year] <- sum(subdf$relocate_hwy,na.rm=T) #+sum(subdf$riprap_hwy,na.rm=T)
+          infra_costtime[[hwylength_col]][infra_costtime$Years == year] <- sum(subdf$relocate_hwy,na.rm=T) 
+          infra_costtime[[hwyripraplen_col]][infra_costtime$Years == year] <- sum(subdf$riprap_hwy,na.rm=T) 
+          infra_costtime[[rdremovelen_col]][infra_costtime$Years == year] <- sum(subdf$remove_rd,na.rm=T) 
           
         }
         
@@ -145,6 +154,8 @@ for (year in years) {
         Retreat_Analysis[[riprap_remove_col]][Retreat_Analysis$Years == year] <- infra_costtime[[riprap_remove_col]][infra_costtime$Years == year]
         Retreat_Analysis[[maintain_col]][Retreat_Analysis$Years == year] <- infra_costtime[[maintain_col]][infra_costtime$Years == year]
         Retreat_Analysis[[hwylength_col]][Retreat_Analysis$Years == year] <- infra_costtime[[hwylength_col]][infra_costtime$Years == year]
+        Retreat_Analysis[[hwyripraplen_col]][Retreat_Analysis$Years == year] <- infra_costtime[[hwyripraplen_col]][infra_costtime$Years == year]
+        Retreat_Analysis[[rdremovelen_col]][Retreat_Analysis$Years == year] <- infra_costtime[[rdremovelen_col]][infra_costtime$Years == year]
         }
       }
     }
