@@ -149,6 +149,12 @@ beachdf$residential_cost <- beachdf$total_cost - beachdf$infrastructure_cost
 beachesdf <- beachdf[beachdf$beach != 0,]
 beachesdf <- beachesdf[beachesdf$trigger == 'CE',]
 
+#get beach names
+beachnames <- read.csv('F:/slr/kauai/CosmosTiff/KauaiBeachNames.csv')
+names(beachnames) <- c('beach','beachname')
+beachesdf <- beachesdf %>%
+  left_join(beachnames, by = c('beach'))
+
 #calculate cost per beach length
 beachlengthdf <- read.csv('F:/slr/kauai/CosmosTiff/Cosmos_to_Tiff.csv')
 beachlengthdf = beachlengthdf[!duplicated(beachlengthdf$NewB),] #get rid of duplicates in NewB column
@@ -165,6 +171,12 @@ beachesdf$ResType <- factor(beachesdf$ResType, levels=c('Non-Impacted Developmen
 #TB scenario only
 beachesdftb <- beachesdf[beachesdf$scenario == 'TB',]
 
+#add all roads affected into one column
+beachesdftb$road_affected <- as.numeric(beachesdftb$length_rdremove) + ifelse(as.numeric(beachesdftb$length_highway == 0),as.numeric(beachesdftb$length_riprap),
+                                                                              as.numeric(beachesdftb$length_highway))
+
+#homes affected in one column
+beachesdftb$homes_affected <- as.numeric(beachesdftb$number_buildings) + as.numeric(beachesdftb$number_CPR)
 
 write.csv(beachesdftb,'beachesdftb.csv')
 
@@ -203,7 +215,7 @@ figbeachA <- ggplot(beachesdftb_stack, aes(x=as.factor(beach),y=as.numeric(cost)
 cebeachdf <- cepfbeach[cepfbeach$trigger == 'CE',]
 cebeach2100df <- cebeachdf[cebeachdf$year == 2100,]
 
-figbeachB <- ggplot(cebeach2100df, aes(y=area, x = reorder(as.factor(beach), sort(as.numeric(beach))))) + 
+figbeachB <- ggplot(cebeach2100df, aes(y=as.numeric(area), x = reorder(as.factor(beach), sort(as.numeric(beach))))) + 
   geom_bar(stat='identity',position='dodge')+
   #facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
   #facet_grid(~ResType,space='free_x',scales='free_x',switch='both')+
@@ -297,7 +309,7 @@ figspike <- ggplot(beachspike, aes(y=costperlength, x=factor(id),fill=district))
   coord_polar(start=0)+
   ylim(-500000,max(beachspike$costperlength)) + #negative space for inner circle
   #facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
-  geom_text(data=label_data,aes(x=id,y=costperlength+10000,label=Hawaiian.Name,hjust=hjust),angle= label_data$angle,size=3)
+  geom_text(data=label_data,aes(x=id,y=costperlength+10000,label=beachname,hjust=hjust),angle= label_data$angle,size=3)
 ggsave('figspike.png', figspike, bg='transparent',width=5,height=5,dpi=300,units='in')
 #add coloring by category
 #spotlights: kekaha (34), wailua (17), moloaa (11), poipu (24), haena (1)
@@ -473,14 +485,6 @@ grid.draw(legend)
 
 
 # FIG 3 BUBBLES
-
-#prepare data
-#add all roads affected into one column
-beachesdftb$road_affected <- as.numeric(beachesdftb$length_rdremove) + ifelse(as.numeric(beachesdftb$length_highway == 0),as.numeric(beachesdftb$length_riprap),
-                                                                              as.numeric(beachesdftb$length_highway))
-
-#homes affected in one column
-beachesdftb$homes_affected <- as.numeric(beachesdftb$number_buildings) + as.numeric(beachesdftb$number_CPR)
 
 #create bubble chart and color circles based on value of team variable
 ggplot(beachesdftb, aes(x=as.numeric(homes_affected), y=as.numeric(road_affected), size=as.numeric(total_cost), color=as.numeric(median_value), label=Hawaiian.Name)) +

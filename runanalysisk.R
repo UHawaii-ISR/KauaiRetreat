@@ -68,10 +68,9 @@ print(fig3mini) #just scenarios of interest to kauai
 print(fig4)
 print(figpie)
 
-ggsave('fig3_kekaha.png',bg='white',fig3mini,width=7,height=5,dpi=300,units='in')
-ggsave('fig4_kekaha.png', fig4, bg='transparent',width=6,height=6.5,dpi=300,units='in')
-ggsave('treemap_kauai.png', figpie, bg='transparent',width=8.5,height=4.5,dpi=300,units='in')
-write.csv(tm,'treemap_kekaha.csv')
+ggsave(paste0('fig3_',titlename,'.png'),bg='white',fig3mini,width=7,height=5,dpi=300,units='in')
+ggsave(paste0('fig4_',titlename,'.png'), fig4, bg='transparent',width=6,height=6.5,dpi=300,units='in')
+ggsave(paste0('treemap_',titlename,'.png'), figpie, bg='transparent',width=8.5,height=4.5,dpi=300,units='in')
 
 
 #save tables as csv
