@@ -74,6 +74,16 @@ for(trigger in triggers){
   clean_retreat_calcs[[col_RE_s_trigger]] <- ifelse(clean_retreat_calcs[[seawalld]]>=1,NA,clean_retreat_calcs[[col_RE_trigger]])
 }
 
+#merge year retreat columns with the buildings dataset
+retreat_years <- clean_retreat_calcs %>%
+  select(TMK, starts_with('year_AO_'), starts_with('year_TB_'), starts_with('year_RE_'))
+clean_assessors_bldg <- clean_assessors_bldg %>%
+  left_join(retreat_years, by = "TMK")
+# Update columns to NA where CPR_UNIT == 0. this is so we don't double count any buildings
+clean_assessors_bldg <- clean_assessors_bldg %>%
+  mutate(across(starts_with('year_AO_') | starts_with('year_TB_') | starts_with('year_RE_'),
+                ~ ifelse(!is.na(CPR_UNIT) & CPR_UNIT == "0", NA, .)))
+
 #calculate land value & tax
 years <- c("2023", "2030","2050","2075","2100")  
 hazard_types <- c("CE","WF","PF","XA",'full','none')

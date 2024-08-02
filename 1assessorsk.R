@@ -123,10 +123,24 @@ clean_assessors <- clean_assessors %>%
 # add apartment identification by CPR count. >15 CPR units per building is apartment building
 clean_assessors$apartment <- ifelse(clean_assessors$Number_CPRbldg >15,1,0)
 
-# buildings count per parcel 
+#buildings count per parcel
 clean_assessors <- clean_assessors %>%
   group_by(TMK) %>%
   mutate(buildings = n())
+
+#make a separate dataframe where all buildings are retained
+clean_assessors_bldg <- clean_assessors
+clean_assessors_bldg <- clean_assessors_bldg %>%
+  group_by(COTMK) %>%
+  mutate(
+    TMK_str = as.character(TMK),
+    # Check if the group has mixed TMKs, indicating that it's a TMK with CPRs
+    has_mixed_TMKs = any(grepl("^[0-9]{11}[1-9]$", TMK_str)),
+    # add a 0 indicator on -0000 TMKs to indicate if they house CPRs (used later for building count retreat)
+    CPR_UNIT = ifelse(has_mixed_TMKs & grepl("0000$", TMK_str) & is.na(CPR_UNIT), '0', CPR_UNIT)
+  ) %>%
+  ungroup() %>%
+  select(-has_mixed_TMKs,-TMK_str)
 
 # if there are >1 buildings on a single non-CPR'd parcel, keep only the row with the most makai building that is >300sqft
 clean_assessors <- clean_assessors %>%
@@ -164,11 +178,15 @@ clean_assessors$TAXCLASS[clean_assessors$TMK == 180080430000] <- '6:CONSERVATION
 residential <- c("1:RESIDENTIAL", "2:VACATION RENTAL","8:HOMESTEAD","9:Residential Investor","10:Commercialized Home Use") 
 
 clean_assessors <- clean_assessors %>%
-  filter( #pre nrow 856, post nrow 787
+  filter( 
     COTMK %in% filter(clean_assessors, TAXCLASS %in% residential)$COTMK | 
       TAXCLASS %in% residential
   )
-
+clean_assessors_bldg <- clean_assessors_bldg %>%
+  filter( 
+    COTMK %in% filter(clean_assessors_bldg, TAXCLASS %in% residential)$COTMK | 
+      TAXCLASS %in% residential
+  )
 
 
 

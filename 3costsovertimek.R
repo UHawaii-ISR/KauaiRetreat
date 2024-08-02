@@ -42,22 +42,26 @@ for (year in years) {
       TB_matching_rows_apt <- clean_retreat_calcs_apt[[yearTB_col]] == year
       RE_matching_rows_apt <- clean_retreat_calcs_apt[[yearRE_col]] == year
       
+      AO_matching_rows_bldg <- clean_assessors_bldg[[yearAO_col]] == year
+      TB_matching_rows_bldg <- clean_assessors_bldg[[yearTB_col]] == year
+      RE_matching_rows_bldg <- clean_assessors_bldg[[yearRE_col]] == year
+      
       ### NUM OF BUILDINGS
       
       #Count the number of AO buildings (in 2023)
       buildings_col <- paste0("buildings_AO",seawall,"t",trigger)
       Retreat_Analysis[[buildings_col]][Retreat_Analysis$Years == year] <- 
-        ifelse(year==2023,n_distinct(clean_retreat_calcs$BuildingID[AO_matching_rows], na.rm = TRUE),0)
+        ifelse(year==2023,n_distinct(clean_assessors_bldg$BuildingID[AO_matching_rows_bldg], na.rm = TRUE),0)
       
       # Count the number of TB buildings in each year
       buildings_col <- paste0("buildings_TB",seawall,"t",trigger)
       Retreat_Analysis[[buildings_col]][Retreat_Analysis$Years == year] <- 
-        n_distinct(clean_retreat_calcs$BuildingID[TB_matching_rows], na.rm = TRUE)
+        n_distinct(clean_assessors_bldg$BuildingID[TB_matching_rows_bldg], na.rm = TRUE)
       
       # Count the number of RE buildings in each year
       buildings_col <- paste0("buildings_RE",seawall,"t",trigger)
       Retreat_Analysis[[buildings_col]][Retreat_Analysis$Years == year] <- 
-        n_distinct(clean_retreat_calcs$BuildingID[RE_matching_rows], na.rm = TRUE)
+        n_distinct(clean_assessors_bldg$BuildingID[RE_matching_rows_bldg], na.rm = TRUE)
       
       ### NUM OF APARTMENT BLDGs
       
