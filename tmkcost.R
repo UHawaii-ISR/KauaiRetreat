@@ -143,7 +143,7 @@ for(rd in kapaard){
   TB_total <- Retreat_Analysis_Total[["infrastructure_TB_CE_rdr1"]]
   
   #RE
-  sum(Retreat_Analysis_Total[["hwylengthRE_CE_rdr1"]],Retreat_Analysis_Total[["hwyripraplenRE_CE_rdr1"]],Retreat_Analysis_Total[["rdremovelenRE_CE_rdr1"]],na.rm=T)
+  RE_length <- sum(Retreat_Analysis_Total[["hwylengthRE_CE_rdr1"]],Retreat_Analysis_Total[["hwyripraplenRE_CE_rdr1"]],Retreat_Analysis_Total[["rdremovelenRE_CE_rdr1"]],na.rm=T)
   RE_brelocate <- Retreat_Analysis_Total[["bridgerelocateRE_CE_rdr1"]]
   RE_bretrofit <- Retreat_Analysis_Total[["bridgeretrofitRE_CE_rdr1"]]
   RE_hwyrelocate <- Retreat_Analysis_Total[["hwyrelocateRE_CE_rdr1"]]

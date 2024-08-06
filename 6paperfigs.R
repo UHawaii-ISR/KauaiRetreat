@@ -34,11 +34,11 @@ road <- c('1','1','1')
 clean <- c(NA,NA,'hi') 
 
 #calculate cost per beach
-beachdf <- setNames(data.frame(matrix(ncol = 25, nrow = 0)), c('scenario','trigger','beach','district',
+beachdf <- setNames(data.frame(matrix(ncol = 27, nrow = 0)), c('scenario','trigger','beach','district',
                                                                 'land_dwelling_cost','ambiguous_cost','infrastructure_cost',
                                                                 'tax_revenue_loss','private_property_value_loss','total_cost',
                                                                'median_value','median_value_cpr','number_buildings','number_apartments','number_CPR',
-                                                               'length_highway','length_riprap','length_rdremove',
+                                                               'length_highway','length_riprap','length_rdremove','length_bridge','length_briprap',
                                                                'residential','vacationrental','commercial','hotel','homestead',
                                                                'resinvestor','commercialhome'))
 #calculate CE/PF per beach over time
@@ -92,6 +92,8 @@ for(beach in beaches){
     hwylength_col <- paste0("hwylength",scen[i],sw[i],trig[i],"_rdr",road[i])
     hwyripraplen_col <- paste0("hwyripraplen",scen[i],sw[i],trig[i],"_rdr",road[i]) #total highway riprap length
     rdremovelen_col <- paste0("rdremovelen",scen[i],sw[i],trig[i],"_rdr",road[i]) #total highway riprap length
+    b_reloclen_col <- paste0("bridgerelocatelen",scenario,seawall,trigger,"_rdr",rdr)
+    b_retrofitlen_col <- paste0("bridgeretrofitlen",scenario,seawall,trigger,"_rdr",rdr)
     
     beachdistricts <- unique(infra_retreat$district)
     beachdistricts <- beachdistricts[!is.na(beachdistricts)]
@@ -110,6 +112,7 @@ for(beach in beaches){
                                     number_buildings = Retreat_Analysis_Total[[buildings_col]],number_apartments = Retreat_Analysis_Total[[apartments_col]],
                                     number_CPR = Retreat_Analysis_Total[[CPRunits_col]],length_highway = Retreat_Analysis_Total[[hwylength_col]],
                                     length_riprap = Retreat_Analysis_Total[[hwyripraplen_col]],length_rdremove = Retreat_Analysis_Total[[rdremovelen_col]],
+                                    length_bridge = Retreat_Analysis_Total[[b_reloclen_col]],length_briprap = Retreat_Analysis_Total[[b_retrofitlen_col]],
                                     residential = residential,vacationrental = vacationrental,commercial = commercial,hotel = hotel,homestead = homestead,
                                     resinvestor = resinvestor,commercialhome = commercialhome
                                     )
@@ -173,7 +176,11 @@ beachesdftb <- beachesdf[beachesdf$scenario == 'TB',]
 
 #add all roads affected into one column
 beachesdftb$road_affected <- as.numeric(beachesdftb$length_rdremove) + ifelse(as.numeric(beachesdftb$length_highway == 0),as.numeric(beachesdftb$length_riprap),
-                                                                              as.numeric(beachesdftb$length_highway))
+                                                                              as.numeric(beachesdftb$length_highway)) + ifelse(
+                                                                                as.numeric(beachesdftb$length_bridge == 0),as.numeric(beachesdftb$length_briprap),
+                                                                                as.numeric(beachesdftb$length_bridge)
+                                                                              )
+  
 
 #homes affected in one column
 beachesdftb$homes_affected <- as.numeric(beachesdftb$number_buildings) + as.numeric(beachesdftb$number_CPR)
