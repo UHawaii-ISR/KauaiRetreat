@@ -49,7 +49,6 @@ assessorscpr <- assessorscpr[,intersect(names(assessors),names(assessorscpr))]
 assessors <- assessors[,intersect(names(assessors),names(assessorscpr))]
 assessors <- rbind(assessors,assessorscpr)
 
-
 # Import OSDS counts data frame 
 # data from here: https://github.com/cshuler/Act132_Cesspool_Prioritization/blob/main/Projected_data/OSDS_v6/Exploding_Multi_unit_TMKs/Outs/OSDSv6_Exploded_ALL.csv
 osds <- read.csv(osdsfile) 

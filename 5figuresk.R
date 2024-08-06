@@ -68,16 +68,16 @@ for(trigger in triggers){
                                               value = sum(Retreat_Analysis_Total[[totalval_col]],Retreat_Analysis_Total[[demo_col]],
                                                           Retreat_Analysis_Total[[osds_col]],Retreat_Analysis_Total[[wastewater_col]],
                                                           Retreat_Analysis_Total[[seawall_col]],na.rm=T))
-        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
+        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 1, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
                                               costtype = "Ambiguous-payer cost", 
                                               value = 0)
-        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
+        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 1, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
                                               costtype = "Infrastructure retreat cost", 
                                               value = Retreat_Analysis_Total[[infra_col]])
-        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
+        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 1, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
                                               costtype = "Tax revenue loss", 
                                               value = Retreat_Analysis_Total[[taxrevloss_col]])
-        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 0, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
+        total_cost[nrow(total_cost) + 1,] = c(management = "Managed",scenario = "AO",trigger = trigger,hazard = hazard_type,bval = 1, cleanup = 0, seawall = seawall, subscenario = scenario_col, 
                                               costtype = "Private property value loss", 
                                               value = Retreat_Analysis_Total[[privproploss_col]])
       }
@@ -262,7 +262,7 @@ fig3mini <- ggplot(total_cost_mini, aes(fill=factor(costtype) ,y=valueMil, x=sub
         panel.grid.minor.x = element_blank(), # remove vertical lines
         legend.text = element_text(size = 12), #legend text size
         legend.background = element_rect(fill="white",colour="white"),
-        legend.position = c(0.75,0.95), # put legend within plot
+        #legend.position = c(0.75,0.95), # put legend within plot
         legend.spacing.y = unit(0.25, 'cm'), #add space between legend lines
         text=element_text(size=16), #overall text size
         axis.title.x = element_text(size = 16), #xaxis text size
@@ -531,7 +531,7 @@ lpc_seg <- ggplot(costtime_mini,aes(x=year,y=cost,group=subscenario,color=scenar
 lpb <- ggplot(areatime_mini, aes(x=year,y=area, group=subscenario,color=scenario))+
   #geom_smooth(aes(color=retreat.scenario),linewidth=1.5,se=F)+
   geom_line(aes(color=scenario),linewidth=1.5)+
-  scale_color_manual(name="Retreat approach",labels=c("All-at-once","Threshold-based","Reactive","Coastal erosion","Wave flooding"),
+  scale_color_manual(name="Retreat approach",labels=c("All-at-once","Threshold-based","Reactive","*Coastal erosion","Wave flooding"),
                      values=c("#75bf67", "#2E9FDF", "#FC4E07","grey","#E7B800"))+ 
   theme_bw()+
   scale_y_continuous(name=expression("Total area retreated "~(m^2)),labels = scales::comma)+

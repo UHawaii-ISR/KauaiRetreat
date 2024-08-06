@@ -19,6 +19,13 @@ Retreat_Analysis <- data.frame(
 #seawall scenarios: "_s_" = seawall stays and parcels&buildings directly/indirectly behind are protected. "_" = seawall is removed and retreat occurs
 seawalls <- c("_","_s_")
 
+#use TMK8 to estimate area retreated so we don't double-count CPR-unit area
+clean_retreat_calcs_area <- clean_retreat_calcs[!duplicated(clean_retreat_calcs$COTMK), ]
+
+#isolate just apartment buildings
+clean_retreat_calcs_apt <- clean_retreat_calcs[clean_retreat_calcs$apartment == 1, ]
+clean_retreat_calcs_apt <- clean_retreat_calcs_apt[!duplicated(clean_retreat_calcs_apt$BuildingID), ]
+
 #calculate values for each year
 for (year in years) {
   for(seawall in seawalls){
@@ -27,17 +34,15 @@ for (year in years) {
       yearTB_col <- paste0("year_TB",seawall,"t",trigger)
       yearRE_col <- paste0("year_RE",seawall,"t",trigger)
       
+      retreating_parcel <- !is.na(clean_retreat_calcs[[yearTB_col]])
       AO_matching_rows <- clean_retreat_calcs[[yearAO_col]] == year
       TB_matching_rows <- clean_retreat_calcs[[yearTB_col]] == year
       RE_matching_rows <- clean_retreat_calcs[[yearRE_col]] == year
       
-      clean_retreat_calcs_area <- clean_retreat_calcs[!duplicated(clean_retreat_calcs$COTMK), ]
       AO_matching_rows_area <- clean_retreat_calcs_area[[yearAO_col]] == year
       TB_matching_rows_area <- clean_retreat_calcs_area[[yearTB_col]] == year
       RE_matching_rows_area <- clean_retreat_calcs_area[[yearRE_col]] == year
       
-      clean_retreat_calcs_apt <- clean_retreat_calcs[clean_retreat_calcs$apartment == 1, ]
-      clean_retreat_calcs_apt <- clean_retreat_calcs_apt[!duplicated(clean_retreat_calcs_apt$BuildingID), ]
       AO_matching_rows_apt <- clean_retreat_calcs_apt[[yearAO_col]] == year
       TB_matching_rows_apt <- clean_retreat_calcs_apt[[yearTB_col]] == year
       RE_matching_rows_apt <- clean_retreat_calcs_apt[[yearRE_col]] == year
@@ -240,17 +245,20 @@ for (year in years) {
       # Total area retreated in AO (sq.m.)
       arearetreat_col <- paste0("arearetreat_AO",seawall,"t",trigger)
       Retreat_Analysis[[arearetreat_col]][Retreat_Analysis$Years == year] <- 
-        ifelse(year==2023,sum(clean_retreat_calcs_area[["OG_PARCEL_AREA"]][AO_matching_rows_area], na.rm = TRUE),0) 
+        ifelse(year==2023,sum(clean_retreat_calcs[["area_og"]][AO_matching_rows], na.rm = TRUE),0) 
+        #ifelse(year==2023,sum(clean_retreat_calcs_area[["OG_PARCEL_AREA"]][AO_matching_rows_area], na.rm = TRUE),0) 
       
       # Total area retreated in TB (sq.m.)
       arearetreat_col <- paste0("arearetreat_TB",seawall,"t",trigger)
       Retreat_Analysis[[arearetreat_col]][Retreat_Analysis$Years == year] <- 
-        sum(clean_retreat_calcs_area[["OG_PARCEL_AREA"]][TB_matching_rows_area], na.rm = TRUE)
+        sum(clean_retreat_calcs[["area_og"]][TB_matching_rows], na.rm = TRUE)
+        #sum(clean_retreat_calcs_area[["OG_PARCEL_AREA"]][TB_matching_rows_area], na.rm = TRUE)
       
       # Total area retreated in RE (sq.m.)
       arearetreat_col <- paste0("arearetreat_RE",seawall,"t",trigger)
       Retreat_Analysis[[arearetreat_col]][Retreat_Analysis$Years == year] <- 
-        sum(clean_retreat_calcs_area[["OG_PARCEL_AREA"]][RE_matching_rows_area], na.rm = TRUE)
+        sum(clean_retreat_calcs[["area_og"]][RE_matching_rows], na.rm = TRUE)
+        #sum(clean_retreat_calcs_area[["OG_PARCEL_AREA"]][RE_matching_rows_area], na.rm = TRUE)
       
       ### OSDS & WASTEWATER REMOVAL
       
@@ -290,7 +298,8 @@ for (year in years) {
         areahazard_col <- paste0("areahazard_l",hazard_type)
         parcelhazard <- paste0("SA_", year, "_", hazard_type) 
         Retreat_Analysis[[areahazard_col]][Retreat_Analysis$Years == year] <- 
-          sum(clean_retreat_calcs_area[[parcelhazard]], na.rm = TRUE)
+          sum(clean_retreat_calcs[[parcelhazard]], na.rm = TRUE) #for total area of hazard
+          #sum(clean_retreat_calcs[[parcelhazard]][retreating_parcel], na.rm = TRUE) #for fig4 displaying only parcels that are retreating
         
         ### TOTAL VALUE, PROPERTY LOSS, TAX REV LOSS
         

@@ -7,6 +7,7 @@ noncprshpfolder <- "F:/slr/kauai/CosmosTiff" #the folder where non-CPR bldg foot
 noncprshplayer <- "Buildings_XA_nonCPR" # "Buildings_XA" #layer name for non-CPR bldg footprint shapefile
 cprshpfolder <- "F:/slr/kauai/CosmosTiff" #the folder for CPR bldg ftprt shapefile
 cprshplayer <- "Buildings_XA_CPR" # "Buildings_XA_CPR"# layer name for CPR bldg ftprt shapefile
+salayer <- "tmk_XA" #Shape area layer
 osdsfile <- "F:/slr/kauai/OSDSv6_Exploded_ALL.csv" #the osds file
 seawallfile <- "F:/slr/kauai/TMK_realign_seawalls" #the folder with seawall shapefile
 infrastructurefolder <- "F:/slr/kauai/CosmosTiff" #the folder that has all of the infrastructure hazard files
@@ -21,11 +22,29 @@ allisland <- clean_retreat_calcs
 allinfra <- infra_retreat
 allbldg <- clean_assessors_bldg
 
+# manually adjust TMK 560030020000 - massive parcel that realistically would only need to retreat coastal portion
+#new area_og = 24,249. only includes eroded area as well as land below buildings. a conservative number
+allisland[allisland$TMK ==560030020000, "OG_PARCEL_AREA"] <- 24249
+#Building values are halved (APRBLDGMKT, ASMTBLDG) because we are only retreating half of the buildings
+allisland[allisland$TMK ==560030020000, "APRBLDGMKT"] <- allisland[allisland$TMK ==560030020000, "APRBLDGMKT"] / 2
+allisland[allisland$TMK ==560030020000, "ASMTBLDG"] <- allisland[allisland$TMK ==560030020000, "ASMTBLDG"] / 2
+#Land values are proportionally decreased (multiply by 24,249/1677905 for APRLANDMKT, ASMTLAND)
+allisland[allisland$TMK ==560030020000, "APRLANDMKT"] <- allisland[allisland$TMK ==560030020000, "APRLANDMKT"] * 24249/1677905
+allisland[allisland$TMK ==560030020000, "ASMTLAND"] <- allisland[allisland$TMK ==560030020000, "ASMTLAND"] * 24249/1677905
+#Recalculate ASMTTOT (ASMTBLDG + ASMTLAND)
+allisland[allisland$TMK ==560030020000, "ASMTTOT"] <- allisland[allisland$TMK ==560030020000, "ASMTBLDG"] + allisland[allisland$TMK ==560030020000, "ASMTLAND"]
+#adjust exemptions TOTEXEMPT proportional to land decrease
+allisland[allisland$TMK ==560030020000, "TOTEXEMPT"] <- allisland[allisland$TMK ==560030020000, "TOTEXEMPT"] * 24249/1677905
+#Recalculate NETTAXABLE (ASMTTOT-TOTEXEMPT)
+allisland[allisland$TMK ==560030020000, "NETTAXABLE"] <- allisland[allisland$TMK ==560030020000, "ASMTTOT"] - allisland[allisland$TMK ==560030020000, "TOTEXEMPT"]
+#delete inland buildings 994, 590, 989, 984, 985 from buildings dataframe
+allbldg <- allbldg[-(which(allbldg$BuildingID %in% c(994, 590, 989, 984, 985))),]
+
 # apply regional/ahupuaa/moku filter if desired
 # community filters: 'ahupuaa','moku',"devplan_","devplan_id","district",'LittrlCell','Community',"dp","ballottype"
 communitytype <- 'Community' #indicate the name of the community column used to filter
-communityfilter <- 'Kapaʻa' #use NA if want entire island. otherwise 'Kapaʻa' 'Kekaha'  
-titlename <- 'Kauaʻi' # Kapaʻa Kekaha Kauaʻi  #this is for the figure label
+communityfilter <- 'Kekaha' #use NA if want entire island. otherwise 'Kapaʻa' 'Kekaha'  
+titlename <- 'Kekaha' # Kapaʻa Kekaha Kauaʻi  #this is for the figure label
 
 #filter both clean_retreat_calcs and infra_retreat
 kekaha <- allisland[allisland[[communitytype]]==communityfilter,] 
@@ -70,9 +89,9 @@ print(fig3mini) #just scenarios of interest to kauai
 print(fig4)
 print(figpie)
 
-ggsave(paste0('fig3_',titlename,'.png'),bg='white',fig3mini,width=7,height=5,dpi=300,units='in')
-ggsave(paste0('fig4_',titlename,'.png'), fig4, bg='transparent',width=6,height=6.5,dpi=300,units='in')
-ggsave(paste0('treemap_',titlename,'.png'), figpie, bg='transparent',width=8.5,height=4.5,dpi=300,units='in')
+ggsave(paste0('fig3_',titlename,'.png'),bg='white',fig3mini,width=10,height=5,dpi=300,units='in')
+ggsave(paste0('fig4_',titlename,'.png'), fig4, bg='transparent',width=6,height=7,dpi=300,units='in')
+ggsave(paste0('figtreemap_',titlename,'.png'), figpie, bg='transparent',width=8.5,height=4.5,dpi=300,units='in')
 
 
 #save tables as csv
