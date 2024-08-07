@@ -262,7 +262,7 @@ fig3mini <- ggplot(total_cost_mini, aes(fill=factor(costtype) ,y=valueMil, x=sub
         panel.grid.minor.x = element_blank(), # remove vertical lines
         legend.text = element_text(size = 12), #legend text size
         legend.background = element_rect(fill="white",colour="white"),
-        #legend.position = c(0.75,0.95), # put legend within plot
+        legend.position = c(0.75,0.95), # put legend within plot
         legend.spacing.y = unit(0.25, 'cm'), #add space between legend lines
         text=element_text(size=16), #overall text size
         axis.title.x = element_text(size = 16), #xaxis text size

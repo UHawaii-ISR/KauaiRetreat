@@ -43,8 +43,8 @@ allbldg <- allbldg[-(which(allbldg$BuildingID %in% c(994, 590, 989, 984, 985))),
 # apply regional/ahupuaa/moku filter if desired
 # community filters: 'ahupuaa','moku',"devplan_","devplan_id","district",'LittrlCell','Community',"dp","ballottype"
 communitytype <- 'Community' #indicate the name of the community column used to filter
-communityfilter <- 'Kekaha' #use NA if want entire island. otherwise 'Kapaʻa' 'Kekaha'  
-titlename <- 'Kekaha' # Kapaʻa Kekaha Kauaʻi  #this is for the figure label
+communityfilter <- 'Kapaʻa' #use NA if want entire island. otherwise 'Kapaʻa' 'Kekaha'  
+titlename <- 'Kapaʻa' # Kapaʻa Kekaha Kauaʻi  #this is for the figure label
 
 #filter both clean_retreat_calcs and infra_retreat
 kekaha <- allisland[allisland[[communitytype]]==communityfilter,] 
@@ -70,7 +70,7 @@ medianhome$TMK <- modhome$TMK
 medhome <- left_join(modhome,medianhome,by='TMK')
 
 #overwrite clean_retreat_calcs to selected ahupuaa/qaqc
-clean_retreat_calcs <- kekaha
+clean_retreat_calcs <- kapaa
 infra_retreat <- allinfra[allinfra[[communitytype]]==communityfilter,] 
 clean_assessors_bldg <- allbldg 
 
@@ -89,7 +89,7 @@ print(fig3mini) #just scenarios of interest to kauai
 print(fig4)
 print(figpie)
 
-ggsave(paste0('fig3_',titlename,'.png'),bg='white',fig3mini,width=10,height=5,dpi=300,units='in')
+ggsave(paste0('fig3_',titlename,'.png'),bg='white',fig3mini,width=7,height=5,dpi=300,units='in')
 ggsave(paste0('fig4_',titlename,'.png'), fig4, bg='transparent',width=6,height=7,dpi=300,units='in')
 ggsave(paste0('figtreemap_',titlename,'.png'), figpie, bg='transparent',width=8.5,height=4.5,dpi=300,units='in')
 

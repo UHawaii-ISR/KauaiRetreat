@@ -42,12 +42,24 @@ assessors <- as.data.frame(assessorsshp)
 #CLASS = use for identifying study site
 #TAXCLASS = use for calculating taxes
 
-#join the dataframes. use the building-TMK-join method1 "centroid within" for non-CPR, method2 "intersect" for CPR units
-assessors <- assessors[is.na(assessors$CPR_UNIT),]
-assessorscpr <- assessorscpr[!is.na(assessorscpr$CPR_UNIT),]
+#join the dataframes. in ArcGIS, use the building-TMK-join method1 "centroid within" for non-CPR, method2 "intersect" for CPR units. 
+#if there are < 3 CPR for a COTMK, these are false CPR and should treat them as non-CPR
+assessorscpr <- assessorscpr[!is.na(assessorscpr$CPR_UNIT),] #remove nonCPR from CPR df
+falseCPR <- assessorscpr %>% #find the false CPRs that are basically really just split parcels and not apartments
+  group_by(COTMK) %>%
+  filter(n_distinct(PARID) < 4) %>%
+  pull(PARID) %>%
+  unique()
+assessors_falseCPR <- assessors %>% #create a df to store the false CPR
+  filter(PARID %in% falseCPR) 
+assessorscpr <- assessorscpr %>% # remove false CPRs from CPR df 
+  filter(!PARID %in% falseCPR)
+assessors <- assessors[is.na(assessors$CPR_UNIT),] #remove CPR and falseCPR from nonCPR df
+#join all dataframes together - falseCPR, nonCPR, and CPR
 assessorscpr <- assessorscpr[,intersect(names(assessors),names(assessorscpr))]
 assessors <- assessors[,intersect(names(assessors),names(assessorscpr))]
-assessors <- rbind(assessors,assessorscpr)
+assessors <- rbind(assessors,assessorscpr) 
+assessors <- rbind(assessors,assessors_falseCPR) 
 
 # Import OSDS counts data frame 
 # data from here: https://github.com/cshuler/Act132_Cesspool_Prioritization/blob/main/Projected_data/OSDS_v6/Exploding_Multi_unit_TMKs/Outs/OSDSv6_Exploded_ALL.csv
