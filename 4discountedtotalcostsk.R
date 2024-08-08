@@ -41,10 +41,23 @@ for(scenario in scenarios){
         hwylength_col <- paste0("hwylength",scenario,seawall,trigger,"_rdr",rdr)
         hwyripraplen_col <- paste0("hwyripraplen",scenario,seawall,trigger,"_rdr",rdr) #total highway riprap length
         rdremovelen_col <- paste0("rdremovelen",scenario,seawall,trigger,"_rdr",rdr) #total highway riprap length
+        b_reloclen_col <- paste0("bridgerelocatelen",scenario,seawall,trigger,"_rdr",rdr)
+        b_retrofitlen_col <- paste0("bridgeretrofitlen",scenario,seawall,trigger,"_rdr",rdr)
+        maintainlen_col <- paste0("maintainlen",scenario,seawall,trigger,"_rdr",rdr)
+        total_affected_col <- paste0("affectedlen",scenario,seawall,trigger,"_rdr",rdr)
         
         Retreat_Analysis_Total[[hwylength_col]] <- sum(Retreat_Analysis[hwylength_col],na.rm=T)
         Retreat_Analysis_Total[[hwyripraplen_col]] <- sum(Retreat_Analysis[hwyripraplen_col],na.rm=T)
         Retreat_Analysis_Total[[rdremovelen_col]] <- sum(Retreat_Analysis[rdremovelen_col],na.rm=T)
+        Retreat_Analysis_Total[[b_reloclen_col]] <- sum(Retreat_Analysis[b_reloclen_col],na.rm=T)
+        Retreat_Analysis_Total[[b_retrofitlen_col]] <- sum(Retreat_Analysis[b_retrofitlen_col],na.rm=T)
+        Retreat_Analysis_Total[[maintainlen_col]] <- Retreat_Analysis[[maintainlen_col]][Retreat_Analysis$Years == 2100] #capture the total length that is maintained at 2100
+        if(scenario == 'AO'){
+          Retreat_Analysis_Total[[total_affected_col]] <- Retreat_Analysis[[total_affected_col]][Retreat_Analysis$Years == 2023]
+        }else{
+          Retreat_Analysis_Total[[total_affected_col]] <- Retreat_Analysis[[total_affected_col]][Retreat_Analysis$Years == 2100]
+        }
+         
       }
     }
   }

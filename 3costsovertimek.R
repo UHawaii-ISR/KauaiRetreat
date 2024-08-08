@@ -301,6 +301,14 @@ for (year in years) {
           sum(clean_retreat_calcs[[parcelhazard]], na.rm = TRUE) #for total area of hazard
           #sum(clean_retreat_calcs[[parcelhazard]][retreating_parcel], na.rm = TRUE) #for fig4 displaying only parcels that are retreating
         
+        ### AREA UNDER HAZARD ALL PARCELS (including non-residential)
+        
+        # Total area affected under each hazard (sq.m.)
+        areahazardall_col <- paste0("areahazardall_l",hazard_type)
+        parcelhazard <- paste0("SA_", year, "_", hazard_type) 
+        Retreat_Analysis[[areahazardall_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_assessors_parcels[[parcelhazard]], na.rm = TRUE) #for total area of hazard
+        
         ### TOTAL VALUE, PROPERTY LOSS, TAX REV LOSS
         
         #total building + land value of parcels that are AO (full building value under AO)

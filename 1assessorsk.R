@@ -152,6 +152,8 @@ clean_assessors_bldg <- clean_assessors_bldg %>%
   ) %>%
   ungroup() %>%
   select(-has_mixed_TMKs,-TMK_str)
+#manually adjust this this parcel and add the 0 indicator - it houses CPRs but does not share the same COTMK
+clean_assessors_bldg$CPR_UNIT[clean_assessors_bldg$TMK == 280170090000] <- 0
 
 # if there are >1 buildings on a single non-CPR'd parcel, keep only the row with the most makai building that is >300sqft
 clean_assessors <- clean_assessors %>%
@@ -164,6 +166,10 @@ clean_assessors <- clean_assessors %>%
   ungroup()
 #as an extra precaution, make sure there are no duplicates of TMK's that happen to have buildings equally far from veg
 clean_assessors = clean_assessors[!duplicated(clean_assessors$TMK),] 
+
+#create a dataframe for calculating amount of hazard coverage, not filtered to only residential parcels. make sure no duplicate TMKs
+clean_assessors_parcels <- clean_assessors_bldg
+clean_assessors_parcels <- clean_assessors_parcels[!duplicated(clean_assessors_parcels$TMK),] 
 
 # Calculate current assessed tax revenue ($)
 

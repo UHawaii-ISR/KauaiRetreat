@@ -13,12 +13,6 @@ setwd(workdir)
 options(scipen = 999)
 
 
-#filter to just community of interest
-# if(!is.na(communityfilter)){
-#   infra_retreat <- infradf[infradf[[communitytype]]==communityfilter,] 
-#   }
-
-
 
 
 #calculate cost for eminent domain
@@ -36,8 +30,6 @@ slrxaadjdf <- slrxaadjdf %>%
 slrxaadjdf$costarea <- slrxaadjdf$APRTOTMKT / slrxaadjdf$Shape__Are
 aveappraisedkauai <- mean(slrxaadjdf$costarea,na.rm=T) #this is cost per sq meter
 emdom_hwy <- aveappraisedkauai*10 #this is cost per 1 meter length of road, assuming road is 10 meters wide
-
-
 
 
 
@@ -83,6 +75,8 @@ for (year in years) {
         rdremovelen_col <- paste0("rdremovelen",scenario,seawall,trigger,"_rdr",rdr) #total highway riprap length
         b_reloclen_col <- paste0("bridgerelocatelen",scenario,seawall,trigger,"_rdr",rdr)
         b_retrofitlen_col <- paste0("bridgeretrofitlen",scenario,seawall,trigger,"_rdr",rdr)
+        maintainlen_col <- paste0("maintainlen",scenario,seawall,trigger,"_rdr",rdr)
+        total_affected_col <- paste0("affectedlen",scenario,seawall,trigger,"_rdr",rdr)
         
         
         if(nrow(subdf)==0){
@@ -100,6 +94,8 @@ for (year in years) {
           infra_costtime[[rdremovelen_col]][infra_costtime$Years == year] <- 0
           infra_costtime[[b_reloclen_col]][infra_costtime$Years == year] <- 0
           infra_costtime[[b_retrofitlen_col]][infra_costtime$Years == year] <- 0
+          infra_costtime[[maintainlen_col]][infra_costtime$Years == year] <- 0
+          infra_costtime[[total_affected_col]][infra_costtime$Years == year] <- 0
           
           
         } else if(seawall == "_s_"){ #seawall-stay scenario
@@ -122,6 +118,8 @@ for (year in years) {
           infra_costtime[[rdremovelen_col]][infra_costtime$Years == year] <- sum(subdf$remove_rd,na.rm=T) 
           infra_costtime[[b_reloclen_col]][infra_costtime$Years == year] <- sum(subdf$relocate_b,na.rm=T)
           infra_costtime[[b_retrofitlen_col]][infra_costtime$Years == year] <- (sum(subdf$riprap_b,na.rm=T)+sum(subdf$riprap_b_s,na.rm=T))
+          infra_costtime[[maintainlen_col]][infra_costtime$Years == year] <- (sum(subdf$maintain_hwy,na.rm=T)+sum(subdf$maintain_s,na.rm=T))
+          infra_costtime[[total_affected_col]][infra_costtime$Years == year] <- (sum(subdf$total_affected,na.rm=T))
           
         } else{ 
           infra_costtime[[b_reloc_col]][infra_costtime$Years == year] <- sum(subdf$relocate_b,na.rm=T)*bridge_reloc
@@ -138,6 +136,8 @@ for (year in years) {
           infra_costtime[[rdremovelen_col]][infra_costtime$Years == year] <- sum(subdf$remove_rd,na.rm=T) 
           infra_costtime[[b_reloclen_col]][infra_costtime$Years == year] <- sum(subdf$relocate_b,na.rm=T)
           infra_costtime[[b_retrofitlen_col]][infra_costtime$Years == year] <- sum(subdf$riprap_b,na.rm=T)
+          infra_costtime[[maintainlen_col]][infra_costtime$Years == year] <- sum(subdf$maintain_hwy,na.rm=T)
+          infra_costtime[[total_affected_col]][infra_costtime$Years == year] <- (sum(subdf$total_affected,na.rm=T))
           
         }
         
@@ -166,6 +166,8 @@ for (year in years) {
         Retreat_Analysis[[rdremovelen_col]][Retreat_Analysis$Years == year] <- infra_costtime[[rdremovelen_col]][infra_costtime$Years == year]
         Retreat_Analysis[[b_reloclen_col]][Retreat_Analysis$Years == year] <- infra_costtime[[b_reloclen_col]][infra_costtime$Years == year]
         Retreat_Analysis[[b_retrofitlen_col]][Retreat_Analysis$Years == year] <- infra_costtime[[b_retrofitlen_col]][infra_costtime$Years == year]
+        Retreat_Analysis[[maintainlen_col]][Retreat_Analysis$Years == year] <- infra_costtime[[maintainlen_col]][infra_costtime$Years == year]
+        Retreat_Analysis[[total_affected_col]][Retreat_Analysis$Years == year] <- infra_costtime[[total_affected_col]][infra_costtime$Years == year]
         }
       }
     }
@@ -174,14 +176,4 @@ for (year in years) {
       
 
 
-
-## QAQC infra
-
-#infra_totalaffected <- aggregate(infra_retreat$riprap_hwy, by=list(infra_retreat$Year,infra_retreat$Scenario),FUN=sum,na.rm=T)
-
-#aggregate(infra_retreat$riprap_hwy, by=list(infra_retreat$Year,infra_retreat$Scenario),FUN=sum,na.rm=T)
-
-
-#infra_retreat$relocate_hwy,infra_retreat$relocate_b,infra_retreat$riprap_hwy,infra_retreat$riprap_b,infra_retreat$removeriprap_hwy,
-#infra_retreat$remove_rd,infra_retreat$removeriprap_rd
 

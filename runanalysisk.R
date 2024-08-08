@@ -43,8 +43,8 @@ allbldg <- allbldg[-(which(allbldg$BuildingID %in% c(994, 590, 989, 984, 985))),
 # apply regional/ahupuaa/moku filter if desired
 # community filters: 'ahupuaa','moku',"devplan_","devplan_id","district",'LittrlCell','Community',"dp","ballottype"
 communitytype <- 'Community' #indicate the name of the community column used to filter
-communityfilter <- 'Kapaʻa' #use NA if want entire island. otherwise 'Kapaʻa' 'Kekaha'  
-titlename <- 'Kapaʻa' # Kapaʻa Kekaha Kauaʻi  #this is for the figure label
+communityfilter <- NA #use NA if want entire island. otherwise 'Kapaʻa' 'Kekaha'  
+titlename <- 'Kauaʻi' # Kapaʻa Kekaha Kauaʻi  #this is for the figure label
 
 #filter both clean_retreat_calcs and infra_retreat
 kekaha <- allisland[allisland[[communitytype]]==communityfilter,] 
@@ -70,7 +70,7 @@ medianhome$TMK <- modhome$TMK
 medhome <- left_join(modhome,medianhome,by='TMK')
 
 #overwrite clean_retreat_calcs to selected ahupuaa/qaqc
-clean_retreat_calcs <- kapaa
+clean_retreat_calcs <- allisland
 infra_retreat <- allinfra[allinfra[[communitytype]]==communityfilter,] 
 clean_assessors_bldg <- allbldg 
 
