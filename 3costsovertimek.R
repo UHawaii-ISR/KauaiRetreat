@@ -26,6 +26,11 @@ clean_retreat_calcs_area <- clean_retreat_calcs[!duplicated(clean_retreat_calcs$
 clean_retreat_calcs_apt <- clean_retreat_calcs[clean_retreat_calcs$apartment == 1, ]
 clean_retreat_calcs_apt <- clean_retreat_calcs_apt[!duplicated(clean_retreat_calcs_apt$BuildingID), ]
 
+#isolate just residential homes
+residential <- c("1:RESIDENTIAL", "2:VACATION RENTAL","8:HOMESTEAD","9:Residential Investor","10:Commercialized Home Use") 
+clean_retreat_calcs_home <- clean_retreat_calcs %>%
+  filter(TAXCLASS %in% residential)
+
 #calculate values for each year
 for (year in years) {
   for(seawall in seawalls){
@@ -50,6 +55,10 @@ for (year in years) {
       AO_matching_rows_bldg <- clean_assessors_bldg[[yearAO_col]] == year
       TB_matching_rows_bldg <- clean_assessors_bldg[[yearTB_col]] == year
       RE_matching_rows_bldg <- clean_assessors_bldg[[yearRE_col]] == year
+      
+      AO_matching_rows_home <- clean_retreat_calcs_home[[yearAO_col]] == year
+      TB_matching_rows_home <- clean_retreat_calcs_home[[yearTB_col]] == year
+      RE_matching_rows_home <- clean_retreat_calcs_home[[yearRE_col]] == year
       
       ### NUM OF BUILDINGS
       
@@ -168,6 +177,24 @@ for (year in years) {
       parcels_col <- paste0("parcelcpr_RE",seawall,"t",trigger)
       Retreat_Analysis[[parcels_col]][Retreat_Analysis$Years == year] <- 
         n_distinct(clean_retreat_calcs$TMK[RE_matching_rows==T], na.rm = TRUE)
+      
+      
+      ### NUM OF RESIDENTIAL PARCELS / CPR (based on TMK12)
+      
+      #sum the AO parcels (in 2023)
+      parcels_col <- paste0("homes_AO",seawall,"t",trigger)
+      Retreat_Analysis[[parcels_col]][Retreat_Analysis$Years == year] <- 
+        ifelse(year==2023,n_distinct(clean_retreat_calcs_home$TMK[AO_matching_rows_home==T],na.rm=T),0)
+      
+      # Count the number of TB parcels in each year
+      parcels_col <- paste0("homes_TB",seawall,"t",trigger)
+      Retreat_Analysis[[parcels_col]][Retreat_Analysis$Years == year] <- 
+        n_distinct(clean_retreat_calcs_home$TMK[TB_matching_rows_home==T], na.rm = TRUE)
+      
+      # Count the number of RE parcels in each year
+      parcels_col <- paste0("homes_RE",seawall,"t",trigger)
+      Retreat_Analysis[[parcels_col]][Retreat_Analysis$Years == year] <- 
+        n_distinct(clean_retreat_calcs_home$TMK[RE_matching_rows_home==T], na.rm = TRUE)
       
       
       ### DEMOLITION & CLEANUP COSTS

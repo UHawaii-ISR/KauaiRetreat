@@ -3,6 +3,7 @@ library(ggpubr)
 library(ggrepel)
 library(dplyr)
 library(tidyr)
+library(ggmagnify)
 
 #tell R where your files are
 workdir <- "F:/slr/kauai/kauai_retreat_code/" # your working directory
@@ -38,10 +39,11 @@ road <- c('1','1','1')
 clean <- c(NA,NA,'hi') 
 
 #calculate cost per beach
-beachdf <- setNames(data.frame(matrix(ncol = 29, nrow = 0)), c('scenario','trigger','beach','district',
+beachdf <- setNames(data.frame(matrix(ncol = 32, nrow = 0)), c('scenario','trigger','beach','district',
                                                                 'land_dwelling_cost','ambiguous_cost','infrastructure_cost',
                                                                 'tax_revenue_loss','private_property_value_loss','total_cost',
-                                                               'median_value','median_value_cpr','number_buildings','number_apartments','number_CPR',
+                                                               'median_value_noncpr','median_value_cpr','median_value_res','median_value_all',
+                                                               'number_buildings','number_apartments','number_CPR','number_homes',
                                                                'length_highway','length_riprap','length_rdremove','length_bridge','length_briprap',
                                                                'length_maintain','length_totalinf',
                                                                'residential','vacationrental','commercial','hotel','homestead',
@@ -60,28 +62,33 @@ for(beach in beaches){
   clean_assessors_parcels <- allparcels[allparcels$NewB==beach,] 
   
   #median home/cpr value calculation
-  houses <- subset(clean_retreat_calcs, Number_CPRbldg == 1) 
-  houses <- subset(houses, NEAR_CE32 == 0 | NEAR_PF32 == 0)
-  medhomeval <- apply(houses[c('APRTOTMKT')],2,median,na.rm=T)[[1]]
+  nonCPR <- subset(clean_retreat_calcs, Number_CPRbldg == 1) 
+  nonCPR <- subset(nonCPR, NEAR_CE32 <= 6.1)
+  mednonCPRval <- apply(nonCPR[c('APRTOTMKT')],2,median,na.rm=T)[[1]]
   cprs <- subset(clean_retreat_calcs, Number_CPRbldg> 1)
-  cprs <- subset(cprs, NEAR_CE32 == 0 | NEAR_PF32 == 0)
+  cprs <- subset(cprs, NEAR_CE32 <= 6.1 )
   medcprval <- apply(cprs[c('APRTOTMKT')],2,median,na.rm=T)[[1]]
-  
-  #taxclasses
-  #sum number each tax class that must retreat by 2100 under CE
-  residential <- sum(clean_retreat_calcs$TAXCLASS == '1:RESIDENTIAL' & clean_retreat_calcs$NEAR_CE32 == 0)
-  vacationrental <- sum(clean_retreat_calcs$TAXCLASS == '2:VACATION RENTAL' & clean_retreat_calcs$NEAR_CE32 == 0)
-  commercial <- sum(clean_retreat_calcs$TAXCLASS == '3:COMMERCIAL' & clean_retreat_calcs$NEAR_CE32 == 0)
-  hotel <- sum(clean_retreat_calcs$TAXCLASS == '7:HOTEL AND RESORT' & clean_retreat_calcs$NEAR_CE32 == 0)
-  homestead <- sum(clean_retreat_calcs$TAXCLASS == '8:HOMESTEAD' & clean_retreat_calcs$NEAR_CE32 == 0)
-  resinvestor <- sum(clean_retreat_calcs$TAXCLASS == '9:Residential Investor' & clean_retreat_calcs$NEAR_CE32 == 0)
-  commercialhome <- sum(clean_retreat_calcs$TAXCLASS == '10:Commercialized Home Use' & clean_retreat_calcs$NEAR_CE32 == 0)
-  
+  residential <- c("1:RESIDENTIAL", "2:VACATION RENTAL","8:HOMESTEAD","9:Residential Investor","10:Commercialized Home Use") 
+  reshomes <- subset(clean_retreat_calcs,TAXCLASS %in% residential)
+  reshomes <- subset(reshomes,NEAR_CE32 <= 6.1)
+  medresval <- apply(reshomes[c('APRTOTMKT')],2,median,na.rm=T)[[1]]
+  parcelsCE <- subset(clean_retreat_calcs,NEAR_CE32 <= 6.1)
+  medparcelval <- apply(parcelsCE[c('APRTOTMKT')],2,median,na.rm=T)[[1]]
   
   source("C:/Users/rsett/Documents/KauaiRetreat/2retreatyearvaluetaxk.R")
   source("C:/Users/rsett/Documents/KauaiRetreat/3costsovertimek.R")
   source("C:/Users/rsett/Documents/KauaiRetreat/3infrastructurek.R") 
   source("C:/Users/rsett/Documents/KauaiRetreat/4discountedtotalcostsk.R")
+  
+  #taxclasses
+  #sum number each tax class that must retreat by 2100 under CE
+  residential <- sum(clean_retreat_calcs$TAXCLASS == '1:RESIDENTIAL' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
+  vacationrental <- sum(clean_retreat_calcs$TAXCLASS == '2:VACATION RENTAL' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
+  commercial <- sum(clean_retreat_calcs$TAXCLASS == '3:COMMERCIAL' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
+  hotel <- sum(clean_retreat_calcs$TAXCLASS == '7:HOTEL AND RESORT' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
+  homestead <- sum(clean_retreat_calcs$TAXCLASS == '8:HOMESTEAD' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
+  resinvestor <- sum(clean_retreat_calcs$TAXCLASS == '9:Residential Investor' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
+  commercialhome <- sum(clean_retreat_calcs$TAXCLASS == '10:Commercialized Home Use' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
   
   for(i in 1:3){
     totalval_col <- paste0("Total_Value_",scen[i],sw[i],"t",trig[i],"_l",land[i],"_bv",build[i])
@@ -96,6 +103,7 @@ for(beach in beaches){
     buildings_col <- paste0('buildings_',scen[i],sw[i],"t",trig[i])
     apartments_col <- paste0("apartments_",scen[i],sw[i],"t",trig[i])
     CPRunits_col <- paste0("CPRunits_",scen[i],sw[i],"t",trig[i])
+    homes_col <- paste0("homes_",scen[i],sw[i],"t",trig[i])
     hwylength_col <- paste0("hwylength",scen[i],sw[i],trig[i],"_rdr",road[i])
     hwyripraplen_col <- paste0("hwyripraplen",scen[i],sw[i],trig[i],"_rdr",road[i]) #total highway riprap length
     rdremovelen_col <- paste0("rdremovelen",scen[i],sw[i],trig[i],"_rdr",road[i]) #total highway riprap length
@@ -117,9 +125,11 @@ for(beach in beaches){
                                       infrastructure_cost = Retreat_Analysis_Total[[infra_col]],
                                       tax_revenue_loss = Retreat_Analysis_Total[[taxrevloss_col]],
                                       private_property_value_loss = Retreat_Analysis_Total[[privproploss_col]],
-                                      total_cost = NA, median_value = medhomeval, median_value_cpr = medcprval,
+                                      total_cost = NA, median_value_noncpr = mednonCPRval, median_value_cpr = medcprval,
+                                    median_value_res=medresval,median_value_all=medparcelval,
                                     number_buildings = Retreat_Analysis_Total[[buildings_col]],number_apartments = Retreat_Analysis_Total[[apartments_col]],
-                                    number_CPR = Retreat_Analysis_Total[[CPRunits_col]],length_highway = Retreat_Analysis_Total[[hwylength_col]],
+                                    number_CPR = Retreat_Analysis_Total[[CPRunits_col]],number_homes = Retreat_Analysis_Total[[homes_col]],
+                                    length_highway = Retreat_Analysis_Total[[hwylength_col]],
                                     length_riprap = Retreat_Analysis_Total[[hwyripraplen_col]],length_rdremove = Retreat_Analysis_Total[[rdremovelen_col]],
                                     length_bridge = Retreat_Analysis_Total[[b_reloclen_col]],length_briprap = Retreat_Analysis_Total[[b_retrofitlen_col]],
                                     length_maintain = Retreat_Analysis_Total[[maintainlen_col]],length_totalinf = Retreat_Analysis_Total[[total_affected_col]],
@@ -136,18 +146,19 @@ for(beach in beaches){
       areahazard_col <- paste0("areahazard_l",hazard_type) #calculates total hazard coverage on just residential parcels
       parcels_col <- paste0("parcelcpr_TB_t",hazard_type)
       hwylength_col <- paste0("hwylengthTB_",hazard_type,"_rdr1")
+      total_affected_col <- paste0("affectedlenTB_",hazard_type,"_rdr1")
       
       year <- years[j]
       prevyear <- years[j-1]
       
       totalarea <- ifelse(year==2023,0,as.numeric(cepfbeach$area[cepfbeach$beach == beach & cepfbeach$trigger == hazard_type & cepfbeach$year == prevyear])) +
         Retreat_Analysis[[areahazardall_col]][Retreat_Analysis$Years == year]
-      totalarea_res <- ifelse(year==2023,0,as.numeric(cepfbeach$area[cepfbeach$beach == beach & cepfbeach$trigger == hazard_type & cepfbeach$year == prevyear])) +
+      totalarea_res <- ifelse(year==2023,0,as.numeric(cepfbeach$area_res[cepfbeach$beach == beach & cepfbeach$trigger == hazard_type & cepfbeach$year == prevyear])) +
         Retreat_Analysis[[areahazard_col]][Retreat_Analysis$Years == year]
       totalparcel <- ifelse(year==2023,0,as.numeric(cepfparcel$numparcels[cepfparcel$beach == beach & cepfparcel$trigger == hazard_type & cepfparcel$year == prevyear])) +
         Retreat_Analysis[[parcels_col]][Retreat_Analysis$Years == year]
       totalroad <- ifelse(year==2023,0,as.numeric(cepfroad$lengthroad[cepfroad$beach == beach & cepfroad$trigger == hazard_type & cepfroad$year == prevyear])) +
-        Retreat_Analysis[[hwylength_col]][Retreat_Analysis$Years == year]
+        Retreat_Analysis[[total_affected_col]][Retreat_Analysis$Years == year]
       
       cepfbeach[nrow(cepfbeach) + 1,] = c(beach = beach,year = year,trigger = hazard_type, area = totalarea, area_res = totalarea_res)
       cepfparcel[nrow(cepfparcel) + 1,] = c(beach = beach,year = year,trigger = hazard_type, numparcels = totalparcel)
@@ -203,6 +214,10 @@ beachesdf<-read.csv('beachesdf.csv')
 cepfbeach<-read.csv('cepfbeach.csv')
 cepfparcel<-read.csv('cepfparcel.csv')
 cepfroad<-read.csv('cepfroad.csv')
+
+
+
+
 
 
 
@@ -262,7 +277,7 @@ figbeachB <- ggplot(cebeach2100df_stack, aes(x=reorder(as.factor(beach), sort(as
   theme(strip.placement = "outside")
 
 # C: number of homes
-figbeachC <- ggplot(beachesdftb, aes(y=homes_affected, x=factor(beach))) + 
+figbeachC <- ggplot(beachesdftb, aes(y=number_homes, x=factor(beach))) + 
   geom_bar(stat='identity',position='dodge')+
   xlab('Beach ID')+
   ylab('Number of \n homes affected')+
@@ -277,18 +292,20 @@ figbeachD <- ggplot(beachesdftb, aes(y=as.numeric(length_totalinf), x=factor(bea
   scale_y_continuous(label=scales::comma)+
   theme_classic() 
 
-#E: median property value
-figbeachE <- ggplot(beachesdftb, aes(y=as.numeric(median_value), x=factor(beach))) + 
+#E: median property value of retreating residential parcels
+beachesdftb$median_value_res_mil <- beachesdftb$median_value_res/1000000
+
+figbeachE <- ggplot(beachesdftb, aes(y=as.numeric(median_value_res_mil), x=factor(beach))) + 
   geom_bar(stat='identity',position='dodge')+
   xlab('Beach ID')+
-  ylab('Median home \n value ($2023)')+
+  ylab('Median home \n value ($2023, mil)')+
   scale_y_continuous(label=scales::comma)+
   theme_classic() 
 
 
 figbeach <- cowplot::plot_grid(figbeachA,figbeachB,figbeachC,figbeachD,figbeachE,
                                labels=c("A","B","C","D","E"), 
-                               ncol=1,nrow=5,
+                               ncol=1,nrow=5,hjust=0.1,
                                align="v",axis="lr",greedy=T)
 ggsave('fig2_bar.png', figbeach,width=25,height=25,dpi=300,units='cm')
 
@@ -520,18 +537,45 @@ grid.draw(legend)
 # FIG 3 BUBBLES
 
 #create bubble chart and color circles based on value of team variable
-ggplot(beachesdftb, aes(x=as.numeric(homes_affected), y=as.numeric(road_affected), size=as.numeric(total_cost), color=as.numeric(median_value), label=Hawaiian.Name)) +
+beachesdftb$total_cost_mil <- beachesdftb$total_cost/1000000
+spotlight <- c('Kekaha','ʻAnini','Hāʻena','Waipouli','Poʻipū','Moloaʻa')
+beachesdftb$number_homes <- as.numeric(beachesdftb$number_homes)
+beachesdftb$length_totalinf <- as.numeric(beachesdftb$length_totalinf)
+beachesdftb$total_cost_mil <- as.numeric(beachesdftb$total_cost_mil)
+labels <- beachesdftb %>%
+  filter(beachname %in% spotlight | total_cost_mil > 100)
+
+bubblezoom <- ggplot(beachesdftb, aes(x=as.numeric(number_homes), y=as.numeric(length_totalinf), 
+                                      size=as.numeric(total_cost_mil), color=as.numeric(median_value_res_mil))) +
   geom_point(alpha=0.5)  +
-  scale_size(range=c(2, 30),labels=scales::label_comma()) +
-  labs(size = "Total cost")+
+  scale_size(range=c(2, 20),labels=scales::label_comma()) +
   scale_color_viridis_c(option="plasma",labels = scales::label_comma()) +
-  guides(col = guide_colourbar(title = "Median home value"))+
-  geom_text_repel(aes(label=ifelse(total_cost>100000000,as.character(Hawaiian.Name),'')), size= 5,color= 'black')+ #,hjust=0.5, vjust=0,
+  geom_text_repel(data=labels,mapping=aes(label=beachname),size= 4,color= 'black')+
+  scale_y_continuous(labels=scales::comma,limits=c(0,400))+
+  xlim(0,30)+
+  theme_classic()+
+  theme(legend.position='none',
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank())
+
+bubbles <- ggplot(beachesdftb, aes(x=as.numeric(number_homes), y=as.numeric(length_totalinf), size=as.numeric(total_cost_mil), 
+                        color=as.numeric(median_value_res_mil), label=beachname)) +
+  geom_point(alpha=0.5)  +
+  scale_size(range=c(2, 20),labels=scales::label_comma()) +
+  labs(size = "Total cost \n ($2023, mil)")+
+  scale_color_viridis_c(option="plasma",labels = scales::label_comma()) +
+  guides(col = guide_colourbar(title = "Median home value \n($2023, mil)"))+
+  geom_text_repel(data=labels,aes(label=beachname), size= 4,color= 'black')+ 
   xlab('Number of homes affected')+
   ylab('Road affected (m)')+
-  scale_y_continuous(labels=scales::comma)+
-  theme_classic()
+  scale_y_continuous(labels=scales::comma) +
+  expand_limits(y=4000,x=225)+
+  theme_classic()+
+  geom_magnify(aes(from=number_homes < 30 & length_totalinf < 400),
+               to=c(xmin=125,xmax=200,ymin=1500,ymax=3000),shadow=T,plot=bubblezoom)
 
+
+ggsave('fig3_bubbles.png', bubbles,width=8,height=6,dpi=300,units='in')
 
 
 
@@ -544,9 +588,6 @@ ggplot(beachesdftb, aes(x=as.numeric(homes_affected), y=as.numeric(road_affected
 
 
 
-#export tables
-write.csv(cepfbeach,'cepfbeach.csv')
-write.csv(beachesdf,'beachdf.csv')
 
 
 
@@ -556,301 +597,24 @@ write.csv(beachesdf,'beachdf.csv')
 
 
 
+#median value test
+beachesdftb_median <- beachesdftb %>%
+  pivot_longer(cols = c(median_value_noncpr, median_value_cpr,median_value_res,median_value_all), 
+               names_to = "median_type", values_to = "value")
 
-
-
-
-
-
-
-
-
-#### OLD UNUSED FIGURES
-
-#reshape for stacked bar chart
-long_beachesdf <- beachesdftb %>%
-  pivot_longer(cols = c(infrastructure_cost, residential_cost),
-               names_to = "cost_type",
-               values_to = "cost")
-figstackA <- ggplot(long_beachesdf, aes(x = factor(beach), y = cost, fill = cost_type)) +
-  geom_bar(stat = "identity") +
-  facet_grid(~ResType,space='free_x',scales='free_x',switch='both')+
-  xlab('Beach ID')+
-  ylab('Total cost')+
-  scale_y_continuous(label=scales::comma)+
-  scale_fill_manual(values=c('grey','grey43'),labels=c('Infrastructure cost','Residential cost'))+
-  theme_classic()
-figbeachstack <- ggarrange(figstackA,figbeachD,
-                           labels=c("A","B"),
-                           ncol=1,nrow=2,
-                           align="v",
-                           common.legend = T)
-
-
-
-
-#cluster analysis
-library(tidyverse)
-library(cluster)    # clustering algorithms
-library(factoextra) # clustering visualization
-library(dendextend) # for comparing two dendrograms
-
-#prepare data
-beachesdftb[c("residential", "homestead", "vacationrental", "commercial", "hotel", "resinvestor", "commercialhome")] <- 
-  lapply(beachesdftb[c("residential", "homestead", "vacationrental", "commercial", "hotel", "resinvestor", "commercialhome")], as.numeric)
-beachesdftb$respercent <- (beachesdftb$residential+beachesdftb$homestead)/(beachesdftb$residential+beachesdftb$homestead+beachesdftb$vacationrental+beachesdftb$commercial+
-                                                                             beachesdftb$hotel+beachesdftb$resinvestor+beachesdftb$commercialhome)
-
-#add all roads affected into one column
-beachesdftb$road_affected <- as.numeric(beachesdftb$length_rdremove) + ifelse(as.numeric(beachesdftb$length_highway == 0),as.numeric(beachesdftb$length_riprap),
-                                                                              as.numeric(beachesdftb$length_highway))
-beachesdftb$rd_affected <- as.numeric(beachesdftb$length_rdremove)
-beachesdftb$hwy_affected <- ifelse(as.numeric(beachesdftb$length_highway == 0),as.numeric(beachesdftb$length_riprap),
-                                   as.numeric(beachesdftb$length_highway))
-
-#homes affected in one column
-beachesdftb$homes_affected <- as.numeric(beachesdftb$number_buildings) + as.numeric(beachesdftb$number_CPR)
-
-#standardize make all numbers per length beach
-beachesdftb$road_affect_perlen <- as.numeric(beachesdftb$road_affected) / as.numeric(beachesdftb$Len_m)
-beachesdftb$home_affect_perlen <- as.numeric(beachesdftb$homes_affected) / as.numeric(beachesdftb$Len_m)
-
-beachesclust <- beachesdftb[c('costperlength','road_affect_perlen','home_affect_perlen','median_value')] 
-# 'total_cost','Len_m','median_value','rd_affected','hwy_affected','number_buildings','number_CPR'
-
-rownames(beachesclust) <- beachesdftb$Hawaiian.Name
-beachesclust[is.na(beachesclust)] <- 0
-beachesclust[] <- lapply(beachesclust, function(x) as.numeric(as.character(x)))
-
-beachesclust <- scale(beachesclust)
-# Dissimilarity matrix
-d <- dist(beachesclust, method = "euclidean")
-
-# Hierarchical clustering using Complete Linkage
-hc1 <- hclust(d, method = "complete" )
-
-# Plot the obtained dendrogram
-plot(hc1, cex = 0.6, hang = -1)
-
-# Compute with agnes
-hc2 <- agnes(beachesclust, method = "complete")
-
-# Agglomerative coefficient
-hc2$ac
-
-# methods to assess
-m <- c( "average", "single", "complete", "ward")
-names(m) <- c( "average", "single", "complete", "ward")
-
-# function to compute coefficient
-ac <- function(x) {
-  agnes(beachesclust, method = x)$ac
-}
-
-map_dbl(m, ac)
-##  average    single  complete      ward 
-## 0.8712478 0.8322026 0.8757782 0.9132052
-
-
-hc3 <- agnes(beachesclust, method = "ward")
-pltree(hc3, cex = 0.6, hang = -1, main = "Dendrogram of agnes") 
-
-
-# compute divisive hierarchical clustering
-hc4 <- diana(beachesclust)
-
-# Divise coefficient; amount of clustering structure found
-hc4$dc
-## [1] 0.8764557
-
-# plot dendrogram
-pltree(hc4, cex = 0.6, hang = -1, main = "Dendrogram of diana")
-
-
-
-# CE over time plot
-# beachesdf$combo <- paste0(beachesdf$beach,beachesdf$trigger)
-# combos <- unique(beachesdf$combo) 
-# cepfbeach$combo <- paste0(cepfbeach$beach,cepfbeach$trigger)
-# cepfbeachdf <- cepfbeach %>%
-#   filter(
-#     combo %in% combos
-#   )
-
-cepfbeach$area <- as.numeric(cepfbeach$area)
-cepfbeach$year <- as.numeric(cepfbeach$year)
-cepfparcel$numparcels <- as.numeric(cepfparcel$numparcels)
-cepfparcel$year <- as.numeric(cepfparcel$year)
-cepfroad$lengthroad <- as.numeric(cepfroad$lengthroad)
-cepfroad$year <- as.numeric(cepfroad$year)
-cebeachdf <- cepfbeach[cepfbeach$trigger == 'CE',]
-ceparcel <- cepfparcel[cepfparcel$trigger == 'CE',]
-ceroad <- cepfroad[cepfroad$trigger == 'CE',]
-beachegce <- c('1','7','11','17','24','34')
-cebeachdf <- cebeachdf %>%
-  rowwise() %>%
-  mutate(label = case_when(beach %in% beachegce && year == 2100 ~ beach))
-ceparcel <- ceparcel %>%
-  rowwise() %>%
-  mutate(label = case_when(beach %in% beachegce && year == 2100 ~ beach))
-ceroad <- ceroad %>%
-  rowwise() %>%
-  mutate(label = case_when(beach %in% beachegce && year == 2100 ~ beach))
-
-figceA <- ggplot(cebeachdf, aes(x=year,y=area,group=beach))+
-  geom_line(aes(color=trigger),alpha=0.5,linewidth=1)+
-  scale_color_manual(values=c("#989898"))+ 
-  theme_bw()+
-  scale_y_continuous(name=expression("Total area retreated "~(m^2)),labels = scales::comma)+
-  xlab("Year") +
-  geom_line(data=cebeachdf[cebeachdf$beach %in% beachegce,], color='#585858',linewidth=1.3)+
-  geom_label_repel(aes(label=label),nudge_x = 1,na.rm=T,show.legend=F)+
-  theme(legend.position="none")
-figceB <- ggplot(ceparcel, aes(x=year,y=as.numeric(numparcels),group=beach))+
-  geom_line(aes(color=trigger),alpha=0.5,linewidth=1)+
-  scale_color_manual(values=c("#989898"))+ 
-  theme_bw()+
-  ylab("Total parcels retreated")+
-  xlab("Year") +
-  geom_line(data=ceparcel[ceparcel$beach %in% beachegce,], color='#585858',linewidth=1.3)+
-  geom_label_repel(aes(label=label),nudge_x = 1,na.rm=T,show.legend=F)+
-  theme(legend.position="none")
-figceC <- ggplot(ceroad, aes(x=year,y=as.numeric(lengthroad),group=beach))+
-  geom_line(aes(color=trigger),alpha=0.5,linewidth=1)+
-  scale_color_manual(values=c("#989898"))+ 
-  theme_bw()+
-  ylab("Total road length retreated (m)")+
-  xlab("Year") +
-  geom_line(data=ceroad[ceroad$beach %in% beachegce,], color='#585858',linewidth=1.3)+
-  geom_label_repel(aes(label=label),nudge_x = 1,na.rm=T,show.legend=F)+
-  theme(legend.position="none")
-figce <- ggarrange(figceA,figceB,figceC,
-                   labels=c("A","B","C"),
-                   ncol=1,nrow=3,
-                   align="v")
-
-
-# treemap plot
-# infrastructure vs res color coding
-
-tm <- setNames(data.frame(matrix(ncol = 4, nrow = 0)), c("scenario","group", "subgroup", "cost"))
-
-scen <- c('AO','TB','RE')
-sw <- c('_','_','_')
-trig <- c('CE','CE','CE')
-land <- c('full','CE','CE')
-build <- c('1','1','0')
-road <- c('1','1','1')
-clean <- c(NA,NA,'hi') 
-
-for(i in 1:3){
-  tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Private Property Value Loss",subgroup="Property \n Value Loss",
-                       cost=Retreat_Analysis_Total[[paste0("Priv_Prop_Loss_",scen[i],sw[i],"t",trig[i],"_l",land[i],"_bv",build[i])]])
-  if(!is.na(clean[i])){
-    tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Ambiguous",subgroup="Debris",
-                         cost=Retreat_Analysis_Total[[paste0("cleanup",clean[i],"_",scen[i],sw[i],"t",trig[i]) ]])
-    tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Ambiguous",subgroup="Seawall \n removal",
-                         cost=Retreat_Analysis_Total[[paste0("seawall_",scen[i],sw[i],trig[i])]])
-  }
-  tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Tax revenue loss",subgroup="Tax \n Revenue \n Loss",
-                       cost=Retreat_Analysis_Total[[paste0("Total_TaxRev_Loss_",scen[i],sw[i],"t",trig[i],"_l",land[i],"_bv",build[i])]])
-  tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Land and dwelling retreat public cost",subgroup="Buyout",
-                       cost=Retreat_Analysis_Total[[paste0("Total_Value_",scen[i],sw[i],"t",trig[i],"_l",land[i],"_bv",build[i])]])
-  if(scen[i] != 'RE'){
-    tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Land and dwelling retreat public cost",subgroup="Demolition",
-                         cost=Retreat_Analysis_Total[[paste0("demolition_",scen[i],sw[i],"t",trig[i])]])
-    tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Land and dwelling retreat public cost",subgroup="Seawall \n removal",
-                         cost=Retreat_Analysis_Total[[paste0("seawall_",scen[i],sw[i],trig[i])]])
-  }
-  tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Land and dwelling retreat public cost",subgroup="Wastewater \n removal",
-                       cost=Retreat_Analysis_Total[[paste0("wastewaterremoval_",scen[i],sw[i],"t",trig[i])]])
-  tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Land and dwelling retreat public cost",subgroup="OSDS \n removal",
-                       cost=Retreat_Analysis_Total[[paste0("osdsremoval_",scen[i],sw[i],"t",trig[i])]])
-  tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Infrastructure retreat cost",subgroup="Bridge \n retreat",
-                       cost=Retreat_Analysis_Total[[paste0("bridgerelocate",scen[i],sw[i],trig[i],"_rdr",road[i])]])
-  tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Infrastructure retreat cost",subgroup="Bridge \n retrofit",
-                       cost=Retreat_Analysis_Total[[paste0("bridgeretrofit",scen[i],sw[i],trig[i],"_rdr",road[i])]])
-  tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Infrastructure retreat cost",subgroup="Road \n realignment",
-                       cost=Retreat_Analysis_Total[[paste0("hwyrelocate",scen[i],sw[i],trig[i],"_rdr",road[i])]])
-  tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Infrastructure retreat cost",subgroup="Road \n removal",
-                       cost=Retreat_Analysis_Total[[paste0("rdremove",scen[i],sw[i],trig[i],"_rdr",road[i])]])
-  tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Infrastructure retreat cost",subgroup="Eminent \n domain",
-                       cost=Retreat_Analysis_Total[[paste0("emdom",scen[i],sw[i],trig[i],"_rdr",road[i])]])
-  tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Infrastructure retreat cost",subgroup="Road \n hardening",
-                       cost=Retreat_Analysis_Total[[paste0("hwyriprap",scen[i],sw[i],trig[i],"_rdr",road[i])]])
-  tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Infrastructure retreat cost",subgroup="Water main \n relocation",
-                       cost=Retreat_Analysis_Total[[paste0("waterrelocate",scen[i],sw[i],trig[i],"_rdr",road[i])]])
-  tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Infrastructure retreat cost",subgroup="Riprap \n removal",
-                       cost=Retreat_Analysis_Total[[paste0("riprapremove",scen[i],sw[i],trig[i],"_rdr",road[i])]])
-  tm[nrow(tm)+1,] <- c(scenario=scen[i],group="Infrastructure retreat cost",subgroup="Riprap \n maintenance",
-                       cost=Retreat_Analysis_Total[[paste0("maintain",scen[i],sw[i],trig[i],"_rdr",road[i])]])
-}
-
-tm$cost <- as.numeric(tm$cost)
-tm <- tm %>%
-  group_by(scenario) %>%
-  mutate(scenario_sum = sum(cost,na.rm=T))
-tm$percent <- tm$cost/tm$scenario_sum #sum(tm$cost,na.rm=T)
-
-figpiebeach <- ggplot(tm,aes(area=cost,fill=group,
-                             label=paste(subgroup,scales::percent(percent,accuracy=1),sep ="\n"),
-                             subgroup=subgroup))+
-  treemapify::geom_treemap(layout="squarified")+
-  geom_treemap_text(color='white',place = "centre",size = 15)+
-  geom_treemap_subgroup_border(colour = "white", size = 3)+
-  scale_fill_brewer("Cost types",palette = "Set2")+
-  scale_fill_manual(values = c('Private Property Value Loss'='#FFEB7F','Ambiguous'='#FFEB7F','Tax revenue loss'='#FFEB7F',
-                               'Land and dwelling retreat public cost'='#FFEB7F','Infrastructure retreat cost'='#00b300'),
-                    limits = c('Private Property Value Loss','Ambiguous','Tax revenue loss','Land and dwelling retreat public cost','Infrastructure retreat cost')) + 
-  ggtitle(paste0(titlename))+
-  facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
-  theme(legend.position="bottom",strip.text.x = element_text(size = 15),panel.spacing=unit(1,"lines"))
-
-#calculate cost per district
-districts <- unique(allisland$district) # 6 distinct
-
-maheledistdf <- setNames(data.frame(matrix(ncol = 10, nrow = 0)), c('scenario','trigger','beach','district',
-                                                                    'land_dwelling_cost','ambiguous_cost','infrastructure_cost',
-                                                                    'tax_revenue_loss','private_property_value_loss','total_cost'))
-for(district in districts){
-  clean_retreat_calcs <- allisland[allisland$district==district,]
-  infra_retreat <- allinfra[allinfra$district==district,] 
-  
-  source("C:/Users/rsett/Documents/KauaiRetreat/2retreatyearvaluetaxk.R")
-  source("C:/Users/rsett/Documents/KauaiRetreat/3costsovertimek.R")
-  source("C:/Users/rsett/Documents/KauaiRetreat/3infrastructurek.R") 
-  source("C:/Users/rsett/Documents/KauaiRetreat/4discountedtotalcostsk.R")
-  
-  for(i in 1:6){
-    totalval_col <- paste0("Total_Value_",scen[i],sw[i],"t",trig[i],"_l",land[i],"_bv",build[i])
-    demo_col <- paste0("demolition_",scen[i],sw[i],"t",trig[i])
-    osds_col <- paste0("osdsremoval_",scen[i],sw[i],"t",trig[i])
-    wastewater_col <- paste0("wastewaterremoval_",scen[i],sw[i],"t",trig[i])
-    seawall_col <- paste0("seawall_",scen[i],sw[i],trig[i])
-    cleanup_col <- paste0("cleanup",clean[i],"_",scen[i],sw[i],"t",trig[i]) 
-    infra_col <- paste0("infrastructure_",scen[i],sw[i],trig[i],"_rdr",road[i])
-    taxrevloss_col <- paste0("Total_TaxRev_Loss_",scen[i],sw[i],"t",trig[i],"_l",land[i],"_bv",build[i])
-    privproploss_col <- paste0("Priv_Prop_Loss_",scen[i],sw[i],"t",trig[i],"_l",land[i],"_bv",build[i])
-    
-    districtbeaches <- unique(infra_retreat$LittrlCell)
-    districtbeaches <- districtbeaches[!is.na(districtbeaches)]
-    
-    maheledistdf[nrow(maheledistdf) + 1,] = c(scenario = scen[i], trigger = trig[i],beach = toString(districtbeaches), district = district,
-                                              land_dwelling_cost = ifelse(is.na(clean[i]),
-                                                                          sum(Retreat_Analysis_Total[[totalval_col]],Retreat_Analysis_Total[[demo_col]],Retreat_Analysis_Total[[seawall_col]],
-                                                                              Retreat_Analysis_Total[[osds_col]],Retreat_Analysis_Total[[wastewater_col]],na.rm=T),
-                                                                          Retreat_Analysis_Total[[totalval_col]]),
-                                              ambiguous_cost = ifelse(is.na(clean[i]),0,
-                                                                      sum(Retreat_Analysis_Total[[cleanup_col]],Retreat_Analysis_Total[[seawall_col]],na.rm=T)),
-                                              infrastructure_cost = Retreat_Analysis_Total[[infra_col]],
-                                              tax_revenue_loss = Retreat_Analysis_Total[[taxrevloss_col]],
-                                              private_property_value_loss = Retreat_Analysis_Total[[privproploss_col]],
-                                              total_cost = NA)
-  }
-}
-maheledistdf[, 5:9] <- apply(maheledistdf[, 5:9], 2, function(x) as.numeric(as.character(x)))
-maheledistdf$total_cost <- rowSums(maheledistdf[5:9])
-
-figmahele <- ggplot(maheledistdf, aes(fill=factor(trigger) ,y=total_cost, x=district)) + 
+medians <- ggplot(beachesdftb_median, aes(x=as.factor(beach),y=as.numeric(value),fill=median_type)) + 
   geom_bar(stat='identity',position='dodge')+
-  facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), nrow = 3) 
+  scale_fill_manual(values=c("#4E84C4", "#E7B800", "#C77CFF","#00BA38"),
+                    labels=c('All parcels','CPR','non-CPR','Residential'),name= "Cost type")+
+  xlab('Beach ID')+
+  ylab('Median value')+
+  scale_y_continuous(label=scales::comma)+
+  theme_classic() 
+
+ggsave('fig_medians.png', medians,width=10,height=5,dpi=300,units='in')
+
+
+
+
+
+
