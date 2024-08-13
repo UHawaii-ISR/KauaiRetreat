@@ -441,16 +441,16 @@ figspotlt_moloaa <- ggplot(spotlt_moloaa,aes(x=Hawaiian.Name, y=as.numeric(cost)
   coord_flip()
 ggsave('figspotlt_moloaa.png', figspotlt_moloaa, bg='transparent',width=7.5,height=1,dpi=300,units='in')
 
-#poipu (24)
-spotlt_poipu <- beachspike[beachspike$beach ==24,]
-spotlt_poipu <- spotlt_poipu[!is.na(spotlt_poipu$beach),]
-spotlt_poipu <- setNames(as.data.frame(t(spotlt_poipu[-1])), spotlt_poipu[[1]])
-names(spotlt_poipu) <- c('cost')
-spotlt_poipu <- spotlt_poipu %>% tibble::rownames_to_column(var = "costtype")
-beachname <- spotlt_poipu$cost[spotlt_poipu$costtype == 'Hawaiian.Name']
-spotlt_poipu<- spotlt_poipu[spotlt_poipu$costtype %in% c('infrastructure_cost','residential_cost'),]
-spotlt_poipu$Hawaiian.Name <- beachname
-figspotlt_poipu <- ggplot(spotlt_poipu,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
+#hanalei (4)
+spotlt_hanalei <- beachspike[beachspike$beach ==4,]
+spotlt_hanalei <- spotlt_hanalei[!is.na(spotlt_hanalei$beach),]
+spotlt_hanalei <- setNames(as.data.frame(t(spotlt_hanalei[-1])), spotlt_hanalei[[1]])
+names(spotlt_hanalei) <- c('cost')
+spotlt_hanalei <- spotlt_hanalei %>% tibble::rownames_to_column(var = "costtype")
+beachname <- spotlt_hanalei$cost[spotlt_hanalei$costtype == 'Hawaiian.Name']
+spotlt_hanalei<- spotlt_hanalei[spotlt_hanalei$costtype %in% c('infrastructure_cost','residential_cost'),]
+spotlt_hanalei$Hawaiian.Name <- beachname
+figspotlt_hanalei <- ggplot(spotlt_hanalei,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
   geom_bar(position='stack',stat='identity',width=0.7)+
   scale_fill_manual(values=c('grey','grey43'))+
   geom_text_repel(aes(label=scales::comma(round(as.numeric(cost),-3))),size = 3, position = position_stack(vjust = 0.5))+
@@ -463,7 +463,7 @@ figspotlt_poipu <- ggplot(spotlt_poipu,aes(x=Hawaiian.Name, y=as.numeric(cost),f
         legend.position="none")+
   expand_limits(y = 1000000000)+
   coord_flip()
-ggsave('figspotlt_poipu.png', figspotlt_poipu, bg='transparent',width=7.5,height=1,dpi=300,units='in')
+ggsave('figspotlt_hanalei.png', figspotlt_hanalei, bg='transparent',width=7.5,height=1,dpi=300,units='in')
 
 #haena (1)
 spotlt_haena <- beachspike[beachspike$beach ==1,]
@@ -538,7 +538,7 @@ grid.draw(legend)
 
 #create bubble chart and color circles based on value of team variable
 beachesdftb$total_cost_mil <- beachesdftb$total_cost/1000000
-spotlight <- c('Kekaha','ʻAnini','Hāʻena','Waipouli','Poʻipū','Moloaʻa')
+spotlight <- c('Kekaha','ʻAnini','Hāʻena','Waipouli','Poʻipū','Moloaʻa','Hanalei')
 beachesdftb$number_homes <- as.numeric(beachesdftb$number_homes)
 beachesdftb$length_totalinf <- as.numeric(beachesdftb$length_totalinf)
 beachesdftb$total_cost_mil <- as.numeric(beachesdftb$total_cost_mil)
