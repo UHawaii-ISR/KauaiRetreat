@@ -26,7 +26,6 @@ allbldg <- clean_assessors_bldg
 allparcels <- clean_assessors_parcels 
 
 
-#beach cost plot
 
 #set up scenarios
 beaches <- c(1:40)
@@ -220,8 +219,55 @@ cepfroad<-read.csv('cepfroad.csv')
 
 
 
+# fig1 spike plot
 
-# Fig 2 COSTS
+#prep df
+beachspike <- beachesdf[beachesdf$scenario =='TB',] #plot only TB
+empty_bar <- 7
+to_add <- matrix(NA, empty_bar, ncol(beachspike))
+colnames(to_add) <- colnames(beachspike)
+beachspike <- rbind(beachspike, to_add)
+beachspike <- beachspike %>% bind_rows(slice(., 1:3)) %>% slice(-(1:3))
+beachspike$id <- seq(1, nrow(beachspike))
+beachspike$district <- ifelse(beachspike$beach %in% 1:10, 'North Shore Kauai',
+                              ifelse(beachspike$beach %in% 11:17, 'Kapaa-Wailua',
+                                     ifelse(beachspike$beach %in% 18:21,'Lihue',
+                                            ifelse(beachspike$beach %in% 22:27,'Koloa-Poipu',
+                                                   ifelse(beachspike$beach %in% 28:30,'Hanapepe-Eleele',
+                                                          ifelse(beachspike$beach %in% 31:40,'Waimea-Kekaha',NA))))))
+label_data <- beachspike
+number_of_bar <- nrow(label_data)
+angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar  
+label_data$hjust <- ifelse( angle < -90, 1, 0)
+label_data$angle <- ifelse(angle < -90, angle+180, angle)
+
+
+figspike <- ggplot(beachspike, aes(y=costperlength, x=factor(id),fill=district)) + 
+  geom_bar(stat='identity',position='dodge')+
+  xlab('beach ID')+
+  ylab('total cost')+
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill='transparent', color=NA),
+    axis.title=element_blank(),
+    axis.text=element_blank(),
+    panel.grid=element_blank(),
+    panel.border = element_blank(),
+    legend.position='none'
+  )+
+  coord_polar(start=0)+
+  ylim(-500000,max(beachspike$costperlength)) + #negative space for inner circle
+  #facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
+  geom_text(data=label_data,aes(x=id,y=costperlength+10000,label=beachname,hjust=hjust),angle= label_data$angle,size=3)
+ggsave('figspike.png', figspike, bg='transparent',width=5,height=5,dpi=300,units='in')
+
+
+
+
+
+
+
+# Fig 2 BAR COSTS
 
 # A) total costs stacked res & inf, 
 # B) erosion area retreated 
@@ -316,56 +362,61 @@ ggsave('fig2_bar.png', figbeach,width=25,height=25,dpi=300,units='cm')
 
 
 
-# spike plot
 
-#prep df
-beachspike <- beachesdf[beachesdf$scenario =='TB',] #plot only TB
-empty_bar <- 7
-to_add <- matrix(NA, empty_bar, ncol(beachspike))
-colnames(to_add) <- colnames(beachspike)
-beachspike <- rbind(beachspike, to_add)
-beachspike <- beachspike %>% bind_rows(slice(., 1:3)) %>% slice(-(1:3))
-beachspike$id <- seq(1, nrow(beachspike))
-beachspike$district <- ifelse(beachspike$beach %in% 1:10, 'North Shore Kauai',
-                              ifelse(beachspike$beach %in% 11:17, 'Kapaa-Wailua',
-                                     ifelse(beachspike$beach %in% 18:21,'Lihue',
-                                            ifelse(beachspike$beach %in% 22:27,'Koloa-Poipu',
-                                                   ifelse(beachspike$beach %in% 28:30,'Hanapepe-Eleele',
-                                                          ifelse(beachspike$beach %in% 31:40,'Waimea-Kekaha',NA))))))
-label_data <- beachspike
-number_of_bar <- nrow(label_data)
-angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar  
-label_data$hjust <- ifelse( angle < -90, 1, 0)
-label_data$angle <- ifelse(angle < -90, angle+180, angle)
+# FIG 3 BUBBLES
 
+#create bubble chart and color circles based on value of team variable
+beachesdftb$total_cost_mil <- beachesdftb$total_cost/1000000
+spotlight <- c('Kekaha','ʻAnini','Hāʻena','Waipouli','Poʻipū','Moloaʻa','Hanalei')
+beachesdftb$number_homes <- as.numeric(beachesdftb$number_homes)
+beachesdftb$length_totalinf <- as.numeric(beachesdftb$length_totalinf)
+beachesdftb$total_cost_mil <- as.numeric(beachesdftb$total_cost_mil)
+labels <- beachesdftb %>%
+  filter(beachname %in% spotlight | total_cost_mil > 100)
 
-figspike <- ggplot(beachspike, aes(y=costperlength, x=factor(id),fill=district)) + 
-  geom_bar(stat='identity',position='dodge')+
-  xlab('beach ID')+
-  ylab('total cost')+
-  theme_minimal() +
-  theme(
-    plot.background = element_rect(fill='transparent', color=NA),
-    axis.title=element_blank(),
-    axis.text=element_blank(),
-    panel.grid=element_blank(),
-    panel.border = element_blank(),
-    legend.position='none'
-  )+
-  coord_polar(start=0)+
-  ylim(-500000,max(beachspike$costperlength)) + #negative space for inner circle
-  #facet_wrap(~factor(scenario,levels=c('AO','TB','RE')), ncol = 3) +
-  geom_text(data=label_data,aes(x=id,y=costperlength+10000,label=beachname,hjust=hjust),angle= label_data$angle,size=3)
-ggsave('figspike.png', figspike, bg='transparent',width=5,height=5,dpi=300,units='in')
+bubblezoom <- ggplot(beachesdftb, aes(x=as.numeric(number_homes), y=as.numeric(length_totalinf), 
+                                      size=as.numeric(total_cost_mil), color=as.numeric(median_value_res_mil))) +
+  geom_point(alpha=0.5)  +
+  scale_size(range=c(2, 20),labels=scales::label_comma()) +
+  scale_color_viridis_c(option="plasma",labels = scales::label_comma()) +
+  geom_text_repel(data=labels,mapping=aes(label=beachname),size= 4,color= 'black')+
+  scale_y_continuous(labels=scales::comma,limits=c(0,400))+
+  xlim(0,30)+
+  theme_classic()+
+  theme(legend.position='none',
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank())
 
+bubbles <- ggplot(beachesdftb, aes(x=as.numeric(number_homes), y=as.numeric(length_totalinf), size=as.numeric(total_cost_mil), 
+                                   color=as.numeric(median_value_res_mil), label=beachname)) +
+  geom_point(alpha=0.5)  +
+  scale_size(range=c(2, 20),labels=scales::label_comma()) +
+  labs(size = "Total cost \n ($2023, mil)")+
+  scale_color_viridis_c(option="plasma",labels = scales::label_comma()) +
+  guides(col = guide_colourbar(title = "Median home value \n($2023, mil)"))+
+  geom_text_repel(data=labels,aes(label=beachname), size= 4,color= 'black')+ 
+  xlab('Number of homes affected')+
+  ylab('Road affected (m)')+
+  scale_y_continuous(labels=scales::comma) +
+  expand_limits(y=4000,x=225)+
+  theme_classic()+
+  geom_magnify(aes(from=number_homes < 30 & length_totalinf < 400),
+               to=c(xmin=125,xmax=200,ymin=1500,ymax=3000),shadow=T,plot=bubblezoom)
 
 
-
-
-#spotlights: kekaha (34), wailua (17), moloaa (11), poipu (24), haena (1)
+ggsave('fig3_bubbles.png', bubbles,width=8,height=6,dpi=300,units='in')
 
 
 
+
+
+
+
+
+
+# FIG 4 SPOTLIGHTS
+
+#spotlights: kekaha (34), wailua (17), moloaa (11), hanalei (4), haena (1)
 
 
 #spike spotlights
@@ -534,48 +585,7 @@ grid.draw(legend)
 
 
 
-# FIG 3 BUBBLES
 
-#create bubble chart and color circles based on value of team variable
-beachesdftb$total_cost_mil <- beachesdftb$total_cost/1000000
-spotlight <- c('Kekaha','ʻAnini','Hāʻena','Waipouli','Poʻipū','Moloaʻa','Hanalei')
-beachesdftb$number_homes <- as.numeric(beachesdftb$number_homes)
-beachesdftb$length_totalinf <- as.numeric(beachesdftb$length_totalinf)
-beachesdftb$total_cost_mil <- as.numeric(beachesdftb$total_cost_mil)
-labels <- beachesdftb %>%
-  filter(beachname %in% spotlight | total_cost_mil > 100)
-
-bubblezoom <- ggplot(beachesdftb, aes(x=as.numeric(number_homes), y=as.numeric(length_totalinf), 
-                                      size=as.numeric(total_cost_mil), color=as.numeric(median_value_res_mil))) +
-  geom_point(alpha=0.5)  +
-  scale_size(range=c(2, 20),labels=scales::label_comma()) +
-  scale_color_viridis_c(option="plasma",labels = scales::label_comma()) +
-  geom_text_repel(data=labels,mapping=aes(label=beachname),size= 4,color= 'black')+
-  scale_y_continuous(labels=scales::comma,limits=c(0,400))+
-  xlim(0,30)+
-  theme_classic()+
-  theme(legend.position='none',
-        axis.title.x=element_blank(),
-        axis.title.y=element_blank())
-
-bubbles <- ggplot(beachesdftb, aes(x=as.numeric(number_homes), y=as.numeric(length_totalinf), size=as.numeric(total_cost_mil), 
-                        color=as.numeric(median_value_res_mil), label=beachname)) +
-  geom_point(alpha=0.5)  +
-  scale_size(range=c(2, 20),labels=scales::label_comma()) +
-  labs(size = "Total cost \n ($2023, mil)")+
-  scale_color_viridis_c(option="plasma",labels = scales::label_comma()) +
-  guides(col = guide_colourbar(title = "Median home value \n($2023, mil)"))+
-  geom_text_repel(data=labels,aes(label=beachname), size= 4,color= 'black')+ 
-  xlab('Number of homes affected')+
-  ylab('Road affected (m)')+
-  scale_y_continuous(labels=scales::comma) +
-  expand_limits(y=4000,x=225)+
-  theme_classic()+
-  geom_magnify(aes(from=number_homes < 30 & length_totalinf < 400),
-               to=c(xmin=125,xmax=200,ymin=1500,ymax=3000),shadow=T,plot=bubblezoom)
-
-
-ggsave('fig3_bubbles.png', bubbles,width=8,height=6,dpi=300,units='in')
 
 
 
@@ -597,7 +607,7 @@ ggsave('fig3_bubbles.png', bubbles,width=8,height=6,dpi=300,units='in')
 
 
 
-#median value test
+#fig median value 
 beachesdftb_median <- beachesdftb %>%
   pivot_longer(cols = c(median_value_noncpr, median_value_cpr,median_value_res,median_value_all), 
                names_to = "median_type", values_to = "value")
