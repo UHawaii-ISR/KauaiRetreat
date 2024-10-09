@@ -291,7 +291,7 @@ for (year in years) {
       
       #for non-osds homes, assume they need wastewater pipe removal
       wastewater_remove <- 5686 
-      osds_remove <- 2000
+      osds_remove <- 2260
       
       # OSDS & wastewater removal costs for AO ($)
       osds_col <- paste0("osdsremoval_AO",seawall,"t",trigger)
