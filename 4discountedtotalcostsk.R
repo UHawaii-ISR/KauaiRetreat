@@ -493,7 +493,7 @@ for(scenario in scenarios){
           # Calculate the discounted costs for each year
           discounted_costs <- sapply(years, function(year) {
             # Retrieve the discount rate for the current year from DiscountRate26 data frame
-            discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+            discount_rate <- DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]
             
             # Calculate the sum discounted costs
             seawall <- Retreat_Analysis[[column]][Retreat_Analysis$Years == year] / discount_rate
@@ -513,18 +513,6 @@ for(scenario in scenarios){
 
 
 
-###
-# export csv's with all relevant calculations
-
-#just tmk + year retreat csv
-# Clean Parcel Hazard Area data, only keep important columns
-#forkammie <- clean_retreat_calcs[, c("TMK","NEAR_XA32","Land_Class","CPR")]
-# write.csv(retreat_time,"retreat_timing.csv")
-# write.csv(clean_retreat_calcs, "clean_retreat_calcs.csv", row.names=F)
-# write.csv(Retreat_Analysis, "Retreat_Analysis.csv",row.names=F)
-# write.csv(Retreat_Analysis_Total, "Retreat_Analysis_Total.csv",row.names=F)
-#write.csv(cost_summary, "cost_summary.csv",row.names=F)
-#write.csv(Retreat_Analysis, "Retreat_Analysis.csv",row.names=F)
 
 
 
