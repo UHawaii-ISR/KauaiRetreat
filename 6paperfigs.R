@@ -352,26 +352,47 @@ summary(totalcost_lm)
 
 #cost over time figure
 costtime_kauai <- subset(costtime_kauai, cost_type != 'ambiguous')
-fig_costtime <- ggplot(costtime_kauai,aes(x=year,y=cost,group=cost_type,color=cost_type))+
+costtime_kauai$costmil <- costtime_kauai$cost / 1000000
+costtime_kauai$cost_type <- factor(costtime_kauai$cost_type,levels=c('total','infra','landdwelling','privproploss','taxrevloss'))
+fig_costtime <- ggplot(costtime_kauai,aes(x=year,y=costmil,group=cost_type,color=cost_type))+
   geom_point(shape=15,size=4)+
   theme_bw()+
-  scale_color_manual(name="Cost type",labels=c("Infrastructure","Land and Dwelling","Private Property Loss","Tax Revenue Loss","Total"),
-                      values=c("#75bf67", "#2E9FDF", "#FC4E07","#E7B800","purple"))+ 
-  scale_y_continuous(name="Cumulative total cost ($2023, millions)",labels = scales::label_number(scale = 1))+
+  scale_color_manual(name="Cost type",labels=c("Total","Infrastructure","Land and Dwelling","Private Property Loss","Tax Revenue Loss"),
+                      values=c("#75bf67", "#2E9FDF", "#FC4E07","#E7B800","purple"))+
+  scale_y_continuous(name="Cumulative total cost ($2023, millions)",labels =scales::comma) +
   xlab("Year") 
+ggsave('fig_costtime.png', fig_costtime, bg='transparent',width=6,height=3,dpi=300,units='in')
 
 #total cost breakdown
 costtime_kauai2100 <- subset(costtime_kauai,year==2100 & cost_type != 'total')
-figtotal_breakdown <- ggplot(costtime_kauai2100,aes(x=year, y=as.numeric(cost),fill=cost_type,label=as.numeric(cost)))+
-  geom_bar(position='stack',stat='identity',width=0.7)+
-  scale_fill_manual(name="Cost type",labels=c("Infrastructure","Land and Dwelling","Private Property Loss","Tax Revenue Loss"),
-                    values=c("#75bf67", "#2E9FDF", "#FC4E07","#E7B800"))+
-  geom_text_repel(aes(label=scales::comma(round(as.numeric(cost),-3))),size = 3, position = position_stack(vjust = 0.5))+
-  scale_y_continuous(breaks=seq(0,3000000000,500000000),labels=scales::dollar_format(prefix='$',suffix='M',scale = 1e-6))+
+costtime_kauai2100[costtime_kauai2100=="infra"] <- "Infrastructure"
+costtime_kauai2100[costtime_kauai2100=="landdwelling"] <- "Land and Dwelling"
+costtime_kauai2100[costtime_kauai2100=="privproploss"] <- "Private Property Loss"
+costtime_kauai2100[costtime_kauai2100=="taxrevloss"] <- "Tax Revenue Loss"
+costtime_kauai2100 <- costtime_kauai2100[order(costtime_kauai2100$cost, decreasing = F),]
+figtotal_breakdown <- ggplot(costtime_kauai2100,aes(x=year, y=as.numeric(cost),label=as.numeric(cost)))+ #fill=cost_type,
+  geom_bar(position='stack',stat='identity',width=0.7,color="black",fill="white")+
+  #scale_fill_manual(values=c("#bfbfbf","#7f7f7f","#555555","#000000"))+
+  geom_label_repel(aes(label=paste0(cost_type,"\n","$",scales::comma(round(as.numeric(cost),-3)))), 
+                   position = position_stack(vjust=0.5),min.segment.length=0.1,fill=alpha(c("white"),0.7))+ #
+  geom_label(aes(label=paste0("Total","\n","$",scales::comma(round(after_stat(y),-3))),group=year),stat='summary',fun=sum,alpha=0.7)+
   theme_minimal() +
-  ylab('Cost')+
-  expand_limits(y = 1000000000)+
+  expand_limits(y = c(-250000000,2800000000))+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.position="none",
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())+
   coord_flip()
+ggsave('figtotal_breakdown.png', figtotal_breakdown, bg='transparent',width=6.5,height=3,dpi=300,units='in')
+
+
+
+
 
 
 
@@ -431,7 +452,7 @@ figbeachB <- ggplot(cebeach2100df_stack, aes(x=reorder(as.factor(beach), sort(as
   theme(strip.placement = "outside")
 
 # C: number of homes
-figbeachC <- ggplot(beachesdftb, aes(y=number_homes, x=factor(beach))) + 
+figbeachC <- ggplot(beachesdftb, aes(y=as.numeric(number_homes), x=factor(beach))) + 
   geom_bar(stat='identity',position='dodge')+
   xlab('Beach ID')+
   ylab('Number of \n homes affected')+
@@ -447,7 +468,7 @@ figbeachD <- ggplot(beachesdftb, aes(y=as.numeric(length_totalinf), x=factor(bea
   theme_classic() 
 
 #E: median property value of retreating residential parcels
-beachesdftb$median_value_res_mil <- beachesdftb$median_value_res/1000000
+beachesdftb$median_value_res_mil <- as.numeric(beachesdftb$median_value_res)/1000000
 
 figbeachE <- ggplot(beachesdftb, aes(y=as.numeric(median_value_res_mil), x=factor(beach))) + 
   geom_bar(stat='identity',position='dodge')+
@@ -705,22 +726,12 @@ grid.draw(legend)
 
 
 
-#fig cost over time
-fig_costtime <- ggplot(costtime_mini,aes(x=year,y=cost,group=subscenario,color=scenario))+
-  #geom_linerange(aes(ymin=min.cost,ymax=max.cost,linewidth=0.001,alpha=0.2))+
-  #geom_errorbar(aes(ymin = min.cost, ymax = max.cost), width = 0.9,alpha=0.4)+
-  geom_point(shape=15,size=4)+
-  theme_bw()+
-  scale_color_manual(name="Retreat approach",labels=c("All-at-once","Threshold-based","Reactive"),
-                     values=c("#75bf67", "#2E9FDF", "#FC4E07"))+ #,"#E7B800"
-  scale_y_continuous(name="Cumulative total cost ($2023, millions)",labels = scales::label_number(scale = 1))+
-  xlab("Year") 
 
 
 
 
 
-
+### unused figures
 
 
 
