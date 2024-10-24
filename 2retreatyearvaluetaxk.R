@@ -196,9 +196,12 @@ for (year in years) {
         totaltaxable_column_title <- paste0("Total_NetTaxable_", year, "_t", trigger, "_l", hazard_type, "_bv",bval) 
         #if before reactive year, building has full/0 value (depending on bval scenario). if after year reactive, building value is 0
         col_RE_trigger <- paste0("year_RE_t",trigger)
-        clean_retreat_calcs[[totaltaxable_column_title]] <- ifelse(clean_retreat_calcs[[col_RE_trigger]] > year,
+        col_TB_trigger <- paste0("year_TB_t",trigger)
+        clean_retreat_calcs[[totaltaxable_column_title]] <- ifelse(!is.na(clean_retreat_calcs[[col_RE_trigger]]) & clean_retreat_calcs[[col_RE_trigger]] > year,
                                                                    clean_retreat_calcs[[land_assess_col]] + bval * clean_retreat_calcs$ASMTBLDG - clean_retreat_calcs$TOTEXEMPT,
-                                                                   clean_retreat_calcs[[land_assess_col]] - clean_retreat_calcs$TOTEXEMPT) 
+                                                                   ifelse(is.na(clean_retreat_calcs[[col_RE_trigger]]) & clean_retreat_calcs[[col_TB_trigger]] == 2100,
+                                                                          clean_retreat_calcs[[land_assess_col]] + bval * clean_retreat_calcs$ASMTBLDG - clean_retreat_calcs$TOTEXEMPT,
+                                                                          clean_retreat_calcs[[land_assess_col]] - clean_retreat_calcs$TOTEXEMPT))
         
         # calculate remaining tax revenue after land transfer using total value
         # title new columns for tax revenue after land transfer for each hazard type
