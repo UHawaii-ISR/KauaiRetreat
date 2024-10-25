@@ -334,62 +334,6 @@ ggsave('figspike.png', figspike, bg='transparent',width=5,height=5,dpi=300,units
 
 
 
-# Fig 1 island-wide costs breakdown
-
-#prep df
-costtimetbce <- subset(costtime, scenario == 'TB' & trigger == 'CE')
-costtimetbce$cost <- as.numeric(costtimetbce$cost)
-costtimetbce <- costtimetbce %>% select(-beach)
-costtime_kauai <- costtimetbce %>%
-  group_by(year, cost_type) %>%
-  summarize(cost = sum(cost,na.rm=T)) 
-
-#cost per year calc
-costtime_kauai_total <- subset(costtime_kauai, cost_type == 'total')
-costtime_kauai_total$year <- as.numeric(costtime_kauai_total$year)
-totalcost_lm <- lm(cost ~ year, data = costtime_kauai_total)
-summary(totalcost_lm)
-
-#cost over time figure
-costtime_kauai <- subset(costtime_kauai, cost_type != 'ambiguous')
-costtime_kauai$costmil <- costtime_kauai$cost / 1000000
-costtime_kauai$cost_type <- factor(costtime_kauai$cost_type,levels=c('total','infra','landdwelling','privproploss','taxrevloss'))
-fig_costtime <- ggplot(costtime_kauai,aes(x=year,y=costmil,group=cost_type,color=cost_type))+
-  geom_point(shape=15,size=4)+
-  theme_bw()+
-  scale_color_manual(name="Cost type",labels=c("Total","Infrastructure","Land and Dwelling","Private Property Loss","Tax Revenue Loss"),
-                      values=c("#75bf67", "#2E9FDF", "#FC4E07","#E7B800","purple"))+
-  scale_y_continuous(name="Cumulative total cost ($2023, millions)",labels =scales::comma) +
-  xlab("Year") 
-ggsave('fig_costtime.png', fig_costtime, bg='transparent',width=6,height=3,dpi=300,units='in')
-
-#total cost breakdown
-costtime_kauai2100 <- subset(costtime_kauai,year==2100 & cost_type != 'total')
-costtime_kauai2100[costtime_kauai2100=="infra"] <- "Infrastructure"
-costtime_kauai2100[costtime_kauai2100=="landdwelling"] <- "Land and Dwelling"
-costtime_kauai2100[costtime_kauai2100=="privproploss"] <- "Private Property Loss"
-costtime_kauai2100[costtime_kauai2100=="taxrevloss"] <- "Tax Revenue Loss"
-costtime_kauai2100 <- costtime_kauai2100[order(costtime_kauai2100$cost, decreasing = F),]
-figtotal_breakdown <- ggplot(costtime_kauai2100,aes(x=year, y=as.numeric(cost),label=as.numeric(cost)))+ #fill=cost_type,
-  geom_bar(position='stack',stat='identity',width=0.7,color="black",fill="white")+
-  #scale_fill_manual(values=c("#bfbfbf","#7f7f7f","#555555","#000000"))+
-  geom_label_repel(aes(label=paste0(cost_type,"\n","$",scales::comma(round(as.numeric(cost),-3)))), 
-                   position = position_stack(vjust=0.5),min.segment.length=0.1,fill=alpha(c("white"),0.7))+ #
-  geom_label(aes(label=paste0("Total","\n","$",scales::comma(round(after_stat(y),-3))),group=year),stat='summary',fun=sum,alpha=0.7)+
-  theme_minimal() +
-  expand_limits(y = c(-250000000,2800000000))+
-  theme(axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank(),
-        axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank(),
-        legend.position="none",
-        panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank())+
-  coord_flip()
-ggsave('figtotal_breakdown.png', figtotal_breakdown, bg='transparent',width=6.5,height=3,dpi=300,units='in')
-
 
 
 
@@ -720,6 +664,64 @@ grid.draw(legend)
 
 
 
+# Fig island-wide costs breakdown
+
+#prep df
+costtimetbce <- subset(costtime, scenario == 'TB' & trigger == 'CE')
+costtimetbce$cost <- as.numeric(costtimetbce$cost)
+costtimetbce <- costtimetbce %>% select(-beach)
+costtime_kauai <- costtimetbce %>%
+  group_by(year, cost_type) %>%
+  summarize(cost = sum(cost,na.rm=T)) 
+
+#cost per year calc
+costtime_kauai_total <- subset(costtime_kauai, cost_type == 'total')
+costtime_kauai_total$year <- as.numeric(costtime_kauai_total$year)
+totalcost_lm <- lm(cost ~ year, data = costtime_kauai_total)
+summary(totalcost_lm)
+
+#cost over time figure
+costtime_kauai <- subset(costtime_kauai, cost_type != 'ambiguous')
+costtime_kauai$costmil <- costtime_kauai$cost / 1000000
+costtime_kauai$cost_type <- factor(costtime_kauai$cost_type,levels=c('total','infra','landdwelling','privproploss','taxrevloss'))
+costtime_kauai_filtered <- costtime_kauai %>%
+  group_by(cost_type, cost) %>%
+  filter(year == min(year)) %>%
+  ungroup()
+fig_costtime <- ggplot(costtime_kauai_filtered,aes(x=year,y=costmil,group=cost_type,color=cost_type))+
+  geom_point(shape=15,size=4,alpha=0.5)+
+  theme_bw()+
+  scale_color_manual(name="Cost type",labels=c("Total","Infrastructure","Land and Dwelling","Private Property Loss","Tax Revenue Loss"),
+                     values=c("#75bf67", "#2E9FDF", "#FC4E07","#E7B800","purple"))+
+  scale_y_continuous(name="Cumulative total cost ($2023, millions)",labels =scales::comma) +
+  xlab("Year") 
+ggsave('fig_costtime.png', fig_costtime, bg='transparent',width=6,height=3,dpi=300,units='in')
+
+#total cost breakdown
+costtime_kauai2100 <- subset(costtime_kauai,year==2100 & cost_type != 'total')
+costtime_kauai2100 <- costtime_kauai2100 %>% 
+  mutate(cost_type = ifelse(cost_type == "infra","Infrastructure",
+                            ifelse(cost_type == "landdwelling","Land and Dwelling",
+                                   ifelse(cost_type == "privproploss","Private Property Loss",
+                                          ifelse(cost_type == "taxrevloss","Tax Revenue Loss",cost_type)))))
+costtime_kauai2100 <- costtime_kauai2100[order(costtime_kauai2100$cost, decreasing = F),]
+costtime_kauai2100 <- costtime_kauai2100 %>%
+  group_by(year) %>%
+  mutate(cost_percentage = cost / sum(cost),
+         cumulative_cost = cumsum(as.numeric(cost)))
+
+
+
+
+
+
+
+
+
+
+
+
+
 #https://htmlcolorcodes.com/
 
 
@@ -732,6 +734,37 @@ grid.draw(legend)
 
 
 ### unused figures
+
+figtotal_breakdown <- ggplot(costtime_kauai2100,aes(x=year, y=as.numeric(cost),label=as.numeric(cost)))+ #fill=cost_type,
+  geom_bar(position='stack',stat='identity',width=0.7,color="black",fill="white")+
+  ggtitle(paste0("Total cost: $", scales::comma(round(sum(costtime_kauai2100$cost),-3))))+
+  geom_label(data = subset(costtime_kauai2100, cost_type %in% c("Infrastructure", "Land and Dwelling")),
+             aes(label=paste0(cost_type,"\n",scales::percent(cost_percentage,accuracy=0.1))), #_repel cost/sum(cost
+             #y=label_position), 
+             #vjust = ifelse(costtime_kauai2100$cost_type %in% c("Infrastructure", "Land and Dwelling"), 0.5, 1),
+             #aes(label=paste0(cost_type,"\n","$",scales::comma(round(as.numeric(cost),-3)))),
+             position = position_stack(vjust=0.5),fill=alpha(c("white"),0.7),size=5)+ #min.segment.length=0.1,
+  geom_label_repel(data = subset(costtime_kauai2100, cost_type %in% c("Tax Revenue Loss", "Private Property Loss")),
+                   aes(label = paste0(cost_type, "\n", scales::percent(cost_percentage)),
+                       y=cumulative_cost - 0.5 * as.numeric(cost)), #cost / sum(cost)
+                   nudge_x = -0.65,min.segment.length=0.1,fill=alpha(c("white"),0.7),size=5)+
+  #geom_label(aes(label=paste0("Total","\n","$",scales::comma(round(after_stat(y),-3))),group=year),stat='summary',fun=sum,alpha=0.7,size=5)+
+  theme_minimal() +
+  expand_limits(y = c(-250000000,2500000000))+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.position="none",
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        plot.title=element_text(vjust=-11.5,hjust=0.2,size=16))+
+  coord_flip()
+ggsave('figtotal_breakdown.png', figtotal_breakdown, bg='transparent',width=6.5,height=3,dpi=300,units='in')
+
+
 
 
 
