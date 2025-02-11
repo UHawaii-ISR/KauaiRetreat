@@ -38,13 +38,13 @@ road <- c('1','1','1')
 clean <- c(NA,NA,'hi') 
 
 #calculate cost per beach
-beachdf <- setNames(data.frame(matrix(ncol = 32, nrow = 0)), c('scenario','trigger','beach','district',
+beachdf <- setNames(data.frame(matrix(ncol = 34, nrow = 0)), c('scenario','trigger','beach','district',
                                                                 'land_dwelling_cost','ambiguous_cost','infrastructure_cost',
                                                                 'tax_revenue_loss','private_property_value_loss','total_cost',
                                                                'median_value_noncpr','median_value_cpr','median_value_res','median_value_all',
                                                                'number_buildings','number_apartments','number_CPR','number_homes',
                                                                'length_highway','length_riprap','length_rdremove','length_bridge','length_briprap',
-                                                               'length_maintain','length_totalinf',
+                                                               'length_maintain','length_totalinf','length_totalhwy','length_totalnonhwy',
                                                                'residential','vacationrental','commercial','hotel','homestead',
                                                                'resinvestor','commercialhome'))
 #calculate CE/PF per beach over time
@@ -114,6 +114,8 @@ for(beach in beaches){
     b_retrofitlen_col <- paste0("bridgeretrofitlen",scen[i],sw[i],trig[i],"_rdr",road[i])
     maintainlen_col <- paste0("maintainlen",scen[i],sw[i],trig[i],"_rdr",road[i])
     total_affected_col <- paste0("affectedlen",scen[i],sw[i],trig[i],"_rdr",road[i])
+    hwy_affected_col <- paste0("hwy_affectedlen",scen[i],sw[i],trig[i],"_rdr",road[i])
+    nonhwy_affected_col <- paste0("nonhwy_affectedlen",scen[i],sw[i],trig[i],"_rdr",road[i])
     
     beachdistricts <- unique(infra_retreat$district)
     beachdistricts <- beachdistricts[!is.na(beachdistricts)]
@@ -136,6 +138,7 @@ for(beach in beaches){
                                     length_riprap = Retreat_Analysis_Total[[hwyripraplen_col]],length_rdremove = Retreat_Analysis_Total[[rdremovelen_col]],
                                     length_bridge = Retreat_Analysis_Total[[b_reloclen_col]],length_briprap = Retreat_Analysis_Total[[b_retrofitlen_col]],
                                     length_maintain = Retreat_Analysis_Total[[maintainlen_col]],length_totalinf = Retreat_Analysis_Total[[total_affected_col]],
+                                    length_totalhwy = Retreat_Analysis_Total[[hwy_affected_col]],length_totalnonhwy = Retreat_Analysis_Total[[nonhwy_affected_col]],
                                     residential = residential,vacationrental = vacationrental,commercial = commercial,hotel = hotel,homestead = homestead,
                                     resinvestor = resinvestor,commercialhome = commercialhome
                                     )
@@ -268,12 +271,12 @@ beachesdf$homes_affected <- as.numeric(beachesdf$number_buildings) + as.numeric(
 #TB scenario only
 beachesdftb <- beachesdf[beachesdf$scenario == 'TB',]
 
-write.csv(beachesdftb,'beachesdftb.csv')
-write.csv(beachesdf,'beachesdf.csv')
-write.csv(cepfbeach,'cepfbeach.csv')
-write.csv(cepfparcel,'cepfparcel.csv')
-write.csv(cepfroad,'cepfroad.csv')
-write.csv(costtime,'costtime.csv')
+write.csv(beachesdftb,'beachesdftb_alltaxclass.csv')
+write.csv(beachesdf,'beachesdf_alltaxclass.csv')
+write.csv(cepfbeach,'cepfbeach_alltaxclass.csv')
+write.csv(cepfparcel,'cepfparcel_alltaxclass.csv')
+write.csv(cepfroad,'cepfroad_alltaxclass.csv')
+write.csv(costtime,'costtime_alltaxclass.csv')
 
 #beachesdftb <- read.csv('beachesdftb.csv')
 #beachesdf<-read.csv('beachesdf.csv')
@@ -404,12 +407,26 @@ figbeachC <- ggplot(beachesdftb, aes(y=as.numeric(number_homes), x=factor(beach)
   theme_classic() 
 
 #D: length of roads
-figbeachD <- ggplot(beachesdftb, aes(y=as.numeric(length_totalinf), x=factor(beach))) + 
-  geom_bar(stat='identity',position='dodge')+
+#bar stack breakdown highway vs nonhighway lengths affected
+beachesdftb_infrastack <- beachesdftb %>%
+  pivot_longer(cols = c(length_totalhwy, length_totalnonhwy), names_to = "infra_type", values_to = "length")
+
+figbeachD <- ggplot(beachesdftb_infrastack, aes(x=as.factor(beach),y=as.numeric(length),fill=infra_type)) + 
+  geom_bar(stat='identity',position='stack')+
+  scale_fill_manual(values=c('grey','grey43'),labels=c('Highway length','Non-highway length'),name= "Cost type")+
   xlab('Beach ID')+
   ylab('Length of road \n affected (m)')+
   scale_y_continuous(label=scales::comma)+
-  theme_classic() 
+  theme_classic() +
+  theme(strip.placement = "outside")
+
+#total infrastructure length version
+# figbeachD <- ggplot(beachesdftb, aes(y=as.numeric(length_totalinf), x=factor(beach))) +
+#   geom_bar(stat='identity',position='dodge')+
+#   xlab('Beach ID')+
+#   ylab('Length of road \n affected (m)')+
+#   scale_y_continuous(label=scales::comma)+
+#   theme_classic()
 
 #E: median property value of retreating residential parcels
 beachesdftb$median_value_res_mil <- as.numeric(beachesdftb$median_value_res)/1000000

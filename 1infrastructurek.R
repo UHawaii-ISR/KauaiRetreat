@@ -164,6 +164,8 @@ years <- unique(na.omit(infra_retreat$Year))
 
 #calculate the total amount of infrastructure affected per infra ID
 infra_retreat$total_affected <- rowSums((infra_retreat[,c('hwy','b','rd','rdretreat','rdbretreat')]), na.rm = TRUE)
+infra_retreat$hwy_affected <-  rowSums((infra_retreat[,c('hwy','b')]), na.rm = TRUE)
+infra_retreat$nonhwy_affected <- rowSums((infra_retreat[,c('rd','rdretreat','rdbretreat')]), na.rm = TRUE)
 
 #add new rows
 infra_retreat[ ,c("new_hwy","total_hwy","new_b","total_b","new_swallhwy","total_swallhwy","total_length","retreatyr",
@@ -306,6 +308,8 @@ for(id in infraIDs){
           ao_b <- subdf$b[subdf$Year == 2100]
           ao_rd <- subdf$rd[subdf$Year == 2100]
           ao_affected <- subdf$total_affected[subdf$Year == 2100]
+          ao_hwy_affected <- subdf$hwy_affected[subdf$Year == 2100]
+          ao_nonhwy_affected <- subdf$nonhwy_affected[subdf$Year == 2100]
           infracommunity <- subdf$Community[1]
           infralittrlcell <- subdf$LittrlCell[1]
           infradistrict <- subdf$district[1]
@@ -320,7 +324,8 @@ for(id in infraIDs){
             add_row(ID=id,Community=infracommunity,LittrlCell=infralittrlcell,district=infradistrict,NewB=infrabeach,
                     Trigger = trigger,Year=2023,Scenario='AO',rdret = rdr,retreatyr=2023,relocate_hwy=ao_relocate_hwy,
                     relocate_b=ao_relocate_b,remove_rd=ao_remove_rd,
-                    removeriprap_hwy=ao_removeriprap_hwy,removeriprap_rd=NA,total_affected = ao_affected ) %>% 
+                    removeriprap_hwy=ao_removeriprap_hwy,removeriprap_rd=NA,
+                    total_affected = ao_affected,hwy_affected = ao_hwy_affected, nonhwy_affected = ao_nonhwy_affected) %>% 
             group_by(ID, Scenario) 
         }
       }

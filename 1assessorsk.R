@@ -194,16 +194,26 @@ clean_assessors$TAXCLASS[clean_assessors$TMK == 180080430000] <- '6:CONSERVATION
 #If CPR but no 0000 parcel, only keep those that are residential
 residential <- c("1:RESIDENTIAL", "2:VACATION RENTAL","8:HOMESTEAD","9:Residential Investor","10:Commercialized Home Use") 
 
-clean_assessors <- clean_assessors %>%
-  filter( 
-    COTMK %in% filter(clean_assessors, TAXCLASS %in% residential)$COTMK | 
-      TAXCLASS %in% residential
-  )
-clean_assessors_bldg <- clean_assessors_bldg %>%
-  filter( 
-    COTMK %in% filter(clean_assessors_bldg, TAXCLASS %in% residential)$COTMK | 
-      TAXCLASS %in% residential
-  )
+#VERSION 1: keep all COTMK groups where ANY row is residential
+# clean_assessors <- clean_assessors %>%
+#   filter(COTMK %in% filter(clean_assessors, TAXCLASS %in% residential)$COTMK | 
+#       TAXCLASS %in% residential)
+# clean_assessors_bldg <- clean_assessors_bldg %>%
+#   filter(COTMK %in% filter(clean_assessors_bldg, TAXCLASS %in% residential)$COTMK | 
+#       TAXCLASS %in% residential)
+
+#VERSION 2: keep only COTMK groups where ALL rows are residential
+# clean_assessors <- clean_assessors %>%
+#   group_by(COTMK) %>%
+#   filter(!any(!TAXCLASS %in% residential)) %>% #confusing, but this returns T if group has no non-residential classes
+#   ungroup()
+# 
+# clean_assessors_bldg <- clean_assessors_bldg %>%
+#   group_by(COTMK) %>%
+#   filter(!any(!TAXCLASS %in% residential)) %>%
+#   ungroup()
+
+#VERSION 3: no filter - keep all tax classes
 
 
 

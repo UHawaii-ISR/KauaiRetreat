@@ -77,6 +77,8 @@ for (year in years) {
         b_retrofitlen_col <- paste0("bridgeretrofitlen",scenario,seawall,trigger,"_rdr",rdr)
         maintainlen_col <- paste0("maintainlen",scenario,seawall,trigger,"_rdr",rdr)
         total_affected_col <- paste0("affectedlen",scenario,seawall,trigger,"_rdr",rdr)
+        hwy_affected_col <- paste0("hwy_affectedlen",scenario,seawall,trigger,"_rdr",rdr)
+        nonhwy_affected_col <- paste0("nonhwy_affectedlen",scenario,seawall,trigger,"_rdr",rdr)
         
         
         if(nrow(subdf)==0){
@@ -96,6 +98,8 @@ for (year in years) {
           infra_costtime[[b_retrofitlen_col]][infra_costtime$Years == year] <- 0
           infra_costtime[[maintainlen_col]][infra_costtime$Years == year] <- 0
           infra_costtime[[total_affected_col]][infra_costtime$Years == year] <- 0
+          infra_costtime[[hwy_affected_col]][infra_costtime$Years == year] <- 0
+          infra_costtime[[nonhwy_affected_col]][infra_costtime$Years == year] <- 0
           
           
         } else if(seawall == "_s_"){ #seawall-stay scenario
@@ -120,6 +124,8 @@ for (year in years) {
           infra_costtime[[b_retrofitlen_col]][infra_costtime$Years == year] <- (sum(subdf$riprap_b,na.rm=T)+sum(subdf$riprap_b_s,na.rm=T))
           infra_costtime[[maintainlen_col]][infra_costtime$Years == year] <- (sum(subdf$maintain_hwy,na.rm=T)+sum(subdf$maintain_s,na.rm=T))
           infra_costtime[[total_affected_col]][infra_costtime$Years == year] <- (sum(subdf$total_affected,na.rm=T))
+          infra_costtime[[hwy_affected_col]][infra_costtime$Years == year] <- (sum(subdf$hwy_affected ,na.rm=T))
+          infra_costtime[[nonhwy_affected_col]][infra_costtime$Years == year] <- (sum(subdf$nonhwy_affected ,na.rm=T))
           
         } else{ 
           infra_costtime[[b_reloc_col]][infra_costtime$Years == year] <- sum(subdf$relocate_b,na.rm=T)*bridge_reloc
@@ -138,6 +144,8 @@ for (year in years) {
           infra_costtime[[b_retrofitlen_col]][infra_costtime$Years == year] <- sum(subdf$riprap_b,na.rm=T)
           infra_costtime[[maintainlen_col]][infra_costtime$Years == year] <- sum(subdf$maintain_hwy,na.rm=T)
           infra_costtime[[total_affected_col]][infra_costtime$Years == year] <- (sum(subdf$total_affected,na.rm=T))
+          infra_costtime[[hwy_affected_col]][infra_costtime$Years == year] <- (sum(subdf$hwy_affected,na.rm=T))
+          infra_costtime[[nonhwy_affected_col]][infra_costtime$Years == year] <- (sum(subdf$nonhwy_affected,na.rm=T))
           
         }
         
@@ -168,6 +176,8 @@ for (year in years) {
         Retreat_Analysis[[b_retrofitlen_col]][Retreat_Analysis$Years == year] <- infra_costtime[[b_retrofitlen_col]][infra_costtime$Years == year]
         Retreat_Analysis[[maintainlen_col]][Retreat_Analysis$Years == year] <- infra_costtime[[maintainlen_col]][infra_costtime$Years == year]
         Retreat_Analysis[[total_affected_col]][Retreat_Analysis$Years == year] <- infra_costtime[[total_affected_col]][infra_costtime$Years == year]
+        Retreat_Analysis[[hwy_affected_col]][Retreat_Analysis$Years == year] <- infra_costtime[[hwy_affected_col]][infra_costtime$Years == year]
+        Retreat_Analysis[[nonhwy_affected_col]][Retreat_Analysis$Years == year] <- infra_costtime[[nonhwy_affected_col]][infra_costtime$Years == year]
         }
       }
     }
