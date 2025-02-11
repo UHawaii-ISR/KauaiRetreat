@@ -5,21 +5,11 @@ library(dplyr)
 library(tidyr)
 library(ggmagnify)
 
-#tell R where your files are
-workdir <- "F:/slr/kauai/kauai_retreat_code/" # your working directory
-assessorsfile <- "F:/slr/kauai/2023_Real_Property_Tax_Data" #original assessors file (used to calculate eminent domain)
-noncprshpfolder <- "F:/slr/kauai/CosmosTiff" #the folder where non-CPR bldg footprint shapefile is
-noncprshplayer <- "Buildings_XA_nonCPR" # "Buildings_XA" #layer name for non-CPR bldg footprint shapefile
-cprshpfolder <- "F:/slr/kauai/CosmosTiff" #the folder for CPR bldg ftprt shapefile
-cprshplayer <- "Buildings_XA_CPR" # "Buildings_XA_CPR"# layer name for CPR bldg ftprt shapefile
-salayer <- "tmk_XA" #Shape area layer
-osdsfile <- "F:/slr/kauai/OSDSv6_Exploded_ALL.csv" #the osds file
-seawallfile <- "F:/slr/kauai/TMK_realign_seawalls" #the folder with seawall shapefile
-infrastructurefolder <- "F:/slr/kauai/CosmosTiff" #the folder that has all of the infrastructure hazard files
-emdomfile <- "F:/slr/kauai/slrxa-adj" #folder with only parcels that are SLRXA-adjacent
+codedir <- getwd()
+source(paste0(codedir,'config_dir.R')) #personal computer config
 
-source("C:/Users/rsett/Documents/KauaiRetreat/1assessorsk.R")
-source("C:/Users/rsett/Documents/KauaiRetreat/1infrastructurek.R") #takes 15 min to run this code
+source(paste0(codedir,"1assessorsk.R"))
+source(paste0(codedir,"1infrastructurek.R")) #takes 15 min to run this code
 allisland <- clean_retreat_calcs
 allinfra <- infra_retreat
 allbldg <- clean_assessors_bldg
@@ -78,10 +68,10 @@ for(beach in beaches){
   parcelsCE <- subset(clean_retreat_calcs,NEAR_CE32 <= 6.1)
   medparcelval <- apply(parcelsCE[c('APRTOTMKT')],2,median,na.rm=T)[[1]]
   
-  source("C:/Users/rsett/Documents/KauaiRetreat/2retreatyearvaluetaxk.R")
-  source("C:/Users/rsett/Documents/KauaiRetreat/3costsovertimek.R")
-  source("C:/Users/rsett/Documents/KauaiRetreat/3infrastructurek.R") 
-  source("C:/Users/rsett/Documents/KauaiRetreat/4discountedtotalcostsk.R")
+  source(paste0(codedir,"2retreatyearvaluetaxk.R"))
+  source(paste0(codedir,"3costsovertimek.R"))
+  source(paste0(codedir,"3infrastructurek.R"))
+  source(paste0(codedir,"4discountedtotalcostsk.R"))
   
   #taxclasses
   #sum number each tax class that must retreat by 2100 under CE
@@ -245,20 +235,20 @@ beachesdf <- beachdf[beachdf$beach != 0,]
 beachesdf <- beachesdf[beachesdf$trigger == 'CE',]
 
 #get beach names
-beachnames <- read.csv('F:/slr/kauai/CosmosTiff/KauaiBeachNames.csv')
+beachnames <- read.csv(beachnames_file)
 names(beachnames) <- c('beach','beachname')
 beachesdf <- beachesdf %>%
   left_join(beachnames, by = c('beach'))
 
 #calculate cost per beach length
-beachlengthdf <- read.csv('F:/slr/kauai/CosmosTiff/Cosmos_to_Tiff.csv')
+beachlengthdf <- read.csv(beachlength_file)
 beachlengthdf = beachlengthdf[!duplicated(beachlengthdf$NewB),] #get rid of duplicates in NewB column
 beachesdf <- beachesdf %>%
      left_join(beachlengthdf, by = c('beach' ='NewB'))
 beachesdf$costperlength <- beachesdf$total_cost / beachesdf$Len_m
 
 #categorize by residential type, color by infrastructure affected
-restype <- read.csv('F:/slr/kauai/CosmosTiff/beachrestype.csv')
+restype <- read.csv(beachrescat_file)
 beachesdf <- beachesdf %>%
   left_join(restype, by = c('beach' ='NewB'))
 beachesdf$ResType <- factor(beachesdf$ResType, levels=c('Non-Impacted Development','Infrastructure','Low-Density Residential',
