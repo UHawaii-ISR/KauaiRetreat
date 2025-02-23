@@ -164,7 +164,11 @@ clean_assessors <- clean_assessors %>%
   filter(
     buildings == 1 | 
       (buildings > 1 & 
-         (BLDG_SQFT > 300 & NEAR_VEG == min(NEAR_VEG)))
+         if(any(BLDG_SQFT > 300)) {
+           NEAR_VEG == min(NEAR_VEG[BLDG_SQFT > 300])
+         } else {
+           NEAR_VEG == min(NEAR_VEG)
+         })
   ) %>%
   ungroup()
 #as an extra precaution, make sure there are no duplicates of TMK's that happen to have buildings equally far from veg
