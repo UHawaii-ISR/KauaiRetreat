@@ -6,10 +6,10 @@ library(tidyr)
 library(ggmagnify)
 
 codedir <- getwd()
-source(paste0(codedir,'config_dir.R')) #personal computer config
+source(paste0(codedir,'/config_dir.R')) #personal computer config
 
-source(paste0(codedir,"1assessorsk.R"))
-source(paste0(codedir,"1infrastructurek.R")) #takes 15 min to run this code
+source(paste0(codedir,"/1assessorsk.R"))
+source(paste0(codedir,"/1infrastructurek.R")) #takes 15 min to run this code
 allisland <- clean_retreat_calcs
 allinfra <- infra_retreat
 allbldg <- clean_assessors_bldg
@@ -68,10 +68,10 @@ for(beach in beaches){
   parcelsCE <- subset(clean_retreat_calcs,NEAR_CE32 <= 6.1)
   medparcelval <- apply(parcelsCE[c('APRTOTMKT')],2,median,na.rm=T)[[1]]
   
-  source(paste0(codedir,"2retreatyearvaluetaxk.R"))
-  source(paste0(codedir,"3costsovertimek.R"))
-  source(paste0(codedir,"3infrastructurek.R"))
-  source(paste0(codedir,"4discountedtotalcostsk.R"))
+  source(paste0(codedir,"/2retreatyearvaluetaxk.R"))
+  source(paste0(codedir,"/3costsovertimek.R"))
+  source(paste0(codedir,"/3infrastructurek.R"))
+  source(paste0(codedir,"/4discountedtotalcostsk.R"))
   
   #taxclasses
   #sum number each tax class that must retreat by 2100 under CE

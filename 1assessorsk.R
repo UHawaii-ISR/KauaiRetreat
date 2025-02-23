@@ -139,6 +139,9 @@ clean_assessors <- clean_assessors %>%
   group_by(TMK) %>%
   mutate(buildings = n())
 
+#data cleaning: remove TMK 0
+clean_assessors <- clean_assessors[clean_assessors$TMK>0,]
+
 #make a separate dataframe where all buildings are retained
 clean_assessors_bldg <- clean_assessors
 clean_assessors_bldg <- clean_assessors_bldg %>%
