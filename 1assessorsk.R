@@ -90,6 +90,7 @@ clean_assessors <- assessors[, c("PARID","COTMK","CPR_UNIT","TAXCLASS",
                                  'SA_WF05','SA_WF11','SA_WF20','SA_WF32',
                                  'SA_XA05','SA_XA11','SA_XA20','SA_XA32',
                                  'SA_PF05','SA_PF11','SA_PF20','SA_PF32',
+                                 'Public','Resident','pubpriv',
                                  'OSDS_QTY_calc','WASTEWATER')]
 
 
@@ -125,6 +126,22 @@ clean_assessors <- clean_assessors %>%
          SA_2100_PF = SA_PF32,
          OSDS = OSDS_QTY_calc)
 
+#data cleaning: remove TMK 0
+clean_assessors <- clean_assessors[clean_assessors$TMK>0,]
+
+#create indicator for tmk8 tax class
+clean_assessors <- clean_assessors %>%
+  group_by(COTMK) %>%
+  mutate(
+    TMK8_TAXCLASS = case_when(
+      n() == 1 ~ TAXCLASS,  # Single row groups use their own TAXCLASS
+      n() > 1 & any(grepl("0000$", TMK)) ~ TAXCLASS[grepl("0000$", TMK)][1],  # Multi-row with 0000 ending
+      TRUE ~ {
+        # Find the majority TAXCLASS value
+        taxclass_counts <- table(TAXCLASS)
+        names(taxclass_counts)[which.max(taxclass_counts)]
+      })) %>%
+  ungroup()
 
 # create column summing number of CPR units per building (need this later for dividing retreat costs per CPR'd building)
 clean_assessors <- clean_assessors %>%
@@ -138,9 +155,6 @@ clean_assessors$apartment <- ifelse(clean_assessors$Number_CPRbldg >15,1,0)
 clean_assessors <- clean_assessors %>%
   group_by(TMK) %>%
   mutate(buildings = n())
-
-#data cleaning: remove TMK 0
-clean_assessors <- clean_assessors[clean_assessors$TMK>0,]
 
 #make a separate dataframe where all buildings are retained
 clean_assessors_bldg <- clean_assessors
@@ -200,28 +214,6 @@ clean_assessors$TAXCLASS[clean_assessors$TMK == 180080430000] <- '6:CONSERVATION
 #Filter TMK8 ending in 0000 general parcel. If residential, keep all CPR’s within
 #If CPR but no 0000 parcel, only keep those that are residential
 residential <- c("1:RESIDENTIAL", "2:VACATION RENTAL","8:HOMESTEAD","9:Residential Investor","10:Commercialized Home Use") 
-
-#VERSION 1: keep all COTMK groups where ANY row is residential
-# clean_assessors <- clean_assessors %>%
-#   filter(COTMK %in% filter(clean_assessors, TAXCLASS %in% residential)$COTMK | 
-#       TAXCLASS %in% residential)
-# clean_assessors_bldg <- clean_assessors_bldg %>%
-#   filter(COTMK %in% filter(clean_assessors_bldg, TAXCLASS %in% residential)$COTMK | 
-#       TAXCLASS %in% residential)
-
-#VERSION 2: keep only COTMK groups where ALL rows are residential
-# clean_assessors <- clean_assessors %>%
-#   group_by(COTMK) %>%
-#   filter(!any(!TAXCLASS %in% residential)) %>% #confusing, but this returns T if group has no non-residential classes
-#   ungroup()
-# 
-# clean_assessors_bldg <- clean_assessors_bldg %>%
-#   group_by(COTMK) %>%
-#   filter(!any(!TAXCLASS %in% residential)) %>%
-#   ungroup()
-
-#VERSION 3: no filter - keep all tax classes
-
 
 
 # Calculate the current tax revenue based on land class

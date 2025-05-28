@@ -130,28 +130,294 @@ discount_sum <- function(column) {
 for(trigger in triggers){
   for(seawall in seawalls){
     for(hazard_type in hazard_types){
+      #AO
       totalval_col <- paste0("Total_Value_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
       Retreat_Analysis_Total[[totalval_col]] <- sum(Retreat_Analysis[[totalval_col]]) # no need to discount because only has values in present (2023)
       
       privproploss_col <- paste0("Priv_Prop_Loss_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
       Retreat_Analysis_Total[[privproploss_col]] <- 0 # no priv prop loss for AO approaches since properties are assumed to have full assessed value 
       
+      totalval_col <- paste0("Total_Value_res_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+      Retreat_Analysis_Total[[totalval_col]] <- sum(Retreat_Analysis[[totalval_col]])
+      privproploss_col <- paste0("Priv_Prop_Loss_res_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+      Retreat_Analysis_Total[[privproploss_col]] <- 0 
+      
+      totalval_col <- paste0("Total_Value_hotel_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+      Retreat_Analysis_Total[[totalval_col]] <- sum(Retreat_Analysis[[totalval_col]])
+      privproploss_col <- paste0("Priv_Prop_Loss_hotel_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+      Retreat_Analysis_Total[[privproploss_col]] <- 0 
+      
+      totalval_col <- paste0("Total_Value_ag_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+      Retreat_Analysis_Total[[totalval_col]] <- sum(Retreat_Analysis[[totalval_col]])
+      privproploss_col <- paste0("Priv_Prop_Loss_ag_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+      Retreat_Analysis_Total[[privproploss_col]] <- 0 
+      
+      totalval_col <- paste0("Total_Value_comm_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+      Retreat_Analysis_Total[[totalval_col]] <- sum(Retreat_Analysis[[totalval_col]])
+      privproploss_col <- paste0("Priv_Prop_Loss_comm_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+      Retreat_Analysis_Total[[privproploss_col]] <- 0 
+      
+      totalval_col <- paste0("Total_Value_cons_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+      Retreat_Analysis_Total[[totalval_col]] <- sum(Retreat_Analysis[[totalval_col]])
+      privproploss_col <- paste0("Priv_Prop_Loss_cons_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+      Retreat_Analysis_Total[[privproploss_col]] <- 0 
+      
+      #RE
       totalval_col <- paste0("Total_Value_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
       Retreat_Analysis_Total[[totalval_col]] <- discount_sum(totalval_col)
       
       privproploss_col <- paste0("Priv_Prop_Loss_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
       Retreat_Analysis_Total[[privproploss_col]] <- discount_sum(privproploss_col)
       
+      totalval_col <- paste0("Total_Value_res_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+      Retreat_Analysis_Total[[totalval_col]] <- discount_sum(totalval_col)
+      privproploss_col <- paste0("Priv_Prop_Loss_res_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+      Retreat_Analysis_Total[[privproploss_col]] <- discount_sum(privproploss_col)
+      
+      totalval_col <- paste0("Total_Value_hotel_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+      Retreat_Analysis_Total[[totalval_col]] <- discount_sum(totalval_col)
+      privproploss_col <- paste0("Priv_Prop_Loss_hotel_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+      Retreat_Analysis_Total[[privproploss_col]] <- discount_sum(privproploss_col)
+      
+      totalval_col <- paste0("Total_Value_ag_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+      Retreat_Analysis_Total[[totalval_col]] <- discount_sum(totalval_col)
+      privproploss_col <- paste0("Priv_Prop_Loss_ag_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+      Retreat_Analysis_Total[[privproploss_col]] <- discount_sum(privproploss_col)
+      
+      totalval_col <- paste0("Total_Value_comm_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+      Retreat_Analysis_Total[[totalval_col]] <- discount_sum(totalval_col)
+      privproploss_col <- paste0("Priv_Prop_Loss_comm_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+      Retreat_Analysis_Total[[privproploss_col]] <- discount_sum(privproploss_col)
+      
+      totalval_col <- paste0("Total_Value_cons_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+      Retreat_Analysis_Total[[totalval_col]] <- discount_sum(totalval_col)
+      privproploss_col <- paste0("Priv_Prop_Loss_cons_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+      Retreat_Analysis_Total[[privproploss_col]] <- discount_sum(privproploss_col)
+      
       for(bval in bvals){
+        #TB
         totalval_col <- paste0("Total_Value_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
         Retreat_Analysis_Total[[totalval_col]] <- discount_sum(totalval_col)
         
         privproploss_col <- paste0("Priv_Prop_Loss_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
         Retreat_Analysis_Total[[privproploss_col]] <- discount_sum(privproploss_col)
+        
+        totalval_col <- paste0("Total_Value_res_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+        Retreat_Analysis_Total[[totalval_col]] <- discount_sum(totalval_col)
+        privproploss_col <- paste0("Priv_Prop_Loss_res_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+        Retreat_Analysis_Total[[privproploss_col]] <- discount_sum(privproploss_col)
+        
+        totalval_col <- paste0("Total_Value_hotel_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+        Retreat_Analysis_Total[[totalval_col]] <- discount_sum(totalval_col)
+        privproploss_col <- paste0("Priv_Prop_Loss_hotel_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+        Retreat_Analysis_Total[[privproploss_col]] <- discount_sum(privproploss_col)
+        
+        totalval_col <- paste0("Total_Value_ag_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+        Retreat_Analysis_Total[[totalval_col]] <- discount_sum(totalval_col)
+        privproploss_col <- paste0("Priv_Prop_Loss_ag_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+        Retreat_Analysis_Total[[privproploss_col]] <- discount_sum(privproploss_col)
+        
+        totalval_col <- paste0("Total_Value_comm_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+        Retreat_Analysis_Total[[totalval_col]] <- discount_sum(totalval_col)
+        privproploss_col <- paste0("Priv_Prop_Loss_comm_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+        Retreat_Analysis_Total[[privproploss_col]] <- discount_sum(privproploss_col)
+        
+        totalval_col <- paste0("Total_Value_cons_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+        Retreat_Analysis_Total[[totalval_col]] <- discount_sum(totalval_col)
+        privproploss_col <- paste0("Priv_Prop_Loss_cons_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+        Retreat_Analysis_Total[[privproploss_col]] <- discount_sum(privproploss_col)
       }
     }
   }
 }
+
+
+# Define taxclass-filtered datasets and corresponding suffixes
+datasets_list <- list(
+  "all" = clean_retreat_calcs,  # No filter version
+  "res" = clean_retreat_calcs_home,
+  "hotel" = clean_retreat_calcs_hotel,
+  "comm" = clean_retreat_calcs_comm,
+  "ag" = clean_retreat_calcs_ag,
+  "cons" = clean_retreat_calcs_cons
+)
+
+for(taxclass in names(taxclass_list)) {
+  current_data <- datasets_list[[taxclass]]
+  
+  # Determine suffix for column names
+  suffix <- ifelse(taxclass == "all", "", paste0("_", taxclass))
+  
+  # Calculate Lost Tax Revenue ($) for AO
+  for (hazard_type in hazard_types) {
+    for(trigger in triggers){
+      for(seawall in seawalls){
+        AO_taxrevloss_col <- paste0("Total_TaxRev_Loss",suffix,"_AO", seawall, "t", trigger, "_l", hazard_type, "_bv1")
+        yearAO_col <- paste0("year_AO", seawall, "t", trigger)
+        totaltax_col_2030 <- paste0("Total_TaxRev_2030_t", trigger, "_l", hazard_type, "_bv1") 
+        totaltax_col_2050 <- paste0("Total_TaxRev_2050_t", trigger, "_l", hazard_type, "_bv1") 
+        totaltax_col_2075 <- paste0("Total_TaxRev_2075_t", trigger, "_l", hazard_type, "_bv1") 
+        totaltax_col_2100 <- paste0("Total_TaxRev_2100_t", trigger, "_l", hazard_type, "_bv1") 
+        
+        current_data[[AO_taxrevloss_col]] <-
+          ifelse(current_data[[yearAO_col]] == 2023, 
+                 (current_data$Current_Tax_Revenue * (2030 - present_year) / discount_rate_30(2025)) +
+                   (current_data[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
+                   (current_data[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
+                   (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
+                   (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+                 NA ) 
+        
+        totaltaxrevloss_col <- paste0("Total_TaxRev_Loss", suffix,"_AO", seawall, "t", trigger, "_l", hazard_type, "_bv1")
+        Retreat_Analysis_Total[[totaltaxrevloss_col]] <- sum(current_data[[AO_taxrevloss_col]], na.rm=T)
+      }
+    }
+  }
+  
+  # Calculate Lost Tax Revenue for TB
+  scenarios <- c("TB")  
+  
+  for(scenario in scenarios){
+    for(hazard_type in hazard_types){
+      for(trigger in triggers){
+        for(bval in bvals){
+          for(seawall in seawalls){
+            taxrevloss_col <- paste0("Total_TaxRev_Loss", suffix,"_", scenario, seawall, "t", trigger, "_l", hazard_type, "_bv", bval)
+            yearRetreat_col <- paste0("year_", scenario, seawall, "t", trigger)
+            totaltax_col_2023 <- paste0("Total_TaxRev_2023_t", trigger, "_l", hazard_type, "_bv", bval) 
+            totaltax_col_2026 <- paste0("Total_TaxRev_2026_t", trigger, "_l", hazard_type, "_bv", bval) 
+            totaltax_col_2030 <- paste0("Total_TaxRev_2030_t", trigger, "_l", hazard_type, "_bv", bval) 
+            totaltax_col_2040 <- paste0("Total_TaxRev_2040_t", trigger, "_l", hazard_type, "_bv", bval) 
+            totaltax_col_2050 <- paste0("Total_TaxRev_2050_t", trigger, "_l", hazard_type, "_bv", bval) 
+            totaltax_col_2062 <- paste0("Total_TaxRev_2062_t", trigger, "_l", hazard_type, "_bv", bval) 
+            totaltax_col_2075 <- paste0("Total_TaxRev_2075_t", trigger, "_l", hazard_type, "_bv", bval) 
+            totaltax_col_2087 <- paste0("Total_TaxRev_2087_t", trigger, "_l", hazard_type, "_bv", bval) 
+            totaltax_col_2100 <- paste0("Total_TaxRev_2100_t", trigger, "_l", hazard_type, "_bv", bval) 
+            
+            current_data[[taxrevloss_col]] <- case_when(
+              current_data[[yearRetreat_col]] == 2023 ~
+                (current_data[[totaltax_col_2023]] * (2030 - 2023) / discount_rate_30(2025)) +
+                (current_data[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
+                (current_data[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
+                (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
+                (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+              current_data[[yearRetreat_col]] == 2026 ~ 
+                (current_data[[totaltax_col_2026]] * (2030 - 2026) / discount_rate_30(2028)) +
+                (current_data[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
+                (current_data[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
+                (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
+                (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+              current_data[[yearRetreat_col]] == 2030 ~ 
+                (current_data[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
+                (current_data[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
+                (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
+                (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+              current_data[[yearRetreat_col]] == 2040 ~ 
+                (current_data[[totaltax_col_2040]] * (2050 - 2040) / discount_rate_30(2045)) +
+                (current_data[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
+                (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
+                (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+              current_data[[yearRetreat_col]] == 2050 ~ 
+                (current_data[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
+                (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
+                (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+              current_data[[yearRetreat_col]] == 2062 ~ 
+                (current_data[[totaltax_col_2062]] * (2075 - 2062) / discount_rate_30(2068)) +
+                (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
+                (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+              current_data[[yearRetreat_col]] == 2075 ~ 
+                (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
+                (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+              current_data[[yearRetreat_col]] == 2087 ~ 
+                (current_data[[totaltax_col_2087]] * (2100 - 2087) / discount_rate_30(2093)) +
+                (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+              current_data[[yearRetreat_col]] == 2100 ~ 
+                (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+              TRUE ~ NA
+            )
+            
+            totaltaxrevloss_col <- paste0("Total_TaxRev_Loss", suffix,"_", scenario, seawall, "t", trigger, "_l", hazard_type, "_bv", bval)
+            Retreat_Analysis_Total[[totaltaxrevloss_col]] <- sum(current_data[[taxrevloss_col]], na.rm=T)
+          }
+        }
+      }
+    }
+  }
+  
+  # Calculate Lost Tax Revenue for RE
+  scenarios <- c("RE")  
+  
+  for(scenario in scenarios){
+    for(hazard_type in hazard_types){
+      for(trigger in triggers){
+        for(seawall in seawalls){
+          taxrevloss_col <- paste0("Total_TaxRev_Loss", suffix,"_", scenario, seawall, "t", trigger, "_l", hazard_type, "_bv0")
+          yearRetreat_col <- paste0("year_", scenario, seawall, "t", trigger)
+          totaltax_col_2023 <- paste0("Total_TaxRev_2023_t", trigger, "_l", hazard_type, "_bv0") 
+          totaltax_col_2026 <- paste0("Total_TaxRev_2026_t", trigger, "_l", hazard_type, "_bv0") 
+          totaltax_col_2030 <- paste0("Total_TaxRev_2030_t", trigger, "_l", hazard_type, "_bv0") 
+          totaltax_col_2040 <- paste0("Total_TaxRev_2040_t", trigger, "_l", hazard_type, "_bv0") 
+          totaltax_col_2050 <- paste0("Total_TaxRev_2050_t", trigger, "_l", hazard_type, "_bv0") 
+          totaltax_col_2062 <- paste0("Total_TaxRev_2062_t", trigger, "_l", hazard_type, "_bv0") 
+          totaltax_col_2075 <- paste0("Total_TaxRev_2075_t", trigger, "_l", hazard_type, "_bv0") 
+          totaltax_col_2087 <- paste0("Total_TaxRev_2087_t", trigger, "_l", hazard_type, "_bv0") 
+          totaltax_col_2100 <- paste0("Total_TaxRev_2100_t", trigger, "_l", hazard_type, "_bv0") 
+          
+          current_data[[taxrevloss_col]] <- case_when(
+            current_data[[yearRetreat_col]] == 2023 ~
+              (current_data[[totaltax_col_2023]] * (2030 - 2023) / discount_rate_30(2025)) +
+              (current_data[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
+              (current_data[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
+              (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
+              (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+            current_data[[yearRetreat_col]] == 2026 ~ 
+              (current_data[[totaltax_col_2026]] * (2030 - 2026) / discount_rate_30(2028)) +
+              (current_data[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
+              (current_data[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
+              (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
+              (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+            current_data[[yearRetreat_col]] == 2030 ~ 
+              (current_data[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
+              (current_data[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
+              (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
+              (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+            current_data[[yearRetreat_col]] == 2040 ~ 
+              (current_data[[totaltax_col_2040]] * (2050 - 2040) / discount_rate_30(2045)) +
+              (current_data[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
+              (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
+              (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+            current_data[[yearRetreat_col]] == 2050 ~ 
+              (current_data[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
+              (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
+              (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+            current_data[[yearRetreat_col]] == 2062 ~ 
+              (current_data[[totaltax_col_2062]] * (2075 - 2062) / discount_rate_30(2068)) +
+              (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
+              (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+            current_data[[yearRetreat_col]] == 2075 ~ 
+              (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
+              (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+            current_data[[yearRetreat_col]] == 2087 ~ 
+              (current_data[[totaltax_col_2087]] * (2100 - 2087) / discount_rate_30(2093)) +
+              (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+            current_data[[yearRetreat_col]] == 2100 ~ 
+              (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
+            TRUE ~ NA
+          )
+          
+          totaltaxrevloss_col <- paste0("Total_TaxRev_Loss", suffix,"_", scenario, seawall, "t", trigger, "_l", hazard_type, "_bv0")
+          Retreat_Analysis_Total[[totaltaxrevloss_col]] <- sum(current_data[[taxrevloss_col]], na.rm=T)
+        }
+      }
+    }
+  }
+}
+
+
+
+
+
+
 
 
 
@@ -178,7 +444,6 @@ for (hazard_type in hazard_types) {
       totaltaxrevloss_col <- paste0("Total_TaxRev_Loss_AO",seawall,"t", trigger, "_l", hazard_type,"_bv1")
       Retreat_Analysis_Total[[totaltaxrevloss_col]] <- sum(clean_retreat_calcs[AO_taxrevloss_col],na.rm=T)
     }
-    
   }
 }
 
@@ -371,6 +636,21 @@ for(trigger in triggers){
     
     Retreat_Analysis_Total[[demo_col]] <- sum(Retreat_Analysis[[demo_col]])
     
+    demo_col <- paste0("demolition_res_AO",seawall,"t",trigger)
+    Retreat_Analysis_Total[[demo_col]] <- sum(Retreat_Analysis[[demo_col]])
+    
+    demo_col <- paste0("demolition_hotel_AO",seawall,"t",trigger)
+    Retreat_Analysis_Total[[demo_col]] <- sum(Retreat_Analysis[[demo_col]])
+    
+    demo_col <- paste0("demolition_ag_AO",seawall,"t",trigger)
+    Retreat_Analysis_Total[[demo_col]] <- sum(Retreat_Analysis[[demo_col]])
+    
+    demo_col <- paste0("demolition_comm_AO",seawall,"t",trigger)
+    Retreat_Analysis_Total[[demo_col]] <- sum(Retreat_Analysis[[demo_col]])
+    
+    demo_col <- paste0("demolition_cons_AO",seawall,"t",trigger)
+    Retreat_Analysis_Total[[demo_col]] <- sum(Retreat_Analysis[[demo_col]])
+    
     #calculate TB demolition costs
     demo_col <- paste0("demolition_TB",seawall,"t",trigger)
     
@@ -385,24 +665,89 @@ for(trigger in triggers){
     })
     
     # Sum up all discounted demolition costs
-    total_discounted_demolition_costs <- sum(discounted_demolition_costs)  
+    Retreat_Analysis_Total[[demo_col]] <- sum(discounted_demolition_costs)
     
-    # add to dataframe
-    Retreat_Analysis_Total[[demo_col]] <- total_discounted_demolition_costs
+    demo_col <- paste0("demolition_res_TB",seawall,"t",trigger)
+    discounted_demolition_costs <- sapply(years, function(year) {
+      discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+      demo <- Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] / discount_rate})
+    Retreat_Analysis_Total[[demo_col]] <- sum(discounted_demolition_costs)
+    
+    demo_col <- paste0("demolition_hotel_TB",seawall,"t",trigger)
+    discounted_demolition_costs <- sapply(years, function(year) {
+      discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+      demo <- Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] / discount_rate})
+    Retreat_Analysis_Total[[demo_col]] <- sum(discounted_demolition_costs)
+    
+    demo_col <- paste0("demolition_ag_TB",seawall,"t",trigger)
+    discounted_demolition_costs <- sapply(years, function(year) {
+      discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+      demo <- Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] / discount_rate})
+    Retreat_Analysis_Total[[demo_col]] <- sum(discounted_demolition_costs)
+    
+    demo_col <- paste0("demolition_comm_TB",seawall,"t",trigger)
+    discounted_demolition_costs <- sapply(years, function(year) {
+      discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+      demo <- Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] / discount_rate})
+    Retreat_Analysis_Total[[demo_col]] <- sum(discounted_demolition_costs)
+    
+    demo_col <- paste0("demolition_cons_TB",seawall,"t",trigger)
+    discounted_demolition_costs <- sapply(years, function(year) {
+      discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+      demo <- Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] / discount_rate})
+    Retreat_Analysis_Total[[demo_col]] <- sum(discounted_demolition_costs)
+    
   }
 }
 
 
-# OSDS Removal Costs ($)
+# OSDS & Seawall Removal Costs ($)
 
 #AO
 for(trigger in triggers){
   for(seawall in seawalls){
     osds_col <- paste0("osdsremoval_AO",seawall,"t",trigger)
     wastewater_col <- paste0("wastewaterremoval_AO",seawall,"t",trigger)
+    seawall_col <- paste0("seawall_AO",seawall,trigger)
     
     Retreat_Analysis_Total[[osds_col]] <- sum(Retreat_Analysis[osds_col])
     Retreat_Analysis_Total[[wastewater_col]] <- sum(Retreat_Analysis[wastewater_col])
+    Retreat_Analysis_Total[[seawall_col]] <- sum(Retreat_Analysis[seawall_col])
+    
+    osds_col <- paste0("osdsremoval_res_AO",seawall,"t",trigger)
+    wastewater_col <- paste0("wastewaterremoval_res_AO",seawall,"t",trigger)
+    seawall_col <- paste0("seawall_res_AO",seawall,trigger)
+    Retreat_Analysis_Total[[osds_col]] <- sum(Retreat_Analysis[osds_col])
+    Retreat_Analysis_Total[[wastewater_col]] <- sum(Retreat_Analysis[wastewater_col])
+    Retreat_Analysis_Total[[seawall_col]] <- sum(Retreat_Analysis[seawall_col])
+    
+    osds_col <- paste0("osdsremoval_hotel_AO",seawall,"t",trigger)
+    wastewater_col <- paste0("wastewaterremoval_hotel_AO",seawall,"t",trigger)
+    seawall_col <- paste0("seawall_hotel_AO",seawall,trigger)
+    Retreat_Analysis_Total[[osds_col]] <- sum(Retreat_Analysis[osds_col])
+    Retreat_Analysis_Total[[wastewater_col]] <- sum(Retreat_Analysis[wastewater_col])
+    Retreat_Analysis_Total[[seawall_col]] <- sum(Retreat_Analysis[seawall_col])
+    
+    osds_col <- paste0("osdsremoval_ag_AO",seawall,"t",trigger)
+    wastewater_col <- paste0("wastewaterremoval_ag_AO",seawall,"t",trigger)
+    seawall_col <- paste0("seawall_ag_AO",seawall,trigger)
+    Retreat_Analysis_Total[[osds_col]] <- sum(Retreat_Analysis[osds_col])
+    Retreat_Analysis_Total[[wastewater_col]] <- sum(Retreat_Analysis[wastewater_col])
+    Retreat_Analysis_Total[[seawall_col]] <- sum(Retreat_Analysis[seawall_col])
+    
+    osds_col <- paste0("osdsremoval_comm_AO",seawall,"t",trigger)
+    wastewater_col <- paste0("wastewaterremoval_comm_AO",seawall,"t",trigger)
+    seawall_col <- paste0("seawall_comm_AO",seawall,trigger)
+    Retreat_Analysis_Total[[osds_col]] <- sum(Retreat_Analysis[osds_col])
+    Retreat_Analysis_Total[[wastewater_col]] <- sum(Retreat_Analysis[wastewater_col])
+    Retreat_Analysis_Total[[seawall_col]] <- sum(Retreat_Analysis[seawall_col])
+    
+    osds_col <- paste0("osdsremoval_cons_AO",seawall,"t",trigger)
+    wastewater_col <- paste0("wastewaterremoval_cons_AO",seawall,"t",trigger)
+    seawall_col <- paste0("seawall_cons_AO",seawall,trigger)
+    Retreat_Analysis_Total[[osds_col]] <- sum(Retreat_Analysis[osds_col])
+    Retreat_Analysis_Total[[wastewater_col]] <- sum(Retreat_Analysis[wastewater_col])
+    Retreat_Analysis_Total[[seawall_col]] <- sum(Retreat_Analysis[seawall_col])
   }
 }
 
@@ -413,6 +758,9 @@ for(scenario in scenarios){
     for(seawall in seawalls){
       osds_col <- paste0("osdsremoval_",scenario,seawall,"t",trigger)
       wastewater_col <- paste0("wastewaterremoval_",scenario,seawall,"t",trigger)
+      seawall_col <- paste0("seawall_",scenario,seawall,trigger)
+      
+      
       
       # Calculate the discounted clean-up costs for each year
       discounted_osds_costs <- sapply(years, function(year) {
@@ -429,27 +777,35 @@ for(scenario in scenarios){
         # Calculate the low end and high end of the range of discounted clean-up costs
         water <- Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] / discount_rate
       })
+      discounted_seawall_costs <- sapply(years, function(year) {
+        # Retrieve the discount rate for the current year from DiscountRate26 data frame
+        discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+        
+        # Calculate the low end and high end of the range of discounted clean-up costs
+        seawall <- Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] / discount_rate
+      })
       
       # Sum up all discounted demolition costs
       total_discounted_osds_costs <- sum(discounted_osds_costs)  
       total_discounted_water_costs <- sum(discounted_water_costs)  
+      total_discounted_seawall_costs <- sum(discounted_seawall_costs)
       
       # add to dataframe
       Retreat_Analysis_Total[[osds_col]] <- total_discounted_osds_costs
       Retreat_Analysis_Total[[wastewater_col]] <- total_discounted_water_costs
+      Retreat_Analysis_Total[[seawall_col]] <- total_discounted_seawall_costs
       
     }
   }
 }
 
 
-# Infrastructure & Seawall Retreat Cost 
+# Infrastructure  Retreat Cost 
 
 #AO
 for(trigger in triggers){
   for(seawall in seawalls){
     for(rdr in rdret){
-      seawall_col <- paste0("seawall_AO",seawall,trigger)
       infrastructure_col <- paste0("infrastructure_AO",seawall,trigger,"_rdr",rdr)
       b_reloc_col <- paste0("bridgerelocateAO",seawall,trigger,"_rdr",rdr)
       b_retrofit_col <- paste0("bridgeretrofitAO",seawall,trigger,"_rdr",rdr)
@@ -461,7 +817,6 @@ for(trigger in triggers){
       riprap_remove_col <- paste0("riprapremoveAO",seawall,trigger,"_rdr",rdr)
       maintain_col <- paste0("maintainAO",seawall,trigger,"_rdr",rdr)
       
-      Retreat_Analysis_Total[[seawall_col]] <- sum(Retreat_Analysis[seawall_col])
       Retreat_Analysis_Total[[infrastructure_col]] <- sum(Retreat_Analysis[infrastructure_col])
       Retreat_Analysis_Total[[b_reloc_col]] <- sum(Retreat_Analysis[b_reloc_col])
       Retreat_Analysis_Total[[b_retrofit_col]] <- sum(Retreat_Analysis[b_retrofit_col])
@@ -482,7 +837,6 @@ for(scenario in scenarios){
   for(trigger in triggers){
     for(seawall in seawalls){
       for(rdr in rdret){
-        seawall_col <- paste0("seawall_",scenario,seawall,trigger)
         infrastructure_col <- paste0("infrastructure_",scenario,seawall,trigger,"_rdr",rdr)
         b_reloc_col <- paste0("bridgerelocate",scenario,seawall,trigger,"_rdr",rdr)
         b_retrofit_col <- paste0("bridgeretrofit",scenario,seawall,trigger,"_rdr",rdr)
@@ -494,17 +848,17 @@ for(scenario in scenarios){
         riprap_remove_col <- paste0("riprapremove",scenario,seawall,trigger,"_rdr",rdr)
         maintain_col <- paste0("maintain",scenario,seawall,trigger,"_rdr",rdr)
         
-        columns <- c(seawall_col,infrastructure_col,b_reloc_col,b_retrofit_col,hwy_reloc_col,water_reloc_col,
+        columns <- c(infrastructure_col,b_reloc_col,b_retrofit_col,hwy_reloc_col,water_reloc_col,
                      emdom_col,hwy_riprap_col,rd_remove_col,riprap_remove_col,maintain_col)
         
         for(column in columns){
           # Calculate the discounted costs for each year
           discounted_costs <- sapply(years, function(year) {
-            # Retrieve the discount rate for the current year from DiscountRate26 data frame
+            # Retrieve the discount rate for the current year from DiscountRate30 data frame
             discount_rate <- DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]
             
             # Calculate the sum discounted costs
-            seawall <- Retreat_Analysis[[column]][Retreat_Analysis$Years == year] / discount_rate
+            discountsum <- Retreat_Analysis[[column]][Retreat_Analysis$Years == year] / discount_rate
           })
           
           # Sum up all discounted demolition costs

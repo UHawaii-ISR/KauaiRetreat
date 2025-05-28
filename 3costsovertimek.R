@@ -22,14 +22,50 @@ seawalls <- c("_","_s_")
 #use TMK8 to estimate area retreated so we don't double-count CPR-unit area
 clean_retreat_calcs_area <- clean_retreat_calcs[!duplicated(clean_retreat_calcs$COTMK), ]
 
+#isolate just residential homes
+residential <- c("1:RESIDENTIAL", "2:VACATION RENTAL","8:HOMESTEAD","9:Residential Investor","10:Commercialized Home Use") 
+hotel <- c("7:HOTEL AND RESORT")
+commercial <- c("3:COMMERCIAL","4:INDUSTRIAL")
+agriculture <- c("5:AGRICULTURAL")
+conservation <- c("6:CONSERVATION")
+
+clean_retreat_calcs_home <- clean_retreat_calcs %>%
+  filter(TMK8_TAXCLASS %in% residential)
+clean_retreat_calcs_hotel <- clean_retreat_calcs %>%
+  filter(TMK8_TAXCLASS %in% hotel)
+clean_retreat_calcs_comm <- clean_retreat_calcs %>%
+  filter(TMK8_TAXCLASS %in% commercial)
+clean_retreat_calcs_ag <- clean_retreat_calcs %>%
+  filter(TMK8_TAXCLASS %in% agriculture)
+clean_retreat_calcs_cons <- clean_retreat_calcs %>%
+  filter(TMK8_TAXCLASS %in% conservation)
+
 #isolate just apartment buildings
 clean_retreat_calcs_apt <- clean_retreat_calcs[clean_retreat_calcs$apartment == 1, ]
 clean_retreat_calcs_apt <- clean_retreat_calcs_apt[!duplicated(clean_retreat_calcs_apt$BuildingID), ]
 
-#isolate just residential homes
-residential <- c("1:RESIDENTIAL", "2:VACATION RENTAL","8:HOMESTEAD","9:Residential Investor","10:Commercialized Home Use") 
-clean_retreat_calcs_home <- clean_retreat_calcs %>%
-  filter(TAXCLASS %in% residential)
+clean_retreat_calcs_apt_res <- clean_retreat_calcs_apt %>%
+  filter(TMK8_TAXCLASS %in% residential)
+clean_retreat_calcs_apt_hotel <- clean_retreat_calcs_apt %>%
+  filter(TMK8_TAXCLASS %in% hotel)
+clean_retreat_calcs_apt_comm <- clean_retreat_calcs_apt %>%
+  filter(TMK8_TAXCLASS %in% commercial)
+clean_retreat_calcs_apt_ag <- clean_retreat_calcs_apt %>%
+  filter(TMK8_TAXCLASS %in% agriculture)
+clean_retreat_calcs_apt_cons <- clean_retreat_calcs_apt %>%
+  filter(TMK8_TAXCLASS %in% conservation)
+
+#buildings by tax class
+clean_assessors_bldg_res <- clean_assessors_bldg %>%
+  filter(TMK8_TAXCLASS %in% residential)
+clean_assessors_bldg_hotel <- clean_assessors_bldg %>%
+  filter(TMK8_TAXCLASS %in% hotel)
+clean_assessors_bldg_comm <- clean_assessors_bldg %>%
+  filter(TMK8_TAXCLASS %in% commercial)
+clean_assessors_bldg_ag <- clean_assessors_bldg %>%
+  filter(TMK8_TAXCLASS %in% agriculture)
+clean_assessors_bldg_cons <- clean_assessors_bldg %>%
+  filter(TMK8_TAXCLASS %in% conservation)
 
 #calculate values for each year
 for (year in years) {
@@ -52,13 +88,69 @@ for (year in years) {
       TB_matching_rows_apt <- clean_retreat_calcs_apt[[yearTB_col]] == year
       RE_matching_rows_apt <- clean_retreat_calcs_apt[[yearRE_col]] == year
       
+      AO_matching_rows_apt_res <- clean_retreat_calcs_apt_res[[yearAO_col]] == year
+      TB_matching_rows_apt_res <- clean_retreat_calcs_apt_res[[yearTB_col]] == year
+      RE_matching_rows_apt_res <- clean_retreat_calcs_apt_res[[yearRE_col]] == year
+      
+      AO_matching_rows_apt_hotel <- clean_retreat_calcs_apt_hotel[[yearAO_col]] == year
+      TB_matching_rows_apt_hotel <- clean_retreat_calcs_apt_hotel[[yearTB_col]] == year
+      RE_matching_rows_apt_hotel <- clean_retreat_calcs_apt_hotel[[yearRE_col]] == year
+      
+      AO_matching_rows_apt_ag <- clean_retreat_calcs_apt_ag[[yearAO_col]] == year
+      TB_matching_rows_apt_ag <- clean_retreat_calcs_apt_ag[[yearTB_col]] == year
+      RE_matching_rows_apt_ag <- clean_retreat_calcs_apt_ag[[yearRE_col]] == year
+      
+      AO_matching_rows_apt_comm <- clean_retreat_calcs_apt_comm[[yearAO_col]] == year
+      TB_matching_rows_apt_comm <- clean_retreat_calcs_apt_comm[[yearTB_col]] == year
+      RE_matching_rows_apt_comm <- clean_retreat_calcs_apt_comm[[yearRE_col]] == year
+      
+      AO_matching_rows_apt_cons <- clean_retreat_calcs_apt_cons[[yearAO_col]] == year
+      TB_matching_rows_apt_cons <- clean_retreat_calcs_apt_cons[[yearTB_col]] == year
+      RE_matching_rows_apt_cons <- clean_retreat_calcs_apt_cons[[yearRE_col]] == year
+      
       AO_matching_rows_bldg <- clean_assessors_bldg[[yearAO_col]] == year
       TB_matching_rows_bldg <- clean_assessors_bldg[[yearTB_col]] == year
       RE_matching_rows_bldg <- clean_assessors_bldg[[yearRE_col]] == year
       
+      AO_matching_rows_bldg_res <- clean_assessors_bldg_res[[yearAO_col]] == year
+      TB_matching_rows_bldg_res <- clean_assessors_bldg_res[[yearTB_col]] == year
+      RE_matching_rows_bldg_res <- clean_assessors_bldg_res[[yearRE_col]] == year
+      
+      AO_matching_rows_bldg_hotel <- clean_assessors_bldg_hotel[[yearAO_col]] == year
+      TB_matching_rows_bldg_hotel <- clean_assessors_bldg_hotel[[yearTB_col]] == year
+      RE_matching_rows_bldg_hotel <- clean_assessors_bldg_hotel[[yearRE_col]] == year
+      
+      AO_matching_rows_bldg_ag <- clean_assessors_bldg_ag[[yearAO_col]] == year
+      TB_matching_rows_bldg_ag <- clean_assessors_bldg_ag[[yearTB_col]] == year
+      RE_matching_rows_bldg_ag <- clean_assessors_bldg_ag[[yearRE_col]] == year
+      
+      AO_matching_rows_bldg_comm <- clean_assessors_bldg_comm[[yearAO_col]] == year
+      TB_matching_rows_bldg_comm <- clean_assessors_bldg_comm[[yearTB_col]] == year
+      RE_matching_rows_bldg_comm <- clean_assessors_bldg_comm[[yearRE_col]] == year
+      
+      AO_matching_rows_bldg_cons <- clean_assessors_bldg_cons[[yearAO_col]] == year
+      TB_matching_rows_bldg_cons <- clean_assessors_bldg_cons[[yearTB_col]] == year
+      RE_matching_rows_bldg_cons <- clean_assessors_bldg_cons[[yearRE_col]] == year
+      
       AO_matching_rows_home <- clean_retreat_calcs_home[[yearAO_col]] == year
       TB_matching_rows_home <- clean_retreat_calcs_home[[yearTB_col]] == year
       RE_matching_rows_home <- clean_retreat_calcs_home[[yearRE_col]] == year
+      
+      AO_matching_rows_hotel <- clean_retreat_calcs_hotel[[yearAO_col]] == year
+      TB_matching_rows_hotel <- clean_retreat_calcs_hotel[[yearTB_col]] == year
+      RE_matching_rows_hotel <- clean_retreat_calcs_hotel[[yearRE_col]] == year
+      
+      AO_matching_rows_comm <- clean_retreat_calcs_comm[[yearAO_col]] == year
+      TB_matching_rows_comm <- clean_retreat_calcs_comm[[yearTB_col]] == year
+      RE_matching_rows_comm <- clean_retreat_calcs_comm[[yearRE_col]] == year
+      
+      AO_matching_rows_ag <- clean_retreat_calcs_ag[[yearAO_col]] == year
+      TB_matching_rows_ag <- clean_retreat_calcs_ag[[yearTB_col]] == year
+      RE_matching_rows_ag <- clean_retreat_calcs_ag[[yearRE_col]] == year
+      
+      AO_matching_rows_cons <- clean_retreat_calcs_cons[[yearAO_col]] == year
+      TB_matching_rows_cons <- clean_retreat_calcs_cons[[yearTB_col]] == year
+      RE_matching_rows_cons <- clean_retreat_calcs_cons[[yearRE_col]] == year
       
       ### NUM OF BUILDINGS
       
@@ -214,14 +306,14 @@ for (year in years) {
       
       #cost of seawall demolition for TB
       seawall_col <- paste0("seawall_TB",seawall,trigger)
-      seawalllen_col <- paste0("seawalllength_AO",seawall,"t",trigger)
+      seawalllen_col <- paste0("seawalllength_TB",seawall,"t",trigger)
       seawallm <- Retreat_Analysis[[seawalllen_col]][Retreat_Analysis$Years == year]
       Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
         seawallm*demolition_seawall
       
       #cost of seawall demolition for RE
       seawall_col <- paste0("seawall_RE",seawall,trigger)
-      seawalllen_col <- paste0("seawalllength_AO",seawall,"t",trigger)
+      seawalllen_col <- paste0("seawalllength_RE",seawall,"t",trigger)
       seawallm <- Retreat_Analysis[[seawalllen_col]][Retreat_Analysis$Years == year]
       Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
         seawallm*demolition_seawall
@@ -363,13 +455,391 @@ for (year in years) {
         Retreat_Analysis[[taxrev_col]][Retreat_Analysis$Years == year] <- 
           sum(clean_retreat_calcs[[column_name]][RE_matching_rows], na.rm = TRUE)
         
+        
+        #BREAKDOWNS PER TAXCLASS
+        
+        #total value per taxclass
+        #AO
+        totalval_col <- paste0("Total_Value_res_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+        Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(year==2023,sum(clean_retreat_calcs$APRTOTMKT[AO_matching_rows_home],na.rm=T),0)
+        
+        totalval_col <- paste0("Total_Value_hotel_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+        Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(year==2023,sum(clean_retreat_calcs$APRTOTMKT[AO_matching_rows_hotel],na.rm=T),0)
+        
+        totalval_col <- paste0("Total_Value_ag_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+        Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(year==2023,sum(clean_retreat_calcs$APRTOTMKT[AO_matching_rows_ag],na.rm=T),0)
+        
+        totalval_col <- paste0("Total_Value_comm_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+        Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(year==2023,sum(clean_retreat_calcs$APRTOTMKT[AO_matching_rows_comm],na.rm=T),0)
+        
+        totalval_col <- paste0("Total_Value_cons_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
+        Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(year==2023,sum(clean_retreat_calcs$APRTOTMKT[AO_matching_rows_cons],na.rm=T),0)
+        
+        #RE
+        totalval_col <- paste0("Total_Value_res_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+        column_name <- paste0("Total_Appraise_", year, "_t",trigger,"_l",hazard_type,"_bv0")
+        Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs[[column_name]][RE_matching_rows_home], na.rm = TRUE)
+        
+        totalval_col <- paste0("Total_Value_hotel_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+        column_name <- paste0("Total_Appraise_", year, "_t",trigger,"_l",hazard_type,"_bv0")
+        Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs[[column_name]][RE_matching_rows_hotel], na.rm = TRUE)
+        
+        totalval_col <- paste0("Total_Value_ag_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+        column_name <- paste0("Total_Appraise_", year, "_t",trigger,"_l",hazard_type,"_bv0")
+        Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs[[column_name]][RE_matching_rows_ag], na.rm = TRUE)
+        
+        totalval_col <- paste0("Total_Value_comm_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+        column_name <- paste0("Total_Appraise_", year, "_t",trigger,"_l",hazard_type,"_bv0")
+        Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs[[column_name]][RE_matching_rows_comm], na.rm = TRUE)
+        
+        totalval_col <- paste0("Total_Value_cons_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+        column_name <- paste0("Total_Appraise_", year, "_t",trigger,"_l",hazard_type,"_bv0")
+        Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs[[column_name]][RE_matching_rows_cons], na.rm = TRUE)
+        
+        #demo cost per taxclass 
+        #AO
+        demo_col <- paste0("demolition_res_AO",seawall,"t",trigger)
+        housecount <- n_distinct(clean_assessors_bldg_res$BuildingID[AO_matching_rows_bldg_res], na.rm = TRUE) - 
+                               n_distinct(clean_retreat_calcs_apt_res$BuildingID[AO_matching_rows_apt_res], na.rm = TRUE)
+        Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(year==2023,sum(clean_retreat_calcs_apt_res[["Number_CPRbldg"]][AO_matching_rows_apt_res], na.rm = TRUE)*demolition_apartment + 
+                   sum(clean_retreat_calcs_apt_res[["BLDG_SQFT"]][AO_matching_rows_apt_res], na.rm = TRUE)*demolition_aptfoundation+
+                   housecount*demolition_house,0)
+        
+        demo_col <- paste0("demolition_hotel_AO",seawall,"t",trigger)
+        housecount <- n_distinct(clean_assessors_bldg_hotel$BuildingID[AO_matching_rows_bldg_hotel], na.rm = TRUE) - 
+          n_distinct(clean_retreat_calcs_apt_hotel$BuildingID[AO_matching_rows_apt_hotel], na.rm = TRUE)
+        Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(year==2023,sum(clean_retreat_calcs_apt_hotel[["Number_CPRbldg"]][AO_matching_rows_apt_hotel], na.rm = TRUE)*demolition_apartment + 
+                   sum(clean_retreat_calcs_apt_hotel[["BLDG_SQFT"]][AO_matching_rows_apt_hotel], na.rm = TRUE)*demolition_aptfoundation+
+                   housecount*demolition_house,0)
+        
+        demo_col <- paste0("demolition_ag_AO",seawall,"t",trigger)
+        housecount <- n_distinct(clean_assessors_bldg_ag$BuildingID[AO_matching_rows_bldg_ag], na.rm = TRUE) - 
+          n_distinct(clean_retreat_calcs_apt_ag$BuildingID[AO_matching_rows_apt_ag], na.rm = TRUE)
+        Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(year==2023,sum(clean_retreat_calcs_apt_ag[["Number_CPRbldg"]][AO_matching_rows_apt_ag], na.rm = TRUE)*demolition_apartment + 
+                   sum(clean_retreat_calcs_apt_ag[["BLDG_SQFT"]][AO_matching_rows_apt_ag], na.rm = TRUE)*demolition_aptfoundation+
+                   housecount*demolition_house,0)
+        
+        demo_col <- paste0("demolition_comm_AO",seawall,"t",trigger)
+        housecount <- n_distinct(clean_assessors_bldg_comm$BuildingID[AO_matching_rows_bldg_comm], na.rm = TRUE) - 
+          n_distinct(clean_retreat_calcs_apt_comm$BuildingID[AO_matching_rows_apt_comm], na.rm = TRUE)
+        Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(year==2023,sum(clean_retreat_calcs_apt_comm[["Number_CPRbldg"]][AO_matching_rows_apt_comm], na.rm = TRUE)*demolition_apartment + 
+                   sum(clean_retreat_calcs_apt_comm[["BLDG_SQFT"]][AO_matching_rows_apt_comm], na.rm = TRUE)*demolition_aptfoundation+
+                   housecount*demolition_house,0)
+        
+        demo_col <- paste0("demolition_cons_AO",seawall,"t",trigger)
+        housecount <- n_distinct(clean_assessors_bldg_cons$BuildingID[AO_matching_rows_bldg_cons], na.rm = TRUE) - 
+          n_distinct(clean_retreat_calcs_apt_cons$BuildingID[AO_matching_rows_apt_cons], na.rm = TRUE)
+        Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(year==2023,sum(clean_retreat_calcs_apt_cons[["Number_CPRbldg"]][AO_matching_rows_apt_cons], na.rm = TRUE)*demolition_apartment + 
+                   sum(clean_retreat_calcs_apt_cons[["BLDG_SQFT"]][AO_matching_rows_apt_cons], na.rm = TRUE)*demolition_aptfoundation+
+                   housecount*demolition_house,0)
+        
+        #TB 
+        demo_col <- paste0("demolition_res_TB",seawall,"t",trigger)
+        housecount <- n_distinct(clean_assessors_bldg_res$BuildingID[TB_matching_rows_bldg_res], na.rm = TRUE) - 
+          n_distinct(clean_retreat_calcs_apt_res$BuildingID[TB_matching_rows_apt_res], na.rm = TRUE)
+        Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs_apt_res[["Number_CPRbldg"]][TB_matching_rows_apt_res], na.rm = TRUE)*demolition_apartment + 
+          sum(clean_retreat_calcs_apt_res[["BLDG_SQFT"]][TB_matching_rows_apt_res], na.rm = TRUE)*demolition_aptfoundation + 
+          housecount*demolition_house
+        
+        demo_col <- paste0("demolition_hotel_TB",seawall,"t",trigger)
+        housecount <- n_distinct(clean_assessors_bldg_hotel$BuildingID[TB_matching_rows_bldg_hotel], na.rm = TRUE) - 
+          n_distinct(clean_retreat_calcs_apt_hotel$BuildingID[TB_matching_rows_apt_hotel], na.rm = TRUE)
+        Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs_apt_hotel[["Number_CPRbldg"]][TB_matching_rows_apt_hotel], na.rm = TRUE)*demolition_apartment + 
+          sum(clean_retreat_calcs_apt_hotel[["BLDG_SQFT"]][TB_matching_rows_apt_hotel], na.rm = TRUE)*demolition_aptfoundation + 
+          housecount*demolition_house
+        
+        demo_col <- paste0("demolition_ag_TB",seawall,"t",trigger)
+        housecount <- n_distinct(clean_assessors_bldg_ag$BuildingID[TB_matching_rows_bldg_ag], na.rm = TRUE) - 
+          n_distinct(clean_retreat_calcs_apt_ag$BuildingID[TB_matching_rows_apt_ag], na.rm = TRUE)
+        Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs_apt_ag[["Number_CPRbldg"]][TB_matching_rows_apt_ag], na.rm = TRUE)*demolition_apartment + 
+          sum(clean_retreat_calcs_apt_ag[["BLDG_SQFT"]][TB_matching_rows_apt_ag], na.rm = TRUE)*demolition_aptfoundation + 
+          housecount*demolition_house
+        
+        demo_col <- paste0("demolition_comm_TB",seawall,"t",trigger)
+        housecount <- n_distinct(clean_assessors_bldg_comm$BuildingID[TB_matching_rows_bldg_comm], na.rm = TRUE) - 
+          n_distinct(clean_retreat_calcs_apt_comm$BuildingID[TB_matching_rows_apt_comm], na.rm = TRUE)
+        Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs_apt_comm[["Number_CPRbldg"]][TB_matching_rows_apt_comm], na.rm = TRUE)*demolition_apartment + 
+          sum(clean_retreat_calcs_apt_comm[["BLDG_SQFT"]][TB_matching_rows_apt_comm], na.rm = TRUE)*demolition_aptfoundation + 
+          housecount*demolition_house
+        
+        demo_col <- paste0("demolition_cons_TB",seawall,"t",trigger)
+        housecount <- n_distinct(clean_assessors_bldg_cons$BuildingID[TB_matching_rows_bldg_cons], na.rm = TRUE) - 
+          n_distinct(clean_retreat_calcs_apt_cons$BuildingID[TB_matching_rows_apt_cons], na.rm = TRUE)
+        Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs_apt_cons[["Number_CPRbldg"]][TB_matching_rows_apt_cons], na.rm = TRUE)*demolition_apartment + 
+          sum(clean_retreat_calcs_apt_cons[["BLDG_SQFT"]][TB_matching_rows_apt_cons], na.rm = TRUE)*demolition_aptfoundation + 
+          housecount*demolition_house
+        
+        
+        #seawall demo per taxclass
+        #AO
+        seawall_col <- paste0("seawall_res_AO",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(seawall=="_s_",0,ifelse(year==2023,
+                                         sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[AO_matching_rows_home], na.rm = TRUE)*demolition_seawall,0))
+        
+        seawall_col <- paste0("seawall_hotel_AO",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(seawall=="_s_",0,ifelse(year==2023,
+                                         sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[AO_matching_rows_hotel], na.rm = TRUE)*demolition_seawall,0))
+        
+        seawall_col <- paste0("seawall_ag_AO",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(seawall=="_s_",0,ifelse(year==2023,
+                                         sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[AO_matching_rows_ag], na.rm = TRUE)*demolition_seawall,0))
+        
+        seawall_col <- paste0("seawall_comm_AO",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(seawall=="_s_",0,ifelse(year==2023,
+                                         sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[AO_matching_rows_comm], na.rm = TRUE)*demolition_seawall,0))
+        
+        seawall_col <- paste0("seawall_cons_AO",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(seawall=="_s_",0,ifelse(year==2023,
+                                         sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[AO_matching_rows_cons], na.rm = TRUE)*demolition_seawall,0))
+        
+        #TB
+        seawall_col <- paste0("seawall_res_TB",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(seawall=="_s_",0,
+                 sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[TB_matching_rows_home], na.rm = TRUE)*demolition_seawall)
+        
+        seawall_col <- paste0("seawall_hotel_TB",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(seawall=="_s_",0,
+                 sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[TB_matching_rows_hotel], na.rm = TRUE)*demolition_seawall)
+        
+        seawall_col <- paste0("seawall_ag_TB",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(seawall=="_s_",0,
+                 sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[TB_matching_rows_ag], na.rm = TRUE)*demolition_seawall)
+        
+        seawall_col <- paste0("seawall_comm_TB",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(seawall=="_s_",0,
+                 sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[TB_matching_rows_comm], na.rm = TRUE)*demolition_seawall)
+        
+        seawall_col <- paste0("seawall_cons_TB",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(seawall=="_s_",0,
+                 sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[TB_matching_rows_cons], na.rm = TRUE)*demolition_seawall)
+        
+        #RE
+        seawall_col <- paste0("seawall_res_RE",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(seawall=="_s_",0,
+                 sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[RE_matching_rows_home], na.rm = TRUE)*demolition_seawall)
+        
+        seawall_col <- paste0("seawall_hotel_RE",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(seawall=="_s_",0,
+                 sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[RE_matching_rows_hotel], na.rm = TRUE)*demolition_seawall)
+        
+        seawall_col <- paste0("seawall_ag_RE",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(seawall=="_s_",0,
+                 sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[RE_matching_rows_ag], na.rm = TRUE)*demolition_seawall)
+        
+        seawall_col <- paste0("seawall_comm_RE",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(seawall=="_s_",0,
+                 sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[RE_matching_rows_comm], na.rm = TRUE)*demolition_seawall)
+        
+        seawall_col <- paste0("seawall_cons_RE",seawall,trigger)
+        Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] <- 
+          ifelse(seawall=="_s_",0,
+                 sum(clean_retreat_calcs$SEAWALL_LEN_PERTMK[RE_matching_rows_cons], na.rm = TRUE)*demolition_seawall)
+        
+        
+        #osds & wastewater per taxclass
+        #AO
+        osds_col <- paste0("osdsremoval_res_AO",seawall,"t",trigger)
+        wastewater_col <- paste0("wastewaterremoval_res_AO",seawall,"t",trigger)
+        Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
+          ifelse(year==2023,sum(clean_retreat_calcs$OSDS[AO_matching_rows_home], na.rm = TRUE) * osds_remove,0)
+        Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+          ifelse(year==2023,sum(clean_retreat_calcs$WASTEWATER[AO_matching_rows_home], na.rm = TRUE) * wastewater_remove,0)
+        
+        osds_col <- paste0("osdsremoval_hotel_AO",seawall,"t",trigger)
+        wastewater_col <- paste0("wastewaterremoval_hotel_AO",seawall,"t",trigger)
+        Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
+          ifelse(year==2023,sum(clean_retreat_calcs$OSDS[AO_matching_rows_hotel], na.rm = TRUE) * osds_remove,0)
+        Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+          ifelse(year==2023,sum(clean_retreat_calcs$WASTEWATER[AO_matching_rows_hotel], na.rm = TRUE) * wastewater_remove,0)
+        
+        osds_col <- paste0("osdsremoval_ag_AO",seawall,"t",trigger)
+        wastewater_col <- paste0("wastewaterremoval_ag_AO",seawall,"t",trigger)
+        Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
+          ifelse(year==2023,sum(clean_retreat_calcs$OSDS[AO_matching_rows_ag], na.rm = TRUE) * osds_remove,0)
+        Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+          ifelse(year==2023,sum(clean_retreat_calcs$WASTEWATER[AO_matching_rows_ag], na.rm = TRUE) * wastewater_remove,0)
+        
+        osds_col <- paste0("osdsremoval_comm_AO",seawall,"t",trigger)
+        wastewater_col <- paste0("wastewaterremoval_comm_AO",seawall,"t",trigger)
+        Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
+          ifelse(year==2023,sum(clean_retreat_calcs$OSDS[AO_matching_rows_comm], na.rm = TRUE) * osds_remove,0)
+        Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+          ifelse(year==2023,sum(clean_retreat_calcs$WASTEWATER[AO_matching_rows_comm], na.rm = TRUE) * wastewater_remove,0)
+        
+        osds_col <- paste0("osdsremoval_cons_AO",seawall,"t",trigger)
+        wastewater_col <- paste0("wastewaterremoval_cons_AO",seawall,"t",trigger)
+        Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
+          ifelse(year==2023,sum(clean_retreat_calcs$OSDS[AO_matching_rows_cons], na.rm = TRUE) * osds_remove,0)
+        Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+          ifelse(year==2023,sum(clean_retreat_calcs$WASTEWATER[AO_matching_rows_cons], na.rm = TRUE) * wastewater_remove,0)
+        
+        # TB
+        osds_col <- paste0("osdsremoval_res_TB",seawall,"t",trigger)
+        wastewater_col <- paste0("wastewaterremoval_res_TB",seawall,"t",trigger)
+        Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["OSDS"]][TB_matching_rows_res], na.rm = TRUE) * osds_remove
+        Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["WASTEWATER"]][TB_matching_rows_res], na.rm = TRUE) * wastewater_remove
+        
+        osds_col <- paste0("osdsremoval_hotel_TB",seawall,"t",trigger)
+        wastewater_col <- paste0("wastewaterremoval_hotel_TB",seawall,"t",trigger)
+        Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["OSDS"]][TB_matching_rows_hotel], na.rm = TRUE) * osds_remove
+        Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["WASTEWATER"]][TB_matching_rows_hotel], na.rm = TRUE) * wastewater_remove
+        
+        osds_col <- paste0("osdsremoval_ag_TB",seawall,"t",trigger)
+        wastewater_col <- paste0("wastewaterremoval_ag_TB",seawall,"t",trigger)
+        Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["OSDS"]][TB_matching_rows_ag], na.rm = TRUE) * osds_remove
+        Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["WASTEWATER"]][TB_matching_rows_ag], na.rm = TRUE) * wastewater_remove
+        
+        osds_col <- paste0("osdsremoval_comm_TB",seawall,"t",trigger)
+        wastewater_col <- paste0("wastewaterremoval_comm_TB",seawall,"t",trigger)
+        Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["OSDS"]][TB_matching_rows_comm], na.rm = TRUE) * osds_remove
+        Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["WASTEWATER"]][TB_matching_rows_comm], na.rm = TRUE) * wastewater_remove
+        
+        osds_col <- paste0("osdsremoval_cons_TB",seawall,"t",trigger)
+        wastewater_col <- paste0("wastewaterremoval_cons_TB",seawall,"t",trigger)
+        Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["OSDS"]][TB_matching_rows_cons], na.rm = TRUE) * osds_remove
+        Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["WASTEWATER"]][TB_matching_rows_cons], na.rm = TRUE) * wastewater_remove
+        
+        # RE 
+        osds_col <- paste0("osdsremoval_res_RE",seawall,"t",trigger)
+        wastewater_col <- paste0("wastewaterremoval_res_RE",seawall,"t",trigger)
+        Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["OSDS"]][RE_matching_rows_home], na.rm = TRUE) * osds_remove
+        Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["WASTEWATER"]][RE_matching_rows_home], na.rm = TRUE) * wastewater_remove
+        
+        osds_col <- paste0("osdsremoval_hotel_RE",seawall,"t",trigger)
+        wastewater_col <- paste0("wastewaterremoval_hotel_RE",seawall,"t",trigger)
+        Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["OSDS"]][RE_matching_rows_hotel], na.rm = TRUE) * osds_remove
+        Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["WASTEWATER"]][RE_matching_rows_hotel], na.rm = TRUE) * wastewater_remove
+        
+        osds_col <- paste0("osdsremoval_ag_RE",seawall,"t",trigger)
+        wastewater_col <- paste0("wastewaterremoval_ag_RE",seawall,"t",trigger)
+        Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["OSDS"]][RE_matching_rows_ag], na.rm = TRUE) * osds_remove
+        Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["WASTEWATER"]][RE_matching_rows_ag], na.rm = TRUE) * wastewater_remove
+        
+        osds_col <- paste0("osdsremoval_comm_RE",seawall,"t",trigger)
+        wastewater_col <- paste0("wastewaterremoval_comm_RE",seawall,"t",trigger)
+        Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["OSDS"]][RE_matching_rows_comm], na.rm = TRUE) * osds_remove
+        Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["WASTEWATER"]][RE_matching_rows_comm], na.rm = TRUE) * wastewater_remove
+        
+        osds_col <- paste0("osdsremoval_cons_RE",seawall,"t",trigger)
+        wastewater_col <- paste0("wastewaterremoval_cons_RE",seawall,"t",trigger)
+        Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["OSDS"]][RE_matching_rows_cons], na.rm = TRUE) * osds_remove
+        Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] <-
+          sum(clean_retreat_calcs[["WASTEWATER"]][RE_matching_rows_cons], na.rm = TRUE) * wastewater_remove
+        
+        #tax rev loss per taxclass
+        taxrev_col <- paste0("Total_TaxRev_res_RE",seawall,"t", trigger, "_l", hazard_type, "_bv0")
+        column_name <- paste0("Total_TaxRev_", year, "_t",trigger,"_l",hazard_type,"_bv0")
+        Retreat_Analysis[[taxrev_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs[[column_name]][RE_matching_rows_home], na.rm = TRUE)
+        
+        taxrev_col <- paste0("Total_TaxRev_hotel_RE",seawall,"t", trigger, "_l", hazard_type, "_bv0")
+        column_name <- paste0("Total_TaxRev_", year, "_t",trigger,"_l",hazard_type,"_bv0")
+        Retreat_Analysis[[taxrev_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs[[column_name]][RE_matching_rows_hotel], na.rm = TRUE)
+        
+        taxrev_col <- paste0("Total_TaxRev_ag_RE",seawall,"t", trigger, "_l", hazard_type, "_bv0")
+        column_name <- paste0("Total_TaxRev_", year, "_t",trigger,"_l",hazard_type,"_bv0")
+        Retreat_Analysis[[taxrev_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs[[column_name]][RE_matching_rows_ag], na.rm = TRUE)
+        
+        taxrev_col <- paste0("Total_TaxRev_comm_RE",seawall,"t", trigger, "_l", hazard_type, "_bv0")
+        column_name <- paste0("Total_TaxRev_", year, "_t",trigger,"_l",hazard_type,"_bv0")
+        Retreat_Analysis[[taxrev_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs[[column_name]][RE_matching_rows_comm], na.rm = TRUE)
+        
+        taxrev_col <- paste0("Total_TaxRev_cons_RE",seawall,"t", trigger, "_l", hazard_type, "_bv0")
+        column_name <- paste0("Total_TaxRev_", year, "_t",trigger,"_l",hazard_type,"_bv0")
+        Retreat_Analysis[[taxrev_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs[[column_name]][RE_matching_rows_cons], na.rm = TRUE)
+      
+        #private property value loss per taxclass
+        privproploss_col <- paste0("Priv_Prop_Loss_res_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+        column_name <- paste0("Priv_Prop_Loss_", year, "_t",trigger,"_l",hazard_type,"_bv0")
+        Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs[[column_name]][RE_matching_rows_home], na.rm = TRUE)
+        
+        privproploss_col <- paste0("Priv_Prop_Loss_hotel_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+        column_name <- paste0("Priv_Prop_Loss_", year, "_t",trigger,"_l",hazard_type,"_bv0")
+        Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs[[column_name]][RE_matching_rows_hotel], na.rm = TRUE)
+        
+        privproploss_col <- paste0("Priv_Prop_Loss_ag_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+        column_name <- paste0("Priv_Prop_Loss_", year, "_t",trigger,"_l",hazard_type,"_bv0")
+        Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs[[column_name]][RE_matching_rows_ag], na.rm = TRUE)
+        
+        privproploss_col <- paste0("Priv_Prop_Loss_comm_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+        column_name <- paste0("Priv_Prop_Loss_", year, "_t",trigger,"_l",hazard_type,"_bv0")
+        Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs[[column_name]][RE_matching_rows_comm], na.rm = TRUE)
+        
+        privproploss_col <- paste0("Priv_Prop_Loss_cons_RE",seawall,"t",trigger,"_l",hazard_type,"_bv0")
+        column_name <- paste0("Priv_Prop_Loss_", year, "_t",trigger,"_l",hazard_type,"_bv0")
+        Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year] <- 
+          sum(clean_retreat_calcs[[column_name]][RE_matching_rows_cons], na.rm = TRUE)
+        
+        
+        
         for(bval in bvals){
           
           # Sum the total building + land value of parcels that are TB 
           totalval_col <- paste0("Total_Value_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
           column_name <- paste0("Total_Appraise_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
           Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year] <- 
-            sum(clean_retreat_calcs[[column_name]][TB_matching_rows], na.rm = TRUE)
+            sum(clean_retreat_calcs[[column_name]][TB_matching_rows & clean_retreat_calcs$Public == 0], na.rm = TRUE)
           
           # Sum private property loss of parcels that are TB 
           privproploss_col <- paste0("Priv_Prop_Loss_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
@@ -382,6 +852,87 @@ for (year in years) {
           column_name <- paste0("Total_TaxRev_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
           Retreat_Analysis[[taxrev_col]][Retreat_Analysis$Years == year] <- 
             sum(clean_retreat_calcs[[column_name]][TB_matching_rows], na.rm = TRUE)
+          
+          #BREAKDOWNS PER TAXCLASS
+          
+          #total value per taxclass
+          totalval_col <- paste0("Total_Value_res_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+          column_name <- paste0("Total_Appraise_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
+          Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year] <- 
+            sum(clean_retreat_calcs[[column_name]][TB_matching_rows_home & clean_retreat_calcs$Public == 0], na.rm = TRUE)
+          
+          totalval_col <- paste0("Total_Value_hotel_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+          column_name <- paste0("Total_Appraise_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
+          Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year] <- 
+            sum(clean_retreat_calcs[[column_name]][TB_matching_rows_hotel & clean_retreat_calcs$Public == 0], na.rm = TRUE)
+          
+          totalval_col <- paste0("Total_Value_ag_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+          column_name <- paste0("Total_Appraise_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
+          Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year] <- 
+            sum(clean_retreat_calcs[[column_name]][TB_matching_rows_ag & clean_retreat_calcs$Public == 0], na.rm = TRUE)
+          
+          totalval_col <- paste0("Total_Value_comm_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+          column_name <- paste0("Total_Appraise_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
+          Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year] <- 
+            sum(clean_retreat_calcs[[column_name]][TB_matching_rows_comm & clean_retreat_calcs$Public == 0], na.rm = TRUE)
+          
+          totalval_col <- paste0("Total_Value_cons_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+          column_name <- paste0("Total_Appraise_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
+          Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year] <- 
+            sum(clean_retreat_calcs[[column_name]][TB_matching_rows_cons & clean_retreat_calcs$Public == 0], na.rm = TRUE)
+          
+          #tax rev loss per taxclass
+          taxrev_col <- paste0("Total_TaxRev_res_TB",seawall,"t", trigger, "_l", hazard_type, "_bv",bval)
+          column_name <- paste0("Total_TaxRev_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
+          Retreat_Analysis[[taxrev_col]][Retreat_Analysis$Years == year] <- 
+            sum(clean_retreat_calcs[[column_name]][TB_matching_rows_home], na.rm = TRUE)
+          
+          taxrev_col <- paste0("Total_TaxRev_hotel_TB",seawall,"t", trigger, "_l", hazard_type, "_bv",bval)
+          column_name <- paste0("Total_TaxRev_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
+          Retreat_Analysis[[taxrev_col]][Retreat_Analysis$Years == year] <- 
+            sum(clean_retreat_calcs[[column_name]][TB_matching_rows_hotel], na.rm = TRUE)
+          
+          taxrev_col <- paste0("Total_TaxRev_ag_TB",seawall,"t", trigger, "_l", hazard_type, "_bv",bval)
+          column_name <- paste0("Total_TaxRev_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
+          Retreat_Analysis[[taxrev_col]][Retreat_Analysis$Years == year] <- 
+            sum(clean_retreat_calcs[[column_name]][TB_matching_rows_ag], na.rm = TRUE)
+          
+          taxrev_col <- paste0("Total_TaxRev_comm_TB",seawall,"t", trigger, "_l", hazard_type, "_bv",bval)
+          column_name <- paste0("Total_TaxRev_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
+          Retreat_Analysis[[taxrev_col]][Retreat_Analysis$Years == year] <- 
+            sum(clean_retreat_calcs[[column_name]][TB_matching_rows_comm], na.rm = TRUE)
+          
+          taxrev_col <- paste0("Total_TaxRev_cons_TB",seawall,"t", trigger, "_l", hazard_type, "_bv",bval)
+          column_name <- paste0("Total_TaxRev_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
+          Retreat_Analysis[[taxrev_col]][Retreat_Analysis$Years == year] <- 
+            sum(clean_retreat_calcs[[column_name]][TB_matching_rows_cons], na.rm = TRUE)
+          
+          #private property value loss per taxclass
+          privproploss_col <- paste0("Priv_Prop_Loss_res_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+          column_name <- paste0("Priv_Prop_Loss_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
+          Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year] <- 
+            sum(clean_retreat_calcs[[column_name]][TB_matching_rows_home], na.rm = TRUE)
+          
+          privproploss_col <- paste0("Priv_Prop_Loss_hotel_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+          column_name <- paste0("Priv_Prop_Loss_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
+          Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year] <- 
+            sum(clean_retreat_calcs[[column_name]][TB_matching_rows_hotel], na.rm = TRUE)
+          
+          privproploss_col <- paste0("Priv_Prop_Loss_ag_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+          column_name <- paste0("Priv_Prop_Loss_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
+          Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year] <- 
+            sum(clean_retreat_calcs[[column_name]][TB_matching_rows_ag], na.rm = TRUE)
+          
+          privproploss_col <- paste0("Priv_Prop_Loss_comm_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+          column_name <- paste0("Priv_Prop_Loss_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
+          Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year] <- 
+            sum(clean_retreat_calcs[[column_name]][TB_matching_rows_comm], na.rm = TRUE)
+          
+          privproploss_col <- paste0("Priv_Prop_Loss_cons_TB",seawall,"t",trigger,"_l",hazard_type,"_bv",bval)
+          column_name <- paste0("Priv_Prop_Loss_", year, "_t",trigger,"_l",hazard_type,"_bv",bval)
+          Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year] <- 
+            sum(clean_retreat_calcs[[column_name]][TB_matching_rows_cons], na.rm = TRUE)
+          
         }
       }
     }
