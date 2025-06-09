@@ -197,11 +197,19 @@ for (year in years) {
         #if before reactive year, building has full/0 value (depending on bval scenario). if after year reactive, building value is 0
         col_RE_trigger <- paste0("year_RE_t",trigger)
         col_TB_trigger <- paste0("year_TB_t",trigger)
-        clean_retreat_calcs[[totaltaxable_column_title]] <- ifelse(!is.na(clean_retreat_calcs[[col_RE_trigger]]) & clean_retreat_calcs[[col_RE_trigger]] > year,
-                                                                   clean_retreat_calcs[[land_assess_col]] + bval * clean_retreat_calcs$ASMTBLDG - clean_retreat_calcs$TOTEXEMPT,
-                                                                   ifelse(is.na(clean_retreat_calcs[[col_RE_trigger]]) & clean_retreat_calcs[[col_TB_trigger]] == 2100,
-                                                                          clean_retreat_calcs[[land_assess_col]] + bval * clean_retreat_calcs$ASMTBLDG - clean_retreat_calcs$TOTEXEMPT,
-                                                                          clean_retreat_calcs[[land_assess_col]] - clean_retreat_calcs$TOTEXEMPT))
+        
+        clean_retreat_calcs[[totaltaxable_column_title]] <- ifelse(
+          # Case 1: RE year exists and is after current year - building has value
+          !is.na(clean_retreat_calcs[[col_RE_trigger]]) & clean_retreat_calcs[[col_RE_trigger]] > as.numeric(year),
+          clean_retreat_calcs[[land_assess_col]] + bval * clean_retreat_calcs$ASMTBLDG - clean_retreat_calcs$TOTEXEMPT,
+          ifelse(
+            # Case 2: No RE year (erosion never reaches building) - building has value
+            is.na(clean_retreat_calcs[[col_RE_trigger]]),
+            clean_retreat_calcs[[land_assess_col]] + bval * clean_retreat_calcs$ASMTBLDG - clean_retreat_calcs$TOTEXEMPT,
+            # Case 3: RE has occurred, building loses value
+            clean_retreat_calcs[[land_assess_col]] - clean_retreat_calcs$TOTEXEMPT
+          )
+        )
         
         # calculate remaining tax revenue after land transfer using total value
         # title new columns for tax revenue after land transfer for each hazard type

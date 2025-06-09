@@ -30,15 +30,27 @@ for(scenario in scenarios){
     for(trigger in triggers){
       apartments_col <- paste0("apartments_",scenario,seawall,"t",trigger)
       buildings_col <- paste0("buildings_",scenario,seawall,"t",trigger)
+      buildings_res_col <- paste0("buildings_res_",scenario,seawall,"t",trigger)
+      buildings_hotel_col <- paste0("buildings_hotel_",scenario,seawall,"t",trigger)
+      buildings_comm_col <- paste0("buildings_comm_",scenario,seawall,"t",trigger)
+      buildings_ag_col <- paste0("buildings_ag_",scenario,seawall,"t",trigger)
+      buildings_cons_col <- paste0("buildings_cons_",scenario,seawall,"t",trigger)
       CPRunits_col <- paste0("CPRunits_",scenario,seawall,"t",trigger)
       parcel_col <- paste0("parcels8_",scenario,seawall,"t",trigger)
       homes_col <- paste0("homes_",scenario,seawall,"t",trigger)
+      homes_cpr_col <- paste0("homes_cpr_",scenario,seawall,"t",trigger)
       
       Retreat_Analysis_Total[[apartments_col]] <- sum(Retreat_Analysis[apartments_col],na.rm=T)
       Retreat_Analysis_Total[[buildings_col]] <- sum(Retreat_Analysis[buildings_col],na.rm=T)
+      Retreat_Analysis_Total[[buildings_res_col]] <- sum(Retreat_Analysis[buildings_res_col],na.rm=T)
+      Retreat_Analysis_Total[[buildings_hotel_col]] <- sum(Retreat_Analysis[buildings_hotel_col],na.rm=T)
+      Retreat_Analysis_Total[[buildings_comm_col]] <- sum(Retreat_Analysis[buildings_comm_col],na.rm=T)
+      Retreat_Analysis_Total[[buildings_ag_col]] <- sum(Retreat_Analysis[buildings_ag_col],na.rm=T)
+      Retreat_Analysis_Total[[buildings_cons_col]] <- sum(Retreat_Analysis[buildings_cons_col],na.rm=T)
       Retreat_Analysis_Total[[CPRunits_col]] <- sum(Retreat_Analysis[CPRunits_col],na.rm=T)
       Retreat_Analysis_Total[[parcel_col]] <- sum(Retreat_Analysis[parcel_col],na.rm=T)
       Retreat_Analysis_Total[[homes_col]] <- sum(Retreat_Analysis[homes_col],na.rm=T)
+      Retreat_Analysis_Total[[homes_cpr_col]] <- sum(Retreat_Analysis[homes_cpr_col],na.rm=T)
       for(rdr in rdret){
         hwylength_col <- paste0("hwylength",scenario,seawall,trigger,"_rdr",rdr)
         hwyripraplen_col <- paste0("hwyripraplen",scenario,seawall,trigger,"_rdr",rdr) #total highway riprap length
@@ -84,12 +96,10 @@ present_year <- 2023  # Set the present year for the discount rate calculation
 #   1/((1+0.03)**(year-2023))
 # }
 
-# 2.6% discount rate (for dwelling and land value, demolition, and clean-up NPV)
-discount_rates_26 <- 1.026 ^ (years - present_year)
-DiscountRate26 <- data.frame(year = years, `Discount_Rates_26` = discount_rates_26)
+discount_rate <- 1.03 #adjust for sensitivity analysis
 
 # 3% discount rate (for tax revenue and road NPV)
-discount_rates_30 <- 1.03 ^ (years - present_year)
+discount_rates_30 <- discount_rate ^ (years - present_year)
 DiscountRate30 <- data.frame(year = years, `Discount_Rates_30` = discount_rates_30)
 
 # Find the corresponding discount rate for each year
@@ -114,8 +124,8 @@ discount_sum <- function(column) {
     index <- which(Retreat_Analysis$Years == year)
     value <- Retreat_Analysis[[column]][index]
     
-    # Retrieve Discount_Rates_26 value and calculate discounted value
-    discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+    # Retrieve Discount_Rates_30 value and calculate discounted value
+    discount_rate <- DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]
     discounted_value <- value / discount_rate
     
     # Store values in vectors
@@ -125,7 +135,7 @@ discount_sum <- function(column) {
   sum(discounted_values, na.rm = TRUE)
 }
 
-# Bring total (building+land) values and private property loss into NPV ($2023) using 2.6% discount rate
+# Bring total (building+land) values and private property loss into NPV ($2023) using 3% discount rate
 # Calculate the sum of discounted values
 for(trigger in triggers){
   for(seawall in seawalls){
@@ -233,7 +243,7 @@ for(trigger in triggers){
 
 
 # Define taxclass-filtered datasets and corresponding suffixes
-datasets_list <- list(
+taxclass_list <- list(
   "all" = clean_retreat_calcs,  # No filter version
   "res" = clean_retreat_calcs_home,
   "hotel" = clean_retreat_calcs_hotel,
@@ -243,7 +253,7 @@ datasets_list <- list(
 )
 
 for(taxclass in names(taxclass_list)) {
-  current_data <- datasets_list[[taxclass]]
+  current_data <- taxclass_list[[taxclass]]
   
   # Determine suffix for column names
   suffix <- ifelse(taxclass == "all", "", paste0("_", taxclass))
@@ -605,8 +615,8 @@ for(trigger in triggers){
     cleanuphi_col <- paste0("cleanuphi_RE",seawall,"t",trigger)
     # Calculate the discounted clean-up costs for each year
     discounted_cleanups <- sapply(years, function(year) {
-      # Retrieve the discount rate for the current year from DiscountRate26 data frame
-      discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+      # Retrieve the discount rate for the current year from DiscountRate30 data frame
+      discount_rate <- DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]
       
       # Calculate the low end and high end of the range of discounted clean-up costs
       low_end <- Retreat_Analysis[[cleanuplo_col]][Retreat_Analysis$Years == year] / discount_rate
@@ -656,8 +666,8 @@ for(trigger in triggers){
     
     # Calculate the discounted clean-up costs for each year
     discounted_demolition_costs <- sapply(years, function(year) {
-      # Retrieve the discount rate for the current year from DiscountRate26 data frame
-      discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+      # Retrieve the discount rate for the current year from DiscountRate30 data frame
+      discount_rate <- DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]
       
       # Calculate the discounted demo costs
       demo <- Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] / discount_rate
@@ -669,31 +679,31 @@ for(trigger in triggers){
     
     demo_col <- paste0("demolition_res_TB",seawall,"t",trigger)
     discounted_demolition_costs <- sapply(years, function(year) {
-      discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+      discount_rate <- DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]
       demo <- Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] / discount_rate})
     Retreat_Analysis_Total[[demo_col]] <- sum(discounted_demolition_costs)
     
     demo_col <- paste0("demolition_hotel_TB",seawall,"t",trigger)
     discounted_demolition_costs <- sapply(years, function(year) {
-      discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+      discount_rate <- DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]
       demo <- Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] / discount_rate})
     Retreat_Analysis_Total[[demo_col]] <- sum(discounted_demolition_costs)
     
     demo_col <- paste0("demolition_ag_TB",seawall,"t",trigger)
     discounted_demolition_costs <- sapply(years, function(year) {
-      discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+      discount_rate <- DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]
       demo <- Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] / discount_rate})
     Retreat_Analysis_Total[[demo_col]] <- sum(discounted_demolition_costs)
     
     demo_col <- paste0("demolition_comm_TB",seawall,"t",trigger)
     discounted_demolition_costs <- sapply(years, function(year) {
-      discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+      discount_rate <- DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]
       demo <- Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] / discount_rate})
     Retreat_Analysis_Total[[demo_col]] <- sum(discounted_demolition_costs)
     
     demo_col <- paste0("demolition_cons_TB",seawall,"t",trigger)
     discounted_demolition_costs <- sapply(years, function(year) {
-      discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+      discount_rate <- DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]
       demo <- Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] / discount_rate})
     Retreat_Analysis_Total[[demo_col]] <- sum(discounted_demolition_costs)
     
@@ -764,22 +774,22 @@ for(scenario in scenarios){
       
       # Calculate the discounted clean-up costs for each year
       discounted_osds_costs <- sapply(years, function(year) {
-        # Retrieve the discount rate for the current year from DiscountRate26 data frame
-        discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+        # Retrieve the discount rate for the current year from DiscountRate30 data frame
+        discount_rate <- DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]
         
         # Calculate the low end and high end of the range of discounted clean-up costs
         osds <- Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year] / discount_rate
       })
       discounted_water_costs <- sapply(years, function(year) {
-        # Retrieve the discount rate for the current year from DiscountRate26 data frame
-        discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+        # Retrieve the discount rate for the current year from DiscountRate30 data frame
+        discount_rate <- DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]
         
         # Calculate the low end and high end of the range of discounted clean-up costs
         water <- Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year] / discount_rate
       })
       discounted_seawall_costs <- sapply(years, function(year) {
-        # Retrieve the discount rate for the current year from DiscountRate26 data frame
-        discount_rate <- DiscountRate26$Discount_Rates_26[DiscountRate26$year == year]
+        # Retrieve the discount rate for the current year from DiscountRate30 data frame
+        discount_rate <- DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]
         
         # Calculate the low end and high end of the range of discounted clean-up costs
         seawall <- Retreat_Analysis[[seawall_col]][Retreat_Analysis$Years == year] / discount_rate

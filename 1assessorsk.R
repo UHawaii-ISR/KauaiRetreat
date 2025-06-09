@@ -43,7 +43,10 @@ assessors <- as.data.frame(assessorsshp)
 #TAXCLASS = use for calculating taxes
 
 #join the dataframes. in ArcGIS, use the building-TMK-join method1 "centroid within" for non-CPR, method2 "intersect" for CPR units. 
-#if there are < 3 CPR for a COTMK, these are false CPR and should treat them as non-CPR
+#if there are < 4 CPR for a COTMK, these are false CPR and should treat them as non-CPR
+common_cols <- intersect(names(assessorscpr), names(assessors)) # Keep only common columns in both datasets
+assessorscpr <- assessorscpr[, common_cols]
+assessors <- assessors[, common_cols]
 assessorscpr <- assessorscpr[!is.na(assessorscpr$CPR_UNIT),] #remove nonCPR from CPR df
 falseCPR <- assessorscpr %>% #find the false CPRs that are basically really just split parcels and not apartments
   group_by(COTMK) %>%
@@ -52,12 +55,11 @@ falseCPR <- assessorscpr %>% #find the false CPRs that are basically really just
   unique()
 assessors_falseCPR <- assessors %>% #create a df to store the false CPR
   filter(PARID %in% falseCPR) 
+assessors_falseCPR <- assessors_falseCPR %>% mutate(CPR_UNIT = NA)
 assessorscpr <- assessorscpr %>% # remove false CPRs from CPR df 
   filter(!PARID %in% falseCPR)
-assessors <- assessors[is.na(assessors$CPR_UNIT),] #remove CPR and falseCPR from nonCPR df
+assessors <- assessors[is.na(assessors$CPR_UNIT) & !assessors$PARID %in% falseCPR,] #remove CPR and falseCPR from nonCPR df
 #join all dataframes together - falseCPR, nonCPR, and CPR
-assessorscpr <- assessorscpr[,intersect(names(assessors),names(assessorscpr))]
-assessors <- assessors[,intersect(names(assessors),names(assessorscpr))]
 assessors <- rbind(assessors,assessorscpr) 
 assessors <- rbind(assessors,assessors_falseCPR) 
 
@@ -135,7 +137,7 @@ clean_assessors <- clean_assessors %>%
   mutate(
     TMK8_TAXCLASS = case_when(
       n() == 1 ~ TAXCLASS,  # Single row groups use their own TAXCLASS
-      n() > 1 & any(grepl("0000$", TMK)) ~ TAXCLASS[grepl("0000$", TMK)][1],  # Multi-row with 0000 ending
+      #n() > 1 & any(grepl("0000$", TMK)) ~ TAXCLASS[grepl("0000$", TMK)][1],  # Multi-row with 0000 ending
       TRUE ~ {
         # Find the majority TAXCLASS value
         taxclass_counts <- table(TAXCLASS)
@@ -148,8 +150,8 @@ clean_assessors <- clean_assessors %>%
   group_by(BuildingID) %>%
   mutate(Number_CPRbldg = n())
 
-# add apartment identification by CPR count. >15 CPR units per building is apartment building
-clean_assessors$apartment <- ifelse(clean_assessors$Number_CPRbldg >15,1,0)
+# add apartment identification by CPR count. >4 CPR units per building is apartment building
+clean_assessors$apartment <- ifelse(clean_assessors$Number_CPRbldg >4,1,0)
 
 #buildings count per parcel
 clean_assessors <- clean_assessors %>%
@@ -173,15 +175,26 @@ clean_assessors_bldg <- clean_assessors_bldg %>%
 clean_assessors_bldg$CPR_UNIT[clean_assessors_bldg$TMK == 280170090000] <- 0
 
 # if there are >1 buildings on a single non-CPR'd parcel, keep only the row with the most makai building that is >300sqft
+# if there are >1 buildings on a single CPR'd TMK8 parcel, keep only the row with the most mauka building that is >300sqft
 clean_assessors <- clean_assessors %>%
-  group_by(TMK) %>%
+  group_by(if_else(!is.na(CPR_UNIT), COTMK, TMK)) %>%
   filter(
     buildings == 1 | 
       (buildings > 1 & 
          if(any(BLDG_SQFT > 300)) {
-           NEAR_VEG == min(NEAR_VEG[BLDG_SQFT > 300])
+           # For non-CPRs (CPR_UNIT is NA): keep most makai (min NEAR_VEG)
+           # For CPRs (CPR_UNIT is not NA): keep most mauka (max NEAR_VEG)
+           if(is.na(first(CPR_UNIT))) {
+             NEAR_VEG == min(NEAR_VEG[BLDG_SQFT > 300])
+           } else {
+             NEAR_VEG == max(NEAR_VEG[BLDG_SQFT > 300])
+           }
          } else {
-           NEAR_VEG == min(NEAR_VEG)
+           if(is.na(first(CPR_UNIT))) {
+             NEAR_VEG == min(NEAR_VEG)
+           } else {
+             NEAR_VEG == max(NEAR_VEG)
+           }
          })
   ) %>%
   ungroup()
