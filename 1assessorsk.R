@@ -96,12 +96,12 @@ clean_assessors <- assessors[, c("PARID","COTMK","CPR_UNIT","TAXCLASS25",
                                  'OSDS_QTY_calc','WASTEWATER')]
 
 
-#Create baseline SA_2023_[hazard] with values of 0 (for easy integration in for loops). 
+#Create baseline SA_2025_[hazard] with values of 0 (for easy integration in for loops). 
 #All are assigned 0 as this is our baseline (no parcels have lost value yet, assessors value is that of current "original" parcel area)
-clean_assessors$SA_2023_WF <- 0
-clean_assessors$SA_2023_CE <- 0
-clean_assessors$SA_2023_PF <- 0
-clean_assessors$SA_2023_XA <- 0
+clean_assessors$SA_2025_WF <- 0
+clean_assessors$SA_2025_CE <- 0
+clean_assessors$SA_2025_PF <- 0
+clean_assessors$SA_2025_XA <- 0
 
 # rename columns
 clean_assessors <- clean_assessors %>%
@@ -254,7 +254,7 @@ clean_assessors$Current_Tax_Revenue <- case_when(
   clean_assessors$TAXCLASS == "Vacation Rental" & clean_assessors$NETTAXABLE > 1000000 & clean_assessors$NETTAXABLE <= 2500000 ~ 
     1000000 * 0.01130 + (clean_assessors$NETTAXABLE - 1000000) * 0.01175,
   clean_assessors$TAXCLASS == "Vacation Rental" & clean_assessors$NETTAXABLE > 2500000 ~ 
-    1000000 * 0.01130 + 1000000 * 0.01175 + (clean_assessors$NETTAXABLE - 2000000) * 0.01220,
+    1000000 * 0.01130 + 1500000 * 0.01175 + (clean_assessors$NETTAXABLE - 2500000) * 0.01220,
   clean_assessors$TAXCLASS == "Hotel and Resort" ~ clean_assessors$NETTAXABLE * 0.01175,
   clean_assessors$TAXCLASS == "Commercial" ~ clean_assessors$NETTAXABLE * 0.00810,
   clean_assessors$TAXCLASS == "Industrial" ~ clean_assessors$NETTAXABLE * 0.00810,

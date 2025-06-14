@@ -69,9 +69,9 @@ for(scenario in scenarios){
         Retreat_Analysis_Total[[b_retrofitlen_col]] <- sum(Retreat_Analysis[b_retrofitlen_col],na.rm=T)
         Retreat_Analysis_Total[[maintainlen_col]] <- Retreat_Analysis[[maintainlen_col]][Retreat_Analysis$Years == 2100] #capture the total length that is maintained at 2100
         if(scenario == 'AO'){
-          Retreat_Analysis_Total[[total_affected_col]] <- Retreat_Analysis[[total_affected_col]][Retreat_Analysis$Years == 2023]
-          Retreat_Analysis_Total[[hwy_affected_col]] <- Retreat_Analysis[[hwy_affected_col]][Retreat_Analysis$Years == 2023]
-          Retreat_Analysis_Total[[nonhwy_affected_col]] <- Retreat_Analysis[[nonhwy_affected_col]][Retreat_Analysis$Years == 2023]
+          Retreat_Analysis_Total[[total_affected_col]] <- Retreat_Analysis[[total_affected_col]][Retreat_Analysis$Years == 2025]
+          Retreat_Analysis_Total[[hwy_affected_col]] <- Retreat_Analysis[[hwy_affected_col]][Retreat_Analysis$Years == 2025]
+          Retreat_Analysis_Total[[nonhwy_affected_col]] <- Retreat_Analysis[[nonhwy_affected_col]][Retreat_Analysis$Years == 2025]
           
         }else{
           Retreat_Analysis_Total[[total_affected_col]] <- Retreat_Analysis[[total_affected_col]][Retreat_Analysis$Years == 2100]
@@ -88,12 +88,12 @@ for(scenario in scenarios){
 
 
 # Create Discount Rate Tables
-years <- c(2023,2025,2026,2028,2030,2035,2040,2045,2050,2056,2062,2068,2075,2081,2087,2093,2100)
-present_year <- 2023  # Set the present year for the discount rate calculation
+years <- c(2025,2027,2028,2029,2030,2035,2040,2045,2050,2056,2062,2068,2075,2081,2087,2093,2100)
+present_year <- 2025  # Set the present year for the discount rate calculation
 
 #consider using this function for npv instead
 # npv <- function(year){
-#   1/((1+0.03)**(year-2023))
+#   1/((1+0.03)**(year-2025))
 # }
 
 discount_rate <- 1.03 #adjust for sensitivity analysis
@@ -113,7 +113,7 @@ discount_rate_30 <- function(year) {
 }
 
 discount_sum <- function(column) {
-  years <- c("2023", "2026", "2030", "2040", "2050", "2062", "2075", "2087", "2100")
+  years <- c("2025", "2028", "2030", "2040", "2050", "2062", "2075", "2087", "2100")
   originalvalues <- numeric(length(years))
   discounted_values <- numeric(length(years))
   
@@ -135,14 +135,14 @@ discount_sum <- function(column) {
   sum(discounted_values, na.rm = TRUE)
 }
 
-# Bring total (building+land) values and private property loss into NPV ($2023) using 3% discount rate
+# Bring total (building+land) values and private property loss into NPV ($2025) using 3% discount rate
 # Calculate the sum of discounted values
 for(trigger in triggers){
   for(seawall in seawalls){
     for(hazard_type in hazard_types){
       #AO
       totalval_col <- paste0("Total_Value_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
-      Retreat_Analysis_Total[[totalval_col]] <- sum(Retreat_Analysis[[totalval_col]]) # no need to discount because only has values in present (2023)
+      Retreat_Analysis_Total[[totalval_col]] <- sum(Retreat_Analysis[[totalval_col]]) # no need to discount because only has values in present (2025)
       
       privproploss_col <- paste0("Priv_Prop_Loss_AO",seawall,"t",trigger,"_l",hazard_type,"_bv1")
       Retreat_Analysis_Total[[privproploss_col]] <- 0 # no priv prop loss for AO approaches since properties are assumed to have full assessed value 
@@ -270,8 +270,8 @@ for(taxclass in names(taxclass_list)) {
         totaltax_col_2100 <- paste0("Total_TaxRev_2100_t", trigger, "_l", hazard_type, "_bv1") 
         
         current_data[[AO_taxrevloss_col]] <-
-          ifelse(current_data[[yearAO_col]] == 2023, 
-                 (current_data$Current_Tax_Revenue * (2030 - present_year) / discount_rate_30(2025)) +
+          ifelse(current_data[[yearAO_col]] == 2025, 
+                 (current_data$Current_Tax_Revenue * (2030 - present_year) / discount_rate_30(2027)) +
                    (current_data[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
                    (current_data[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
                    (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
@@ -294,8 +294,8 @@ for(taxclass in names(taxclass_list)) {
           for(seawall in seawalls){
             taxrevloss_col <- paste0("Total_TaxRev_Loss", suffix,"_", scenario, seawall, "t", trigger, "_l", hazard_type, "_bv", bval)
             yearRetreat_col <- paste0("year_", scenario, seawall, "t", trigger)
-            totaltax_col_2023 <- paste0("Total_TaxRev_2023_t", trigger, "_l", hazard_type, "_bv", bval) 
-            totaltax_col_2026 <- paste0("Total_TaxRev_2026_t", trigger, "_l", hazard_type, "_bv", bval) 
+            totaltax_col_2025 <- paste0("Total_TaxRev_2025_t", trigger, "_l", hazard_type, "_bv", bval) 
+            totaltax_col_2028 <- paste0("Total_TaxRev_2028_t", trigger, "_l", hazard_type, "_bv", bval) 
             totaltax_col_2030 <- paste0("Total_TaxRev_2030_t", trigger, "_l", hazard_type, "_bv", bval) 
             totaltax_col_2040 <- paste0("Total_TaxRev_2040_t", trigger, "_l", hazard_type, "_bv", bval) 
             totaltax_col_2050 <- paste0("Total_TaxRev_2050_t", trigger, "_l", hazard_type, "_bv", bval) 
@@ -305,14 +305,14 @@ for(taxclass in names(taxclass_list)) {
             totaltax_col_2100 <- paste0("Total_TaxRev_2100_t", trigger, "_l", hazard_type, "_bv", bval) 
             
             current_data[[taxrevloss_col]] <- case_when(
-              current_data[[yearRetreat_col]] == 2023 ~
-                (current_data[[totaltax_col_2023]] * (2030 - 2023) / discount_rate_30(2025)) +
+              current_data[[yearRetreat_col]] == 2025 ~
+                (current_data[[totaltax_col_2025]] * (2030 - 2025) / discount_rate_30(2027)) +
                 (current_data[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
                 (current_data[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
                 (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
                 (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
-              current_data[[yearRetreat_col]] == 2026 ~ 
-                (current_data[[totaltax_col_2026]] * (2030 - 2026) / discount_rate_30(2028)) +
+              current_data[[yearRetreat_col]] == 2028 ~ 
+                (current_data[[totaltax_col_2028]] * (2030 - 2028) / discount_rate_30(2029)) +
                 (current_data[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
                 (current_data[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
                 (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
@@ -363,8 +363,8 @@ for(taxclass in names(taxclass_list)) {
         for(seawall in seawalls){
           taxrevloss_col <- paste0("Total_TaxRev_Loss", suffix,"_", scenario, seawall, "t", trigger, "_l", hazard_type, "_bv0")
           yearRetreat_col <- paste0("year_", scenario, seawall, "t", trigger)
-          totaltax_col_2023 <- paste0("Total_TaxRev_2023_t", trigger, "_l", hazard_type, "_bv0") 
-          totaltax_col_2026 <- paste0("Total_TaxRev_2026_t", trigger, "_l", hazard_type, "_bv0") 
+          totaltax_col_2025 <- paste0("Total_TaxRev_2025_t", trigger, "_l", hazard_type, "_bv0") 
+          totaltax_col_2028 <- paste0("Total_TaxRev_2028_t", trigger, "_l", hazard_type, "_bv0") 
           totaltax_col_2030 <- paste0("Total_TaxRev_2030_t", trigger, "_l", hazard_type, "_bv0") 
           totaltax_col_2040 <- paste0("Total_TaxRev_2040_t", trigger, "_l", hazard_type, "_bv0") 
           totaltax_col_2050 <- paste0("Total_TaxRev_2050_t", trigger, "_l", hazard_type, "_bv0") 
@@ -374,14 +374,14 @@ for(taxclass in names(taxclass_list)) {
           totaltax_col_2100 <- paste0("Total_TaxRev_2100_t", trigger, "_l", hazard_type, "_bv0") 
           
           current_data[[taxrevloss_col]] <- case_when(
-            current_data[[yearRetreat_col]] == 2023 ~
-              (current_data[[totaltax_col_2023]] * (2030 - 2023) / discount_rate_30(2025)) +
+            current_data[[yearRetreat_col]] == 2025 ~
+              (current_data[[totaltax_col_2025]] * (2030 - 2025) / discount_rate_30(2027)) +
               (current_data[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
               (current_data[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
               (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
               (current_data[[totaltax_col_2100]] / discount_rate_30(2100)),
-            current_data[[yearRetreat_col]] == 2026 ~ 
-              (current_data[[totaltax_col_2026]] * (2030 - 2026) / discount_rate_30(2028)) +
+            current_data[[yearRetreat_col]] == 2028 ~ 
+              (current_data[[totaltax_col_2028]] * (2030 - 2028) / discount_rate_30(2029)) +
               (current_data[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
               (current_data[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
               (current_data[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
@@ -443,8 +443,8 @@ for (hazard_type in hazard_types) {
       totaltax_col_2100 <- paste0("Total_TaxRev_2100_t", trigger, "_l", hazard_type,"_bv1") 
       
       clean_retreat_calcs[[AO_taxrevloss_col]] <-
-        ifelse(clean_retreat_calcs[[yearAO_col]] == 2023, 
-               (clean_retreat_calcs$Current_Tax_Revenue * (2030 - present_year) / discount_rate_30(2025)) +
+        ifelse(clean_retreat_calcs[[yearAO_col]] == 2025, 
+               (clean_retreat_calcs$Current_Tax_Revenue * (2030 - present_year) / discount_rate_30(2027)) +
                  (clean_retreat_calcs[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
                  (clean_retreat_calcs[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
                  (clean_retreat_calcs[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
@@ -468,8 +468,8 @@ for(scenario in scenarios){
         for(seawall in seawalls){
           taxrevloss_col <- paste0("Total_TaxRev_Loss_",scenario,seawall,"t", trigger, "_l", hazard_type, "_bv",bval)
           yearRetreat_col <- paste0("year_",scenario,seawall,"t",trigger)
-          totaltax_col_2023 <- paste0("Total_TaxRev_2023_t", trigger, "_l", hazard_type, "_bv",bval) 
-          totaltax_col_2026 <- paste0("Total_TaxRev_2026_t", trigger, "_l", hazard_type, "_bv",bval) 
+          totaltax_col_2025 <- paste0("Total_TaxRev_2025_t", trigger, "_l", hazard_type, "_bv",bval) 
+          totaltax_col_2028 <- paste0("Total_TaxRev_2028_t", trigger, "_l", hazard_type, "_bv",bval) 
           totaltax_col_2030 <- paste0("Total_TaxRev_2030_t", trigger, "_l", hazard_type, "_bv",bval) 
           totaltax_col_2040 <- paste0("Total_TaxRev_2040_t", trigger, "_l", hazard_type, "_bv",bval) 
           totaltax_col_2050 <- paste0("Total_TaxRev_2050_t", trigger, "_l", hazard_type, "_bv",bval) 
@@ -481,14 +481,14 @@ for(scenario in scenarios){
           
           
           clean_retreat_calcs[[taxrevloss_col]] <- case_when(
-            clean_retreat_calcs[[yearRetreat_col]] == 2023 ~
-              (clean_retreat_calcs[[totaltax_col_2023]] * (2030 - 2023) / discount_rate_30(2025)) +
+            clean_retreat_calcs[[yearRetreat_col]] == 2025 ~
+              (clean_retreat_calcs[[totaltax_col_2025]] * (2030 - 2025) / discount_rate_30(2027)) +
               (clean_retreat_calcs[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
               (clean_retreat_calcs[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
               (clean_retreat_calcs[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
               (clean_retreat_calcs[[totaltax_col_2100]] / discount_rate_30(2100)),
-            clean_retreat_calcs[[yearRetreat_col]] == 2026 ~ 
-              (clean_retreat_calcs[[totaltax_col_2026]] * (2030 - 2026) / discount_rate_30(2028)) +
+            clean_retreat_calcs[[yearRetreat_col]] == 2028 ~ 
+              (clean_retreat_calcs[[totaltax_col_2028]] * (2030 - 2028) / discount_rate_30(2029)) +
               (clean_retreat_calcs[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
               (clean_retreat_calcs[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
               (clean_retreat_calcs[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
@@ -542,8 +542,8 @@ for(scenario in scenarios){
       for(seawall in seawalls){
         taxrevloss_col <- paste0("Total_TaxRev_Loss_",scenario,seawall,"t", trigger, "_l", hazard_type, "_bv0")
         yearRetreat_col <- paste0("year_",scenario,seawall,"t",trigger)
-        totaltax_col_2023 <- paste0("Total_TaxRev_2023_t", trigger, "_l", hazard_type, "_bv0") 
-        totaltax_col_2026 <- paste0("Total_TaxRev_2026_t", trigger, "_l", hazard_type, "_bv0") 
+        totaltax_col_2025 <- paste0("Total_TaxRev_2025_t", trigger, "_l", hazard_type, "_bv0") 
+        totaltax_col_2028 <- paste0("Total_TaxRev_2028_t", trigger, "_l", hazard_type, "_bv0") 
         totaltax_col_2030 <- paste0("Total_TaxRev_2030_t", trigger, "_l", hazard_type, "_bv0") 
         totaltax_col_2040 <- paste0("Total_TaxRev_2040_t", trigger, "_l", hazard_type, "_bv0") 
         totaltax_col_2050 <- paste0("Total_TaxRev_2050_t", trigger, "_l", hazard_type, "_bv0") 
@@ -554,14 +554,14 @@ for(scenario in scenarios){
         
         
         clean_retreat_calcs[[taxrevloss_col]] <- case_when(
-          clean_retreat_calcs[[yearRetreat_col]] == 2023 ~
-            (clean_retreat_calcs[[totaltax_col_2023]] * (2030 - 2023) / discount_rate_30(2025)) +
+          clean_retreat_calcs[[yearRetreat_col]] == 2025 ~
+            (clean_retreat_calcs[[totaltax_col_2025]] * (2030 - 2025) / discount_rate_30(2027)) +
             (clean_retreat_calcs[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
             (clean_retreat_calcs[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
             (clean_retreat_calcs[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +
             (clean_retreat_calcs[[totaltax_col_2100]] / discount_rate_30(2100)),
-          clean_retreat_calcs[[yearRetreat_col]] == 2026 ~ 
-            (clean_retreat_calcs[[totaltax_col_2026]] * (2030 - 2026) / discount_rate_30(2028)) +
+          clean_retreat_calcs[[yearRetreat_col]] == 2028 ~ 
+            (clean_retreat_calcs[[totaltax_col_2028]] * (2030 - 2028) / discount_rate_30(2029)) +
             (clean_retreat_calcs[[totaltax_col_2030]] * (2050 - 2030) / discount_rate_30(2040)) +
             (clean_retreat_calcs[[totaltax_col_2050]] * (2075 - 2050) / discount_rate_30(2062)) +
             (clean_retreat_calcs[[totaltax_col_2075]] * (2100 - 2075) / discount_rate_30(2087)) +

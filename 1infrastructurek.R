@@ -35,7 +35,7 @@ for(buff in buffer){
   
   infradf <- infrasdf[c('Has_HWY','SS_FID','VEG','Ln_m','id')]
   
-  year <- 2023
+  year <- 2025
   
   #reformat and summarize data
   for(trigger in triggers){
@@ -143,10 +143,10 @@ infra_retreat <- infrademo %>%
 infra_retreat <- infra_retreat %>%
   group_by(ID, Community,LittrlCell,NewB,district, Trigger, Scenario) %>%
   mutate(
-    hwy = ifelse(Year == 2023, hwy, sum(hwy[Year == 2023], na.rm = TRUE) + ifelse(is.na(hwy), 0, hwy)),
-    b = ifelse(Year == 2023, b, sum(b[Year == 2023], na.rm = TRUE) + ifelse(is.na(b), 0, b)),
-    rd = ifelse(Year == 2023, rd, sum(rd[Year == 2023], na.rm = TRUE) + ifelse(is.na(rd), 0, rd)),
-    rdretreat = ifelse(Year == 2023, rdretreat, sum(rdretreat[Year == 2023], na.rm = TRUE) + ifelse(is.na(rdretreat), 0, rdretreat))
+    hwy = ifelse(Year == 2025, hwy, sum(hwy[Year == 2025], na.rm = TRUE) + ifelse(is.na(hwy), 0, hwy)),
+    b = ifelse(Year == 2025, b, sum(b[Year == 2025], na.rm = TRUE) + ifelse(is.na(b), 0, b)),
+    rd = ifelse(Year == 2025, rd, sum(rd[Year == 2025], na.rm = TRUE) + ifelse(is.na(rd), 0, rd)),
+    rdretreat = ifelse(Year == 2025, rdretreat, sum(rdretreat[Year == 2025], na.rm = TRUE) + ifelse(is.na(rdretreat), 0, rdretreat))
   ) %>%
   ungroup()
 
@@ -201,19 +201,19 @@ for(id in infraIDs){
           #calculate new highway and bridge lengths under hazard
           #highway+bridge. retreat occurs when length of highway+bridge under hazard exceeds 1000ft (304.8m)
           hwy <- subdf$hwy[subdf$Year == year]
-          prev_hwy <- ifelse(year > 2023,subdf$hwy[subdf$Year == prevyear],0)
+          prev_hwy <- ifelse(year > 2025,subdf$hwy[subdf$Year == prevyear],0)
           new_hwyy <- ifelse(!is.na(prev_hwy), hwy - prev_hwy, hwy) 
           new_hwy <- pmax(new_hwyy,0,na.rm=T) #here pmax is removing any negative numbers
           b <- subdf$b[subdf$Year == year]
-          prev_b <- ifelse(year > 2023,subdf$b[subdf$Year == prevyear],0)
+          prev_b <- ifelse(year > 2025,subdf$b[subdf$Year == prevyear],0)
           new_b <- ifelse(!is.na(prev_b), b - prev_b, b)
-          prev_swallhwy <- ifelse(year == 2023, subdf$seawall[subdf$Year == year], ifelse(year > 2023,subdf$total_swallhwy[subdf$Year == prevyear],0))
-          new_swall_hwy <- ifelse(year==2023 & new_hwy>0, new_hwy-prev_swallhwy,new_hwy) #amount of highway that needs to be riprapped
+          prev_swallhwy <- ifelse(year == 2025, subdf$seawall[subdf$Year == year], ifelse(year > 2025,subdf$total_swallhwy[subdf$Year == prevyear],0))
+          new_swall_hwy <- ifelse(year==2025 & new_hwy>0, new_hwy-prev_swallhwy,new_hwy) #amount of highway that needs to be riprapped
           
           total_hwy <- sum(new_hwy,total_hwy,na.rm=T)
           total_b <- sum(new_b,total_b, na.rm=T)
-          total_swallhwy <- ifelse(year==2023, sum(prev_swallhwy, new_swall_hwy, na.rm=T),sum(new_swall_hwy,total_swallhwy,na.rm=T))
-          total_swallhwy_s <-  ifelse(year==2023, sum(prev_swallhwy, new_swall_hwy, na.rm=T),sum(new_swall_hwy,total_swallhwy_s,na.rm=T))
+          total_swallhwy <- ifelse(year==2025, sum(prev_swallhwy, new_swall_hwy, na.rm=T),sum(new_swall_hwy,total_swallhwy,na.rm=T))
+          total_swallhwy_s <-  ifelse(year==2025, sum(prev_swallhwy, new_swall_hwy, na.rm=T),sum(new_swall_hwy,total_swallhwy_s,na.rm=T))
           total_length <- sum(total_length, new_hwy, new_b, na.rm=T)
           
           
@@ -271,10 +271,10 @@ for(id in infraIDs){
           
           #calculate road removed (all non-hwy road is removed as it becomes under hazard)
           rd <- subdf$rd[subdf$Year == year]
-          prev_rd <- ifelse(year > 2023,subdf$rd[subdf$Year == prevyear],0)
+          prev_rd <- ifelse(year > 2025,subdf$rd[subdf$Year == prevyear],0)
           new_rd <- ifelse(!is.na(prev_rd), rd - prev_rd, rd)
-          prev_swallrd <- ifelse(year == 2023 & grepl('r',id) & rdr<1, subdf$seawall[subdf$Year == year], 0) #amount of highway that has riprap that needs to be removed
-          new_swall_rd <- ifelse(year==2023 & new_rd>0, new_rd-prev_swallrd,new_rd) #amount of highway that needs to be riprapped
+          prev_swallrd <- ifelse(year == 2025 & grepl('r',id) & rdr<1, subdf$seawall[subdf$Year == year], 0) #amount of highway that has riprap that needs to be removed
+          new_swall_rd <- ifelse(year==2025 & new_rd>0, new_rd-prev_swallrd,new_rd) #amount of highway that needs to be riprapped
           
           infra_retreat[infra_retreat$Year == year & infra_retreat$Scenario == scenario & infra_retreat$ID == id & infra_retreat$Trigger == trigger & infra_retreat$rdret == rdr, 
                         'remove_rd'] <- new_rd       
@@ -302,7 +302,7 @@ for(id in infraIDs){
         if(scenario == "RE"){
           #add row for AO
           #get current riprap hwy/rd lengths
-          ao_removeriprap_hwy <- subdf$seawall[subdf$Year == 2023]
+          ao_removeriprap_hwy <- subdf$seawall[subdf$Year == 2025]
           
           ao_hwy <- subdf$hwy[subdf$Year == 2100]
           ao_b <- subdf$b[subdf$Year == 2100]
@@ -322,7 +322,7 @@ for(id in infraIDs){
           infra_retreat <- infra_retreat %>%
             ungroup() %>%
             add_row(ID=id,Community=infracommunity,LittrlCell=infralittrlcell,district=infradistrict,NewB=infrabeach,
-                    Trigger = trigger,Year=2023,Scenario='AO',rdret = rdr,retreatyr=2023,relocate_hwy=ao_relocate_hwy,
+                    Trigger = trigger,Year=2025,Scenario='AO',rdret = rdr,retreatyr=2025,relocate_hwy=ao_relocate_hwy,
                     relocate_b=ao_relocate_b,remove_rd=ao_remove_rd,
                     removeriprap_hwy=ao_removeriprap_hwy,removeriprap_rd=NA,
                     total_affected = ao_affected,hwy_affected = ao_hwy_affected, nonhwy_affected = ao_nonhwy_affected) %>% 

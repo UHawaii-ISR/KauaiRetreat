@@ -35,8 +35,8 @@ for(trigger in triggers){
   col_n11_trigger <- paste0("NEAR_",trigger,"11")
   col_n05_trigger <- paste0("NEAR_",trigger,"05")
   
-  #calc year (2023) that parcel is all-at-once under the trigger
-  clean_retreat_calcs[[col_AO_trigger]] <- ifelse(clean_retreat_calcs[[col_n32_trigger]] == 0, 2023,NA)
+  #calc year (2025) that parcel is all-at-once under the trigger
+  clean_retreat_calcs[[col_AO_trigger]] <- ifelse(clean_retreat_calcs[[col_n32_trigger]] == 0, 2025,NA)
   
   #calc year that a parcel is threshold-based under the trigger
   clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n32_trigger]] <= 6.1 & clean_retreat_calcs[[col_n32_trigger]] > 0,2100,NA)
@@ -46,16 +46,16 @@ for(trigger in triggers){
   clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n11_trigger]] <= 6.1 & clean_retreat_calcs[[col_n11_trigger]] > 0,2050,clean_retreat_calcs[[col_TB_trigger]])
   clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n11_trigger]] == 0 & clean_retreat_calcs[[col_n05_trigger]] >= 6.1,2040,clean_retreat_calcs[[col_TB_trigger]])
   clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n05_trigger]] <= 6.1 & clean_retreat_calcs[[col_n05_trigger]] > 0,2030,clean_retreat_calcs[[col_TB_trigger]])
-  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n05_trigger]] == 0 & clean_retreat_calcs$NEAR_VEG >= 6.1,2026,clean_retreat_calcs[[col_TB_trigger]])
+  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n05_trigger]] == 0 & clean_retreat_calcs$NEAR_VEG >= 6.1,2028,clean_retreat_calcs[[col_TB_trigger]])
   clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs$NEAR_VEG <= 6.1 & clean_retreat_calcs$NEAR_VEG >= 0 & clean_retreat_calcs[[col_n05_trigger]] == 0,
-                                                  2023,clean_retreat_calcs[[col_TB_trigger]])
+                                                  2025,clean_retreat_calcs[[col_TB_trigger]])
   
   #calc year that a parcel is reactive under the trigger
   clean_retreat_calcs[[col_RE_trigger]] <- ifelse(clean_retreat_calcs[[col_n32_trigger]] == 0,2100,NA)
   clean_retreat_calcs[[col_RE_trigger]] <- ifelse(clean_retreat_calcs[[col_n20_trigger]] == 0,2075,clean_retreat_calcs[[col_RE_trigger]])
   clean_retreat_calcs[[col_RE_trigger]] <- ifelse(clean_retreat_calcs[[col_n11_trigger]] == 0,2050,clean_retreat_calcs[[col_RE_trigger]])
   clean_retreat_calcs[[col_RE_trigger]] <- ifelse(clean_retreat_calcs[[col_n05_trigger]] == 0,2030,clean_retreat_calcs[[col_RE_trigger]])
-  clean_retreat_calcs[[col_RE_trigger]] <- ifelse(clean_retreat_calcs$NEAR_VEG == 0 & clean_retreat_calcs[[col_n05_trigger]] == 0,2023,clean_retreat_calcs[[col_RE_trigger]])
+  clean_retreat_calcs[[col_RE_trigger]] <- ifelse(clean_retreat_calcs$NEAR_VEG == 0 & clean_retreat_calcs[[col_n05_trigger]] == 0,2025,clean_retreat_calcs[[col_RE_trigger]])
   
   
   #calculate retreat year under seawall scenario - if parcel has direct/indirect seawall, it does not retreat
@@ -85,7 +85,7 @@ clean_assessors_bldg <- clean_assessors_bldg %>%
                 ~ ifelse(!is.na(CPR_UNIT) & CPR_UNIT == "0", NA, .)))
 
 #calculate land value & tax
-years <- c("2023", "2030","2050","2075","2100")  
+years <- c("2025", "2030","2050","2075","2100")  
 hazard_types <- c("CE","WF","PF","XA",'full','none')
 
 #calculate land value based on percent exposure to hazard
@@ -124,8 +124,8 @@ for (year in years) {
 }
 
 #for loop for TB averaged years
-yearsTB <- c("2026","2040","2062","2087")
-years <- c("2023", "2030","2050","2075","2100")
+yearsTB <- c("2028","2040","2062","2087")
+years <- c("2025", "2030","2050","2075","2100")
 
 #calculate land value for middle years 
 for (i in 1:length(yearsTB)) {
@@ -172,7 +172,7 @@ for (i in 1:length(yearsTB)) {
 # Calculate tax revenue 
 
 # Assume hazards used here are WF and CE, use same call for hazards as prior for loop
-years <- c("2023", "2026", "2030","2040", "2050", "2062", "2075", "2087", "2100") 
+years <- c("2025", "2028", "2030","2040", "2050", "2062", "2075", "2087", "2100") 
 bvals <- c(1,0) #indicate whether building value is full (1) or none (0)
 
 for (year in years) {
@@ -218,16 +218,27 @@ for (year in years) {
         # create columns and fill with new tax revenue 
         #min property tax =75 to avoid negative taxes https://www.kauai.gov/Government/Departments-Agencies/Finance/Real-Property-Tax/Assessment/ExemptionTax-Relief-Information#section-9
         clean_retreat_calcs[[totaltax_column_title]] <- ifelse(clean_retreat_calcs[[totaltaxable_column_title]] < 75, 75, case_when( 
-          clean_retreat_calcs$TAXCLASS == "1:RESIDENTIAL" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00545,
-          clean_retreat_calcs$TAXCLASS == "2:VACATION RENTAL" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00985,
-          clean_retreat_calcs$TAXCLASS == "3:COMMERCIAL" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00810,
-          clean_retreat_calcs$TAXCLASS == "4:INDUSTRIAL" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00810,
-          clean_retreat_calcs$TAXCLASS == "5:AGRICULTURAL" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00675,
-          clean_retreat_calcs$TAXCLASS == "6:CONSERVATION" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00675,
-          clean_retreat_calcs$TAXCLASS == "7:HOTEL AND RESORT" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.01085,
-          clean_retreat_calcs$TAXCLASS == "8:HOMESTEAD" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00259,
-          clean_retreat_calcs$TAXCLASS == "9:Residential Investor" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00940,
-          clean_retreat_calcs$TAXCLASS == "10:Commercialized Home Use" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00505))
+          clean_retreat_calcs$TAXCLASS == "Owner-Occupied" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00259,
+          clean_retreat_calcs$TAXCLASS == "Non-Owner-Occupied Residential" & clean_retreat_calcs[[totaltaxable_column_title]] <= 1300000 ~ 
+            clean_retreat_calcs[[totaltaxable_column_title]] * 0.00545,
+          clean_retreat_calcs$TAXCLASS == "Non-Owner-Occupied Residential" & clean_retreat_calcs[[totaltaxable_column_title]] > 1300000 & clean_retreat_calcs[[totaltaxable_column_title]] <= 2000000 ~ 
+            1300000 * 0.00545 + (clean_retreat_calcs[[totaltaxable_column_title]] - 1300000) * 0.00605,
+          clean_retreat_calcs$TAXCLASS == "Non-Owner-Occupied Residential" & clean_retreat_calcs[[totaltaxable_column_title]] > 2000000 ~ 
+            1300000 * 0.00545 + 700000 * 0.00605 + (clean_retreat_calcs[[totaltaxable_column_title]] - 2000000) * 0.00940,
+          clean_retreat_calcs$TAXCLASS == "Vacation Rental" & clean_retreat_calcs[[totaltaxable_column_title]] <= 1000000 ~ 
+            clean_retreat_calcs[[totaltaxable_column_title]] * 0.01130,
+          clean_retreat_calcs$TAXCLASS == "Vacation Rental" & clean_retreat_calcs[[totaltaxable_column_title]] > 1000000 & clean_retreat_calcs[[totaltaxable_column_title]] <= 2500000 ~ 
+            1000000 * 0.01130 + (clean_retreat_calcs[[totaltaxable_column_title]] - 1000000) * 0.01175,
+          clean_retreat_calcs$TAXCLASS == "Vacation Rental" & clean_retreat_calcs[[totaltaxable_column_title]] > 2500000 ~ 
+            1000000 * 0.01130 + 1500000 * 0.01175 + (clean_retreat_calcs[[totaltaxable_column_title]] - 2500000) * 0.01220,
+          clean_retreat_calcs$TAXCLASS == "Hotel and Resort" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.01175,
+          clean_retreat_calcs$TAXCLASS == "Commercial" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00810,
+          clean_retreat_calcs$TAXCLASS == "Industrial" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00810,
+          clean_retreat_calcs$TAXCLASS == "Agricultural" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00675,
+          clean_retreat_calcs$TAXCLASS == "Conservation" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00675,
+          clean_retreat_calcs$TAXCLASS == "Owner-Occupied Mixed Use" ~ clean_retreat_calcs[[totaltaxable_column_title]] * 0.00505
+        ))
+        
       }
     }
   }

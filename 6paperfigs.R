@@ -28,7 +28,7 @@ road <- c('1','1','1')
 clean <- c(NA,NA,'hi') 
 
 #calculate cost per beach
-beachdf <- setNames(data.frame(matrix(ncol = 45, nrow = 0)), c('scenario','trigger','beach','district',
+beachdf <- setNames(data.frame(matrix(ncol = 44, nrow = 0)), c('scenario','trigger','beach','district',
                                                                 'land_dwelling_cost','infrastructure_cost',
                                                                 'tax_revenue_loss','private_property_value_loss','total_cost',
                                                                'median_value_noncpr','median_value_cpr','median_value_res','median_value_all',
@@ -36,15 +36,15 @@ beachdf <- setNames(data.frame(matrix(ncol = 45, nrow = 0)), c('scenario','trigg
                                                                'number_apartments','number_CPR','number_homes',
                                                                'length_highway','length_riprap','length_rdremove','length_bridge','length_briprap',
                                                                'length_maintain','length_totalinf','length_totalhwy','length_totalnonhwy',
-                                                               'residential','vacationrental','commercial','hotel','homestead',
-                                                               'resinvestor','commercialhome','agriculture','conservation',
+                                                               'residential','vacationrental','commercial','hotel','resNonOwnOc',
+                                                               'resMix','agriculture','conservation',
                                                                'res_cost','hotel_cost','ag_cost','comm_cost','cons_cost'))
 #calculate CE/PF per beach over time
 cepfbeach <- setNames(data.frame(matrix(ncol = 5, nrow = 0)), c('beach','year','trigger','area','area_res'))
 cepfparcel <- setNames(data.frame(matrix(ncol = 4, nrow = 0)), c('beach','year','trigger','numparcels'))
 cepfroad <- setNames(data.frame(matrix(ncol = 4, nrow = 0)), c('beach','year','trigger','lengthroad'))
 cepfhazard_types <- c('CE','PF')
-years <- c(2023,2026,2030,2040,2050,2062,2075,2087,2100)
+years <- c(2025,2028,2030,2040,2050,2062,2075,2087,2100)
 
 #calculate costs over time
 costtime <- setNames(data.frame(matrix(ncol = 6, nrow = 0)), c('scenario','beach','year','trigger','cost','cost_type'))
@@ -63,7 +63,7 @@ for(beach in beaches){
   cprs <- subset(clean_retreat_calcs, Number_CPRbldg> 1)
   cprs <- subset(cprs, NEAR_CE32 <= 6.1 )
   medcprval <- apply(cprs[c('APRTOTMKT')],2,median,na.rm=T)[[1]]
-  residential <- c("1:RESIDENTIAL", "2:VACATION RENTAL","8:HOMESTEAD","9:Residential Investor","10:Commercialized Home Use") 
+  residential <- c("Owner-Occupied", "Vacation Rental","Non-Owner-Occupied Residential","Owner-Occupied Mixed Use")  
   reshomes <- subset(clean_retreat_calcs,TAXCLASS %in% residential)
   reshomes <- subset(reshomes,NEAR_CE32 <= 6.1)
   medresval <- apply(reshomes[c('APRTOTMKT')],2,median,na.rm=T)[[1]]
@@ -77,15 +77,14 @@ for(beach in beaches){
   
   #taxclasses
   #sum number each tax class that must retreat by 2100 under CE
-  residential <- sum(clean_retreat_calcs$TAXCLASS == '1:RESIDENTIAL' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
-  vacationrental <- sum(clean_retreat_calcs$TAXCLASS == '2:VACATION RENTAL' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
-  commercial <- sum(clean_retreat_calcs$TAXCLASS == '3:COMMERCIAL' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
-  hotel <- sum(clean_retreat_calcs$TAXCLASS == '7:HOTEL AND RESORT' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
-  homestead <- sum(clean_retreat_calcs$TAXCLASS == '8:HOMESTEAD' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
-  resinvestor <- sum(clean_retreat_calcs$TAXCLASS == '9:Residential Investor' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
-  commercialhome <- sum(clean_retreat_calcs$TAXCLASS == '10:Commercialized Home Use' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
-  agriculture <- sum(clean_retreat_calcs$TAXCLASS == '5:AGRICULTURAL' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
-  conservation <- sum(clean_retreat_calcs$TAXCLASS == '6:CONSERVATION' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
+  residential <- sum(clean_retreat_calcs$TAXCLASS == "Owner-Occupied" & clean_retreat_calcs$NEAR_CE32 <= 6.1)
+  vacationrental <- sum(clean_retreat_calcs$TAXCLASS == "Vacation Rental" & clean_retreat_calcs$NEAR_CE32 <= 6.1)
+  commercial <- sum(clean_retreat_calcs$TAXCLASS == 'Commercial' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
+  hotel <- sum(clean_retreat_calcs$TAXCLASS ==  'Hotel and Resort' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
+  resNonOwnOc <- sum(clean_retreat_calcs$TAXCLASS == 'Non-Owner-Occupied Residential' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
+  resMix <- sum(clean_retreat_calcs$TAXCLASS == 'Owner-Occupied Mixed Use' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
+  agriculture <- sum(clean_retreat_calcs$TAXCLASS == 'Agricultural' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
+  conservation <- sum(clean_retreat_calcs$TAXCLASS == 'Conservation' & clean_retreat_calcs$NEAR_CE32 <= 6.1)
   
   for(i in 1:3){
     totalval_col <- paste0("Total_Value_",scen[i],sw[i],"t",trig[i],"_l",land[i],"_bv",build[i])
@@ -178,8 +177,8 @@ for(beach in beaches){
                                     length_bridge = Retreat_Analysis_Total[[b_reloclen_col]],length_briprap = Retreat_Analysis_Total[[b_retrofitlen_col]],
                                     length_maintain = Retreat_Analysis_Total[[maintainlen_col]],length_totalinf = Retreat_Analysis_Total[[total_affected_col]],
                                     length_totalhwy = Retreat_Analysis_Total[[hwy_affected_col]],length_totalnonhwy = Retreat_Analysis_Total[[nonhwy_affected_col]],
-                                    residential = residential,vacationrental = vacationrental,commercial = commercial,hotel = hotel,homestead = homestead,
-                                    resinvestor = resinvestor,commercialhome = commercialhome, agriculture = agriculture, conservation = conservation,
+                                    residential = residential,vacationrental = vacationrental,commercial = commercial,hotel = hotel,resNonOwnOc = resNonOwnOc,
+                                    resMix = resMix, agriculture = agriculture, conservation = conservation,
                                     res_cost = ifelse(is.na(clean[i]),
                                                       sum(Retreat_Analysis_Total[[totalval_res_col]],Retreat_Analysis_Total[[demo_res_col]],Retreat_Analysis_Total[[seawall_res_col]],
                                                           Retreat_Analysis_Total[[osds_res_col]],Retreat_Analysis_Total[[wastewater_res_col]],na.rm=T),0)+
@@ -258,12 +257,12 @@ for(beach in beaches){
         prevyear <- years[j-1]
         
         # 3% discount rate (for dwelling and land value, demolition, and clean-up NPV, tax revenue and road NPV)
-        cost_privproploss <- ifelse(year==2023,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
+        cost_privproploss <- ifelse(year==2025,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
                                                                             costtime$trigger == hazard_type & costtime$cost_type == "privproploss"])) + 
           (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[privproploss_col]][Retreat_Analysis$Years == year]))
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year])
         
-        cost_landdwelling <- ifelse(year==2023,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
+        cost_landdwelling <- ifelse(year==2025,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
                                                                             costtime$trigger == hazard_type & costtime$cost_type == "landdwelling"])) + 
           (ifelse(is.na(clean[i]),
                   sum(Retreat_Analysis[[totalval_col]][Retreat_Analysis$Years == year],Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year],
@@ -271,17 +270,17 @@ for(beach in beaches){
                       Retreat_Analysis[[osds_col]][Retreat_Analysis$Years == year],Retreat_Analysis[[wastewater_col]][Retreat_Analysis$Years == year],na.rm=T),0)
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year])
         
-        cost_infra <- ifelse(year==2023,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
+        cost_infra <- ifelse(year==2025,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
                                                                      costtime$trigger == hazard_type & costtime$cost_type == "infra"])) + 
           (as.numeric(Retreat_Analysis[[infra_col]][Retreat_Analysis$Years == year]) 
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year])
         
-        cost_taxrevloss <- ifelse(year==2023,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
+        cost_taxrevloss <- ifelse(year==2025,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
                                                                           costtime$trigger == hazard_type & costtime$cost_type == "taxrevloss"])) + 
           (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[taxrevloss_col]][Retreat_Analysis$Years == year])) 
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year])
         
-        cost_res <- ifelse(year==2023,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
+        cost_res <- ifelse(year==2025,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
                                                                    costtime$trigger == hazard_type & costtime$cost_type == "res_cost"])) + 
           (ifelse(is.na(clean[i]),
                   sum(Retreat_Analysis[[totalval_res_col]][Retreat_Analysis$Years == year],Retreat_Analysis[[demo_res_col]][Retreat_Analysis$Years == year],
@@ -293,7 +292,7 @@ for(beach in beaches){
           (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[privproploss_res_col]][Retreat_Analysis$Years == year]))
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year])
         
-        cost_hotel <- ifelse(year==2023,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
+        cost_hotel <- ifelse(year==2025,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
                                                                    costtime$trigger == hazard_type & costtime$cost_type == "hotel_cost"])) + 
           (ifelse(is.na(clean[i]),
                   sum(Retreat_Analysis[[totalval_hotel_col]][Retreat_Analysis$Years == year],Retreat_Analysis[[demo_hotel_col]][Retreat_Analysis$Years == year],
@@ -305,7 +304,7 @@ for(beach in beaches){
           (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[privproploss_hotel_col]][Retreat_Analysis$Years == year]))
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year])
         
-        cost_ag <- ifelse(year==2023,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
+        cost_ag <- ifelse(year==2025,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
                                                                    costtime$trigger == hazard_type & costtime$cost_type == "ag_cost"])) + 
           (ifelse(is.na(clean[i]),
                   sum(Retreat_Analysis[[totalval_ag_col]][Retreat_Analysis$Years == year],Retreat_Analysis[[demo_ag_col]][Retreat_Analysis$Years == year],
@@ -317,7 +316,7 @@ for(beach in beaches){
           (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[privproploss_ag_col]][Retreat_Analysis$Years == year]))
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year])
         
-        cost_comm <- ifelse(year==2023,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
+        cost_comm <- ifelse(year==2025,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
                                                                    costtime$trigger == hazard_type & costtime$cost_type == "comm_cost"])) + 
           (ifelse(is.na(clean[i]),
                   sum(Retreat_Analysis[[totalval_comm_col]][Retreat_Analysis$Years == year],Retreat_Analysis[[demo_comm_col]][Retreat_Analysis$Years == year],
@@ -329,7 +328,7 @@ for(beach in beaches){
           (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[privproploss_comm_col]][Retreat_Analysis$Years == year]))
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year])
         
-        cost_cons <- ifelse(year==2023,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
+        cost_cons <- ifelse(year==2025,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
                                                                    costtime$trigger == hazard_type & costtime$cost_type == "cons_cost"])) + 
           (ifelse(is.na(clean[i]),
                   sum(Retreat_Analysis[[totalval_cons_col]][Retreat_Analysis$Years == year],Retreat_Analysis[[demo_cons_col]][Retreat_Analysis$Years == year],
@@ -373,13 +372,13 @@ for(beach in beaches){
       year <- years[j]
       prevyear <- years[j-1]
       
-      totalarea <- ifelse(year==2023,0,as.numeric(cepfbeach$area[cepfbeach$beach == beach & cepfbeach$trigger == hazard_type & cepfbeach$year == prevyear])) +
+      totalarea <- ifelse(year==2025,0,as.numeric(cepfbeach$area[cepfbeach$beach == beach & cepfbeach$trigger == hazard_type & cepfbeach$year == prevyear])) +
         Retreat_Analysis[[areahazardall_col]][Retreat_Analysis$Years == year]
-      totalarea_res <- ifelse(year==2023,0,as.numeric(cepfbeach$area_res[cepfbeach$beach == beach & cepfbeach$trigger == hazard_type & cepfbeach$year == prevyear])) +
+      totalarea_res <- ifelse(year==2025,0,as.numeric(cepfbeach$area_res[cepfbeach$beach == beach & cepfbeach$trigger == hazard_type & cepfbeach$year == prevyear])) +
         Retreat_Analysis[[areahazard_col]][Retreat_Analysis$Years == year]
-      totalparcel <- ifelse(year==2023,0,as.numeric(cepfparcel$numparcels[cepfparcel$beach == beach & cepfparcel$trigger == hazard_type & cepfparcel$year == prevyear])) +
+      totalparcel <- ifelse(year==2025,0,as.numeric(cepfparcel$numparcels[cepfparcel$beach == beach & cepfparcel$trigger == hazard_type & cepfparcel$year == prevyear])) +
         Retreat_Analysis[[parcels_col]][Retreat_Analysis$Years == year]
-      totalroad <- ifelse(year==2023,0,as.numeric(cepfroad$lengthroad[cepfroad$beach == beach & cepfroad$trigger == hazard_type & cepfroad$year == prevyear])) +
+      totalroad <- ifelse(year==2025,0,as.numeric(cepfroad$lengthroad[cepfroad$beach == beach & cepfroad$trigger == hazard_type & cepfroad$year == prevyear])) +
         Retreat_Analysis[[total_affected_col]][Retreat_Analysis$Years == year]
       
       cepfbeach[nrow(cepfbeach) + 1,] = c(beach = beach,year = year,trigger = hazard_type, area = totalarea, area_res = totalarea_res)
@@ -506,7 +505,7 @@ figbeachA <- ggplot(beachesdftb_stack, aes(x=as.factor(beach),y=as.numeric(cost)
   geom_bar(stat='identity',position='stack')+
   scale_fill_manual(values=c('grey','grey43'),labels=c('Infrastructure cost','Building & land cost'),name= "Cost type")+
   xlab('Beach ID')+
-  ylab('Total cost \n ($2023, mil)')+
+  ylab('Total cost \n ($2025, mil)')+
   scale_y_continuous(label=scales::comma)+
   theme_classic() +
   theme(strip.placement = "outside")
@@ -612,9 +611,9 @@ bubbles <- ggplot(beachesdftb, aes(x=as.numeric(number_homes), y=as.numeric(leng
                                    color=as.numeric(median_value_res_mil), label=beachname)) +
   geom_point(alpha=0.5)  +
   scale_size(range=c(2, 20),labels=scales::label_comma()) +
-  labs(size = "Total cost \n ($2023, mil)")+
+  labs(size = "Total cost \n ($2025, mil)")+
   scale_color_viridis_c(option="plasma",labels = scales::label_comma()) +
-  guides(col = guide_colourbar(title = "Median home value \n($2023, mil)"))+
+  guides(col = guide_colourbar(title = "Median home value \n($2025, mil)"))+
   geom_text_repel(data=labels,aes(label=beachname), size= 4,color= 'black')+ 
   xlab('Number of homes affected')+
   ylab('Road affected (m)')+
@@ -841,7 +840,7 @@ fig_costtime <- ggplot(costtime_kauai_filtered,aes(x=year,y=costmil,group=cost_t
   theme_bw()+
   scale_color_manual(name="Cost type",labels=c("Total","Infrastructure","Residential","Hotel","Agriculture","Commercial","Conservation"),
                      values=c("red", "#FC4E07","#E7B800","purple","#75bf67", "#2E9FDF","brown"))+
-  scale_y_continuous(name="Cumulative total cost ($2023, millions)",labels =scales::comma) +
+  scale_y_continuous(name="Cumulative total cost ($2025, millions)",labels =scales::comma) +
   xlab("Year") +
   theme_classic()
 ggsave('fig_costtime.png', fig_costtime, bg='transparent',width=6,height=3,dpi=300,units='in')

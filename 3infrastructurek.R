@@ -36,7 +36,7 @@ emdom_hwy <- aveappraisedkauai*10 #this is cost per 1 meter length of road, assu
 
 #add infrastructure demo calcs to Retreat_Analysis df and breakdown in infra_costtime
 
-years <- c(2023, 2026, 2030, 2040, 2050, 2062, 2075, 2087, 2100)
+years <- c(2025, 2028, 2030, 2040, 2050, 2062, 2075, 2087, 2100)
 scenarios <- c('AO','TB','RE')
 
 infra_costtime <- data.frame(
@@ -48,15 +48,15 @@ for (year in years) {
       for(rdr in rdret){
 
       #highways, bridges, roads
-      bridge_reloc <- 337992 #per meter retreat    
-      bridge_riprap <- 71910 #per meter retrofit
-      highway_reloc <- 259489 #per meter realignment
-      water_reloc <- 5686 #per meter removal replacement water mains
-      highway_riprap <- 37069 #per meter hardening
-      road_remove <- 34 #per meter
+      bridge_reloc <- 358576  #per meter retreat    
+      bridge_riprap <- 76289  #per meter retrofit
+      highway_reloc <- 275292  #per meter realignment
+      water_reloc <- 6032  #per meter removal replacement water mains
+      highway_riprap <- 39327  #per meter hardening
+      road_remove <- 36  #per meter
       emdom_hwy #per meter length of road
-      riprap_remove <- 14764 #per meter 
-      maintain <- 11814 #per meter
+      riprap_remove <- 15663  #per meter 
+      maintain <- 12533  #per meter
       
       for(scenario in scenarios){
         subdf <- subset(infra_retreat, Scenario == scenario & Year == year & Trigger == trigger & rdret == rdr)
