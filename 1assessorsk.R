@@ -31,16 +31,16 @@ assessors <- as.data.frame(assessorsshp)
 #COTMK = TMK8
 #CPR_UNIT = CPR number. blank if no CPR
 #PARID = TMK12 (alternatively use PARTXT which is a text character version of this column)
-#APRTOTMKT = Appraised Total Market Value (use for total value)
-#ASMTTOT = Total Property Assessed Value (use for tax loss: (Assessed Value-Exemptions) x Tax Rate = Taxes)
-#TOTEXEMPT = Total Property Exemption
-#NETTAXABLE = Total Net Taxable Value (ASMTTOT - TOTEXEMPT)
-#APRLANDMKT = Appraised Land Market Value
-#APRBLDGMKT = Appraised Building Market Value
-#ASMTLAND = Land Assessed Value
-#ASMTBLDG = Building Assessed Value
+#APRTOTMKT = MKTTOT25 = Appraised Total Market Value (use for total value)
+#ASMTTOT = ASSDTOT25 = Total Property Assessed Value (use for tax loss: (Assessed Value-Exemptions) x Tax Rate = Taxes)
+#TOTEXEMPT = TOTEXEMPT_ = Total Property Exemption
+#NETTAXABLE = NETTAXAB_3 = Total Net Taxable Value (MKTTOT25 - TOTEXEMPT)
+#APRLANDMKT = MKTLAND25 = Appraised Land Market Value
+#APRBLDGMKT = MKTBLDG25 = Appraised Building Market Value
+#ASMTLAND = ASSDLAND25 = Land Assessed Value
+#ASMTBLDG = ASSDBLDG25 = Building Assessed Value
 #CLASS = use for identifying study site
-#TAXCLASS = use for calculating taxes
+#TAXCLASS = TAXCLASS25 = use for calculating taxes
 
 #join the dataframes. in ArcGIS, use the building-TMK-join method1 "centroid within" for non-CPR, method2 "intersect" for CPR units. 
 #if there are < 4 CPR for a COTMK, these are false CPR and should treat them as non-CPR
@@ -79,10 +79,10 @@ assessors <- assessors %>%
 assessors$WASTEWATER[is.na(assessors$OSDS_QTY_calc)] <- 1
 
 # Clean assessor's data, only keep important columns. no issue with duplicate TMK in kauai data
-clean_assessors <- assessors[, c("PARID","COTMK","CPR_UNIT","TAXCLASS",
+clean_assessors <- assessors[, c("PARID","COTMK","CPR_UNIT","TAXCLASS25",
                                  "Community","ahupuaa","moku","devplan_","LittrlCell","devplan_id","district","dp","ballottype","NewB",
-                                 "APRBLDGMKT","ASMTBLDG","APRLANDMKT","ASMTLAND",
-                                 "APRTOTMKT","ASMTTOT","TOTEXEMPT","NETTAXABLE",
+                                 "MKTBLDG25","ASSDBLDG25","MKTLAND25","ASSDLAND25",
+                                 "MKTTOT25","ASSDTOT25","TOTEXEMPT_","NETTAXAB_3",
                                  "TARGET_FID","GIS_SQFT","NEAR_VEG",
                                  "NEAR_CE05","NEAR_CE11","NEAR_CE20","NEAR_CE32",
                                  "NEAR_PF05","NEAR_PF11","NEAR_PF20","NEAR_PF32",
@@ -106,9 +106,16 @@ clean_assessors$SA_2023_XA <- 0
 # rename columns
 clean_assessors <- clean_assessors %>%
   rename(TMK = PARID,              #new name = old name
-         #NEAR_VEG = NEAR__VEG,
          BuildingID = TARGET_FID,
-         #CPR_PER_BLDG = Join_Count,
+         #adjust 2025 column names to match old names
+         APRTOTMKT = MKTTOT25,
+         ASMTTOT = ASSDTOT25,
+         TOTEXEMPT = TOTEXEMPT_,
+         NETTAXABLE = NETTAXAB_3,
+         APRLANDMKT = MKTLAND25,
+         APRBLDGMKT = MKTBLDG25,
+         ASMTLAND = ASSDLAND25,
+         TAXCLASS = TAXCLASS25,
          BLDG_SQFT = GIS_SQFT,
          SA_2030_CE = SA_CE05,
          SA_2050_CE = SA_CE11,
@@ -177,7 +184,8 @@ clean_assessors_bldg$CPR_UNIT[clean_assessors_bldg$TMK == 280170090000] <- 0
 # if there are >1 buildings on a single non-CPR'd parcel, keep only the row with the most makai building that is >300sqft
 # if there are >1 buildings on a single CPR'd TMK8 parcel, keep only the row with the most mauka building that is >300sqft
 clean_assessors <- clean_assessors %>%
-  group_by(if_else(!is.na(CPR_UNIT), COTMK, TMK)) %>%
+  mutate(grouping_var = ifelse(!is.na(CPR_UNIT), COTMK, TMK)) %>%
+  group_by(grouping_var) %>%
   filter(
     buildings == 1 | 
       (buildings > 1 & 
@@ -197,7 +205,10 @@ clean_assessors <- clean_assessors %>%
            }
          })
   ) %>%
+  select(-grouping_var) %>%  
   ungroup()
+
+
 #as an extra precaution, make sure there are no duplicates of TMK's that happen to have buildings equally far from veg
 clean_assessors = clean_assessors[!duplicated(clean_assessors$TMK),] 
 
@@ -207,40 +218,51 @@ clean_assessors_parcels <- clean_assessors_parcels[!duplicated(clean_assessors_p
 
 # Calculate current assessed tax revenue ($)
 
-# Define the tax rates per $1000:
-#residential <- 5.45 / 1000
-#vacation rental <- 9.85 / 1000
-#homestead <- 2.59 / 1000
-#residential investor <- 9.40 / 1000
-#commercialized home use <- 5.05 / 1000
-#hotel and resort <- 10.85 / 1000
-#commercial <- 8.10 / 1000
-#industrial <- 8.10 / 1000
-#agricultural <- 6.75 / 1000
-#conservation <- 6.75 / 1000         # doesn't appear in the dataset
+# Define the tax rates per $1000: (2025)
+#Owner-Occupied <- 2.59 / 1000
+#Non-Owner-Occupied Residential <= $1,300,000 <- 5.45 / 1000
+#Non-Owner-Occupied Residential > $1,300,000 & <= $2,000,000 <- 6.05 / 1000
+#Non-Owner-Occupied Residential > $2,000,000 <- 9.40 / 1000
+#Vacation Rental <= $1,000,000 <- 11.30 / 1000
+#Vacation Rental > $1,000,000 & <= $2,500,000 <- 11.75 / 1000
+#Vacation Rental > $2,500,000 <- 12.20 / 1000
+#Hotel and Resort <- 11.75 / 1000
+#Commercial <- 8.10 / 1000
+#Industrial <- 8.10 / 1000
+#Agricultural <- 6.75 / 1000
+#Conservation <- 6.75 / 1000 
+#Owner-Occupied Mixed-Use <- 5.05 / 1000
 
 #remove TMK's that are not residential, but keep non-res those that are in CPR'd building with res
 
 #fix this specific row - beach park that is incorrectly labeled as 'residential investor'
-clean_assessors$TAXCLASS[clean_assessors$TMK == 180080430000] <- '6:CONSERVATION'
+clean_assessors$TAXCLASS[clean_assessors$TMK == 180080430000] <- 'Conservation'
 
 #Filter TMK8 ending in 0000 general parcel. If residential, keep all CPR’s within
 #If CPR but no 0000 parcel, only keep those that are residential
-residential <- c("1:RESIDENTIAL", "2:VACATION RENTAL","8:HOMESTEAD","9:Residential Investor","10:Commercialized Home Use") 
-
+residential <- c("Owner-Occupied", "Vacation Rental","Non-Owner-Occupied Residential","Owner-Occupied Mixed Use")  
 
 # Calculate the current tax revenue based on land class
 clean_assessors$Current_Tax_Revenue <- case_when(
-  clean_assessors$TAXCLASS == "1:RESIDENTIAL" ~ clean_assessors$NETTAXABLE * 0.00545,
-  clean_assessors$TAXCLASS == "2:VACATION RENTAL" ~ clean_assessors$NETTAXABLE * 0.00985,
-  clean_assessors$TAXCLASS == "3:COMMERCIAL" ~ clean_assessors$NETTAXABLE * 0.00810,
-  clean_assessors$TAXCLASS == "4:INDUSTRIAL" ~ clean_assessors$NETTAXABLE * 0.00810,
-  clean_assessors$TAXCLASS == "5:AGRICULTURAL" ~ clean_assessors$NETTAXABLE * 0.00675,
-  clean_assessors$TAXCLASS == "6:CONSERVATION" ~ clean_assessors$NETTAXABLE * 0.00675,
-  clean_assessors$TAXCLASS == "7:HOTEL AND RESORT" ~ clean_assessors$NETTAXABLE * 0.01085,
-  clean_assessors$TAXCLASS == "8:HOMESTEAD" ~ clean_assessors$NETTAXABLE * 0.00259,
-  clean_assessors$TAXCLASS == "9:Residential Investor" ~ clean_assessors$NETTAXABLE * 0.00940,
-  clean_assessors$TAXCLASS == "10:Commercialized Home Use" ~ clean_assessors$NETTAXABLE * 0.00505)
+  clean_assessors$TAXCLASS == "Owner-Occupied" ~ clean_assessors$NETTAXABLE * 0.00259,
+  clean_assessors$TAXCLASS == "Non-Owner-Occupied Residential" & clean_assessors$NETTAXABLE <= 1300000 ~ clean_assessors$NETTAXABLE * 0.00545,
+  clean_assessors$TAXCLASS == "Non-Owner-Occupied Residential" & clean_assessors$NETTAXABLE > 1300000 & clean_assessors$NETTAXABLE <= 2000000 ~ 
+    1300000 * 0.00545 + (clean_assessors$NETTAXABLE - 1300000) * 0.00605,
+  clean_assessors$TAXCLASS == "Non-Owner-Occupied Residential" & clean_assessors$NETTAXABLE > 2000000 ~ 
+    1300000 * 0.00545 + 700000 * 0.00605 + (clean_assessors$NETTAXABLE - 2000000) * 0.00940,
+  clean_assessors$TAXCLASS == "Vacation Rental" & clean_assessors$NETTAXABLE <= 1000000 ~ clean_assessors$NETTAXABLE * 0.01130,
+  clean_assessors$TAXCLASS == "Vacation Rental" & clean_assessors$NETTAXABLE > 1000000 & clean_assessors$NETTAXABLE <= 2500000 ~ 
+    1000000 * 0.01130 + (clean_assessors$NETTAXABLE - 1000000) * 0.01175,
+  clean_assessors$TAXCLASS == "Vacation Rental" & clean_assessors$NETTAXABLE > 2500000 ~ 
+    1000000 * 0.01130 + 1000000 * 0.01175 + (clean_assessors$NETTAXABLE - 2000000) * 0.01220,
+  clean_assessors$TAXCLASS == "Hotel and Resort" ~ clean_assessors$NETTAXABLE * 0.01175,
+  clean_assessors$TAXCLASS == "Commercial" ~ clean_assessors$NETTAXABLE * 0.00810,
+  clean_assessors$TAXCLASS == "Industrial" ~ clean_assessors$NETTAXABLE * 0.00810,
+  clean_assessors$TAXCLASS == "Agricultural" ~ clean_assessors$NETTAXABLE * 0.00675,
+  clean_assessors$TAXCLASS == "Conservation" ~ clean_assessors$NETTAXABLE * 0.00675,
+  clean_assessors$TAXCLASS == "Owner-Occupied Mixed Use" ~ clean_assessors$NETTAXABLE * 0.00505
+)
+
 
 
 
