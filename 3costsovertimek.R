@@ -390,12 +390,14 @@ for (year in years) {
       apartments_col <- paste0("apartments_TB",seawall,"t",trigger)
       aptcount <- Retreat_Analysis[[apartments_col]][Retreat_Analysis$Years == year]
       housecount <- Retreat_Analysis[[bldg_res_col]][Retreat_Analysis$Years == year] - aptcount + 
-        n_distinct(clean_assessors_bldg_cons$BuildingID[AO_matching_rows_bldg_cons]) + 
-                     n_distinct(clean_assessors_bldg_ag$BuildingID[AO_matching_rows_bldg_ag])
+        n_distinct(clean_assessors_bldg_cons$BuildingID[TB_matching_rows_bldg_cons],na.rm=T) + 
+                     n_distinct(clean_assessors_bldg_ag$BuildingID[TB_matching_rows_bldg_ag],na.rm=T)
       apartmentdemo <- sum(clean_retreat_calcs_apt_res[["Number_CPRbldg"]][TB_matching_rows_apt_res], na.rm = TRUE)*demolition_apartment + 
         sum(clean_retreat_calcs_apt_res[["BLDG_SQFT"]][TB_matching_rows_apt_res], na.rm = TRUE)*demolition_aptfoundation
-      hotelcommdemo <- sum(clean_assessors_bldg_hotel[["BLDG_SQFT"]][TB_matching_rows_bldg_hotel], na.rm = TRUE)*demolition_hotelcomm + 
-        sum(clean_assessors_bldg_comm[["BLDG_SQFT"]][TB_matching_rows_bldg_comm], na.rm = TRUE)*demolition_hotelcomm
+      hotelcommdemo <- sum(clean_assessors_bldg_hotel[["BLDG_SQFT"]][TB_matching_rows_bldg_hotel][
+        !duplicated(clean_assessors_bldg_hotel[["BuildingID"]][TB_matching_rows_bldg_hotel])], na.rm = TRUE)*demolition_hotelcomm + 
+        sum(clean_assessors_bldg_comm[["BLDG_SQFT"]][TB_matching_rows_bldg_comm][
+          !duplicated(clean_assessors_bldg_comm[["BuildingID"]][TB_matching_rows_bldg_comm])], na.rm = TRUE)*demolition_hotelcomm
       Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
         apartmentdemo + housecount*demolition_house + hotelcommdemo
       
@@ -601,7 +603,8 @@ for (year in years) {
         
         demo_col <- paste0("demolition_hotel_TB",seawall,"t",trigger)
         Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
-          sum(clean_assessors_bldg_hotel[["BLDG_SQFT"]][TB_matching_rows_bldg_hotel], na.rm = TRUE)*demolition_hotelcomm
+          sum(clean_assessors_bldg_hotel[["BLDG_SQFT"]][TB_matching_rows_bldg_hotel][
+          !duplicated(clean_assessors_bldg_hotel[["BuildingID"]][TB_matching_rows_bldg_hotel])], na.rm = TRUE)*demolition_hotelcomm
         
         demo_col <- paste0("demolition_ag_TB",seawall,"t",trigger)
         Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
@@ -609,7 +612,8 @@ for (year in years) {
         
         demo_col <- paste0("demolition_comm_TB",seawall,"t",trigger)
         Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 
-          sum(clean_assessors_bldg_comm[["BLDG_SQFT"]][TB_matching_rows_bldg_comm], na.rm = TRUE)*demolition_hotelcomm
+          sum(clean_assessors_bldg_comm[["BLDG_SQFT"]][TB_matching_rows_bldg_comm][
+            !duplicated(clean_assessors_bldg_comm[["BuildingID"]][TB_matching_rows_bldg_comm])], na.rm = TRUE)*demolition_hotelcomm
         
         demo_col <- paste0("demolition_cons_TB",seawall,"t",trigger)
         Retreat_Analysis[[demo_col]][Retreat_Analysis$Years == year] <- 

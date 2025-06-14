@@ -17,7 +17,7 @@ allparcels <- clean_assessors_parcels
 
 
 
-#set up scenarios
+  #set up scenarios
 beaches <- c(1:40)
 scen <- c('AO','TB','RE')
 sw <- c('_','_','_')
