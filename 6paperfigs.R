@@ -571,9 +571,9 @@ figbeachD <- ggplot(beachesdftb_infrastack, aes(x=as.factor(beach),y=as.numeric(
 
 figbeach <- cowplot::plot_grid(figbeachA,figbeachB,figbeachC,figbeachD,
                                labels=c("A","B","C","D"), 
-                               ncol=1,nrow=5,hjust=0.1,
+                               ncol=1,nrow=4,hjust=0.1,
                                align="v",axis="lr",greedy=T)
-ggsave('fig2_bar.png', figbeach,width=25,height=25,dpi=300,units='cm')
+ggsave('fig2_bar.png', figbeach,width=25,height=20,dpi=300,units='cm')
 
 
 
@@ -591,6 +591,7 @@ spotlight <- c('Kekaha','ʻAnini','Hāʻena','Waipouli','Poʻipū','Moloaʻa','H
 beachesdftb$number_homes <- as.numeric(beachesdftb$number_homes)
 beachesdftb$length_totalinf <- as.numeric(beachesdftb$length_totalinf)
 beachesdftb$total_cost_mil <- as.numeric(beachesdftb$total_cost_mil)
+beachesdftb$median_value_res_mil <- as.numeric(beachesdftb$median_value_res)/1000000
 labels <- beachesdftb %>%
   filter(beachname %in% spotlight | total_cost_mil > 100)
 

@@ -115,6 +115,7 @@ clean_assessors <- clean_assessors %>%
          APRLANDMKT = MKTLAND25,
          APRBLDGMKT = MKTBLDG25,
          ASMTLAND = ASSDLAND25,
+         ASMTBLDG = ASSDBLDG25,
          TAXCLASS = TAXCLASS25,
          BLDG_SQFT = GIS_SQFT,
          SA_2030_CE = SA_CE05,
