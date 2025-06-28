@@ -18,7 +18,8 @@ setwd(workdir)
 options(scipen = 999)
 
 
-
+#set trigger distance
+dist <- 6.096 #adjust this in sensitivity analysis: 6.096 3.048 1.524
 
 ### calculate retreat under each retreat type (RE,TB,AO) under each trigger (XA, WF, PF, CE)
 
@@ -39,15 +40,15 @@ for(trigger in triggers){
   clean_retreat_calcs[[col_AO_trigger]] <- ifelse(clean_retreat_calcs[[col_n32_trigger]] == 0, 2025,NA)
   
   #calc year that a parcel is threshold-based under the trigger
-  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n32_trigger]] <= 6.1 & clean_retreat_calcs[[col_n32_trigger]] > 0,2100,NA)
-  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n32_trigger]] == 0 & clean_retreat_calcs[[col_n20_trigger]] >= 6.1,2087,clean_retreat_calcs[[col_TB_trigger]])
-  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n20_trigger]] <= 6.1 & clean_retreat_calcs[[col_n20_trigger]] > 0,2075,clean_retreat_calcs[[col_TB_trigger]])
-  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n20_trigger]] == 0 & clean_retreat_calcs[[col_n11_trigger]] >= 6.1,2062,clean_retreat_calcs[[col_TB_trigger]])
-  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n11_trigger]] <= 6.1 & clean_retreat_calcs[[col_n11_trigger]] > 0,2050,clean_retreat_calcs[[col_TB_trigger]])
-  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n11_trigger]] == 0 & clean_retreat_calcs[[col_n05_trigger]] >= 6.1,2040,clean_retreat_calcs[[col_TB_trigger]])
-  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n05_trigger]] <= 6.1 & clean_retreat_calcs[[col_n05_trigger]] > 0,2030,clean_retreat_calcs[[col_TB_trigger]])
-  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n05_trigger]] == 0 & clean_retreat_calcs$NEAR_VEG >= 6.1,2028,clean_retreat_calcs[[col_TB_trigger]])
-  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs$NEAR_VEG <= 6.1 & clean_retreat_calcs$NEAR_VEG >= 0 & clean_retreat_calcs[[col_n05_trigger]] == 0,
+  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n32_trigger]] <= dist & clean_retreat_calcs[[col_n32_trigger]] > 0,2100,NA)
+  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n32_trigger]] == 0 & clean_retreat_calcs[[col_n20_trigger]] >= dist,2087,clean_retreat_calcs[[col_TB_trigger]])
+  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n20_trigger]] <= dist & clean_retreat_calcs[[col_n20_trigger]] > 0,2075,clean_retreat_calcs[[col_TB_trigger]])
+  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n20_trigger]] == 0 & clean_retreat_calcs[[col_n11_trigger]] >= dist,2062,clean_retreat_calcs[[col_TB_trigger]])
+  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n11_trigger]] <= dist & clean_retreat_calcs[[col_n11_trigger]] > 0,2050,clean_retreat_calcs[[col_TB_trigger]])
+  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n11_trigger]] == 0 & clean_retreat_calcs[[col_n05_trigger]] >= dist,2040,clean_retreat_calcs[[col_TB_trigger]])
+  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n05_trigger]] <= dist & clean_retreat_calcs[[col_n05_trigger]] > 0,2030,clean_retreat_calcs[[col_TB_trigger]])
+  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs[[col_n05_trigger]] == 0 & clean_retreat_calcs$NEAR_VEG >= dist,2028,clean_retreat_calcs[[col_TB_trigger]])
+  clean_retreat_calcs[[col_TB_trigger]] <- ifelse(clean_retreat_calcs$NEAR_VEG <= dist & clean_retreat_calcs$NEAR_VEG >= 0 & clean_retreat_calcs[[col_n05_trigger]] == 0,
                                                   2025,clean_retreat_calcs[[col_TB_trigger]])
   
   #calc year that a parcel is reactive under the trigger

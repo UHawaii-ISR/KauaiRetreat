@@ -96,7 +96,7 @@ present_year <- 2025  # Set the present year for the discount rate calculation
 #   1/((1+0.03)**(year-2025))
 # }
 
-discount_rate <- 1.03 #adjust for sensitivity analysis
+discount_rate <- 1.03 #adjust for sensitivity analysis 
 
 # 3% discount rate (for tax revenue and road NPV)
 discount_rates_30 <- discount_rate ^ (years - present_year)

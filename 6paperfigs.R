@@ -10,6 +10,7 @@ source(paste0(codedir,'/config_dir.R')) #personal computer config
 
 source(paste0(codedir,"/1assessorsk.R"))
 source(paste0(codedir,"/1infrastructurek.R")) #takes 15 min to run this code
+#source(paste0(codedir,"/1infrastructurek_sensitivity.R")) #sensitivity analysis: run this instead of line above
 allisland <- clean_retreat_calcs
 allinfra <- infra_retreat
 allbldg <- clean_assessors_bldg
@@ -424,12 +425,12 @@ beachesdf$costperlength <- beachesdf$total_cost / beachesdf$Len_m
 #TB scenario only
 beachesdftb <- beachesdf[beachesdf$scenario == 'TB',]
 
-write.csv(beachesdftb,'beachesdftb_alltaxclass.csv')
-write.csv(beachesdf,'beachesdf_alltaxclass.csv')
-write.csv(cepfbeach,'cepfbeach_alltaxclass.csv')
-write.csv(cepfparcel,'cepfparcel_alltaxclass.csv')
-write.csv(cepfroad,'cepfroad_alltaxclass.csv')
-write.csv(costtime,'costtime_alltaxclass.csv')
+write.csv(beachesdftb,'beachesdftb.csv')
+write.csv(beachesdf,'beachesdf.csv')
+write.csv(cepfbeach,'cepfbeach.csv')
+write.csv(cepfparcel,'cepfparcel.csv')
+write.csv(cepfroad,'cepfroad.csv')
+write.csv(costtime,'costtime.csv')
 
 #beachesdftb <- read.csv('beachesdftb_alltaxclass.csv')
 #beachesdf<-read.csv('beachesdf.csv')
@@ -623,6 +624,8 @@ beachesdftb$number_homes <- as.numeric(beachesdftb$number_homes)
 beachesdftb$length_totalinf <- as.numeric(beachesdftb$length_totalinf)
 beachesdftb$total_cost_mil <- as.numeric(beachesdftb$total_cost_mil)
 beachesdftb$median_value_res_mil <- as.numeric(beachesdftb$median_value_res)/1000000
+beachesdftb$mean_value_all <- as.numeric(beachesdftb$mean_value_all)
+beachesdftb$mean_value_all[is.nan(beachesdftb$mean_value_all)] <- NA
 labels <- beachesdftb %>%
   filter(beachname %in% spotlight) #| total_cost_mil > 100)
 
@@ -913,6 +916,21 @@ figbarC <- ggplot(beachesdftb, aes(x=as.factor(beach), y=as.numeric(total_cost_m
   theme_classic() +
   theme(strip.placement = "outside")
 
+# C: total cost with stacked res & inf
+beachesdftb$buildingland_cost_mil <- as.numeric(beachesdftb$land_dwelling_cost)/1000000+as.numeric(beachesdftb$tax_revenue_loss)/1000000+
+                                         as.numeric(beachesdftb$private_property_value_loss)/1000000
+beachesdftb$infrastructure_cost_mil <- beachesdftb$infrastructure_cost/1000000
+beachesdftb_stack <- beachesdftb %>%
+  pivot_longer(cols = c(buildingland_cost_mil, infrastructure_cost_mil), names_to = "cost_type", values_to = "cost")
+
+figbarC <- ggplot(beachesdftb_stack, aes(x=as.factor(beach),y=as.numeric(cost),fill=cost_type)) + 
+  geom_bar(stat='identity',position='stack')+
+  scale_fill_manual(values=c('grey','grey43'),labels=c('Building & land cost','Infrastructure cost'),name= "Cost type")+
+  xlab('Beach ID')+
+  ylab('Total cost \n ($2025, mil)')+
+  scale_y_continuous(label=scales::comma)+
+  theme_classic() +
+  theme(strip.placement = "outside")
 
 
 # D: cost per beach length
@@ -925,11 +943,11 @@ figbarD <- ggplot(beachesdftb, aes(x=as.factor(beach), y=as.numeric(costperlengt
   theme(strip.placement = "outside")
 
 
-#E: median value
-figbarE <- ggplot(beachesdftb, aes(x=as.factor(beach), y=as.numeric(median_value_all)/1000000)) + 
+#E: mean value
+figbarE <- ggplot(beachesdftb, aes(x=as.factor(beach), y=as.numeric(mean_value_all)/1000000)) + 
   geom_bar(stat='identity', fill='grey43')+
   xlab('Beach ID')+
-  ylab('Median parcel value \n ($2025, mil)')+
+  ylab('Mean parcel value \n ($2025, mil)')+
   scale_y_continuous(label=scales::comma)+
   theme_classic() +
   theme(strip.placement = "outside")
