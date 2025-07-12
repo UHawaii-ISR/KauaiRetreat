@@ -29,14 +29,14 @@ road <- c('1','1','1')
 clean <- c(NA,NA,'hi') 
 
 #calculate cost per beach
-beachdf <- setNames(data.frame(matrix(ncol = 50, nrow = 0)), c('scenario','trigger','beach','district',
+beachdf <- setNames(data.frame(matrix(ncol = 49, nrow = 0)), c('scenario','trigger','beach','district',
                                                                 'land_dwelling_cost','infrastructure_cost',
                                                                 'tax_revenue_loss','private_property_value_loss','total_cost',
                                                                'median_value_noncpr','median_value_cpr','median_value_res','median_value_all','mean_value_all',
                                                                'number_buildings','n_bldg_res','n_bldg_hotel','n_bldg_ag','n_bldg_comm','n_bldg_cons',
                                                                'number_apartments','number_CPR','number_homes',
                                                                'length_highway','length_riprap','length_rdremove','length_bridge','length_briprap',
-                                                               'length_maintain','length_totalinf','length_totalhwy','length_totalnonhwy',
+                                                               'length_totalinf','length_totalhwy','length_totalnonhwy', #'length_maintain',
                                                                'residential','vacationrental','commercial','hotel','resNonOwnOc',
                                                                'resMix','agriculture','conservation',
                                                                'res_cost','hotel_cost','ag_cost','comm_cost','cons_cost',
@@ -116,7 +116,7 @@ for(beach in beaches){
     rdremovelen_col <- paste0("rdremovelen",scen[i],sw[i],trig[i],"_rdr",road[i]) #total highway riprap length
     b_reloclen_col <- paste0("bridgerelocatelen",scen[i],sw[i],trig[i],"_rdr",road[i])
     b_retrofitlen_col <- paste0("bridgeretrofitlen",scen[i],sw[i],trig[i],"_rdr",road[i])
-    maintainlen_col <- paste0("maintainlen",scen[i],sw[i],trig[i],"_rdr",road[i])
+    #maintainlen_col <- paste0("maintainlen",scen[i],sw[i],trig[i],"_rdr",road[i])
     total_affected_col <- paste0("affectedlen",scen[i],sw[i],trig[i],"_rdr",road[i])
     hwy_affected_col <- paste0("hwy_affectedlen",scen[i],sw[i],trig[i],"_rdr",road[i])
     nonhwy_affected_col <- paste0("nonhwy_affectedlen",scen[i],sw[i],trig[i],"_rdr",road[i])
@@ -181,7 +181,7 @@ for(beach in beaches){
                                     length_highway = Retreat_Analysis_Total[[hwylength_col]],
                                     length_riprap = Retreat_Analysis_Total[[hwyripraplen_col]],length_rdremove = Retreat_Analysis_Total[[rdremovelen_col]],
                                     length_bridge = Retreat_Analysis_Total[[b_reloclen_col]],length_briprap = Retreat_Analysis_Total[[b_retrofitlen_col]],
-                                    length_maintain = Retreat_Analysis_Total[[maintainlen_col]],length_totalinf = Retreat_Analysis_Total[[total_affected_col]],
+                                    length_totalinf = Retreat_Analysis_Total[[total_affected_col]], #length_maintain = Retreat_Analysis_Total[[maintainlen_col]],
                                     length_totalhwy = Retreat_Analysis_Total[[hwy_affected_col]],length_totalnonhwy = Retreat_Analysis_Total[[nonhwy_affected_col]],
                                     residential = residential,vacationrental = vacationrental,commercial = commercial,hotel = hotel,resNonOwnOc = resNonOwnOc,
                                     resMix = resMix, agriculture = agriculture, conservation = conservation,
@@ -267,6 +267,143 @@ for(beach in beaches){
         year <- years[j]
         prevyear <- years[j-1]
         
+        #tax rev loss special calcs
+        
+        taxclass_datasets <- list(
+          "all" = clean_retreat_calcs,
+          "res" = clean_retreat_calcs_home,
+          "hotel" = clean_retreat_calcs_hotel,
+          "comm" = clean_retreat_calcs_comm,
+          "ag" = clean_retreat_calcs_ag,
+          "cons" = clean_retreat_calcs_cons
+        )
+        
+        # Calculate tax revenue loss for each tax class
+        taxrevloss_results <- list()
+        
+        for(taxclass_name in names(taxclass_datasets)) {
+          current_data <- taxclass_datasets[[taxclass_name]]
+          
+          if(scen[i] == "AO") {
+            # AO has no tax revenue loss
+            taxrevloss_results[[taxclass_name]] <- 0
+            
+          } else {
+            # Get retreat year column
+            yearRetreat_col <- paste0("year_", scen[i], sw[i], "t", trig[i])
+            
+            if(yearRetreat_col %in% names(current_data)) {
+              
+              # Find properties in this dataset that retreat in this specific year
+              properties_retreating_this_year <- current_data[[yearRetreat_col]] == year
+              
+              if(any(properties_retreating_this_year, na.rm = TRUE)) {
+                
+                # Get tax revenue columns (same names as Method 1 uses)
+                totaltax_col_2025 <- paste0("Total_TaxRev_2025_t", trig[i], "_l", land[i], "_bv", build[i])
+                totaltax_col_2028 <- paste0("Total_TaxRev_2028_t", trig[i], "_l", land[i], "_bv", build[i])
+                totaltax_col_2030 <- paste0("Total_TaxRev_2030_t", trig[i], "_l", land[i], "_bv", build[i])
+                totaltax_col_2040 <- paste0("Total_TaxRev_2040_t", trig[i], "_l", land[i], "_bv", build[i])
+                totaltax_col_2050 <- paste0("Total_TaxRev_2050_t", trig[i], "_l", land[i], "_bv", build[i])
+                totaltax_col_2062 <- paste0("Total_TaxRev_2062_t", trig[i], "_l", land[i], "_bv", build[i])
+                totaltax_col_2075 <- paste0("Total_TaxRev_2075_t", trig[i], "_l", land[i], "_bv", build[i])
+                totaltax_col_2087 <- paste0("Total_TaxRev_2087_t", trig[i], "_l", land[i], "_bv", build[i])
+                totaltax_col_2100 <- paste0("Total_TaxRev_2100_t", trig[i], "_l", land[i], "_bv", build[i])
+                
+                # Calculate tax loss for properties retreating this year using Method 1's exact formula
+                taxrevloss_this_year <- 0
+                
+                for(row_idx in which(properties_retreating_this_year)) {
+                  
+                  # Apply Method 1's exact case_when logic
+                  property_tax_loss <- case_when(
+                    year == 2025 ~
+                      (ifelse(totaltax_col_2025 %in% names(current_data), 
+                              current_data[[totaltax_col_2025]][row_idx], 0) * (2030 - 2025) / discount_rate_30(2027)) +
+                      (ifelse(totaltax_col_2030 %in% names(current_data), 
+                              current_data[[totaltax_col_2030]][row_idx], 0) * (2050 - 2030) / discount_rate_30(2040)) +
+                      (ifelse(totaltax_col_2050 %in% names(current_data), 
+                              current_data[[totaltax_col_2050]][row_idx], 0) * (2075 - 2050) / discount_rate_30(2062)) +
+                      (ifelse(totaltax_col_2075 %in% names(current_data), 
+                              current_data[[totaltax_col_2075]][row_idx], 0) * (2100 - 2075) / discount_rate_30(2087)) +
+                      (ifelse(totaltax_col_2100 %in% names(current_data), 
+                              current_data[[totaltax_col_2100]][row_idx], 0) / discount_rate_30(2100)),
+                    year == 2028 ~ 
+                      (ifelse(totaltax_col_2028 %in% names(current_data), 
+                              current_data[[totaltax_col_2028]][row_idx], 0) * (2030 - 2028) / discount_rate_30(2029)) +
+                      (ifelse(totaltax_col_2030 %in% names(current_data), 
+                              current_data[[totaltax_col_2030]][row_idx], 0) * (2050 - 2030) / discount_rate_30(2040)) +
+                      (ifelse(totaltax_col_2050 %in% names(current_data), 
+                              current_data[[totaltax_col_2050]][row_idx], 0) * (2075 - 2050) / discount_rate_30(2062)) +
+                      (ifelse(totaltax_col_2075 %in% names(current_data), 
+                              current_data[[totaltax_col_2075]][row_idx], 0) * (2100 - 2075) / discount_rate_30(2087)) +
+                      (ifelse(totaltax_col_2100 %in% names(current_data), 
+                              current_data[[totaltax_col_2100]][row_idx], 0) / discount_rate_30(2100)),
+                    year == 2030 ~ 
+                      (ifelse(totaltax_col_2030 %in% names(current_data), 
+                              current_data[[totaltax_col_2030]][row_idx], 0) * (2050 - 2030) / discount_rate_30(2040)) +
+                      (ifelse(totaltax_col_2050 %in% names(current_data), 
+                              current_data[[totaltax_col_2050]][row_idx], 0) * (2075 - 2050) / discount_rate_30(2062)) +
+                      (ifelse(totaltax_col_2075 %in% names(current_data), 
+                              current_data[[totaltax_col_2075]][row_idx], 0) * (2100 - 2075) / discount_rate_30(2087)) +
+                      (ifelse(totaltax_col_2100 %in% names(current_data), 
+                              current_data[[totaltax_col_2100]][row_idx], 0) / discount_rate_30(2100)),
+                    year == 2040 ~ 
+                      (ifelse(totaltax_col_2040 %in% names(current_data), 
+                              current_data[[totaltax_col_2040]][row_idx], 0) * (2050 - 2040) / discount_rate_30(2045)) +
+                      (ifelse(totaltax_col_2050 %in% names(current_data), 
+                              current_data[[totaltax_col_2050]][row_idx], 0) * (2075 - 2050) / discount_rate_30(2062)) +
+                      (ifelse(totaltax_col_2075 %in% names(current_data), 
+                              current_data[[totaltax_col_2075]][row_idx], 0) * (2100 - 2075) / discount_rate_30(2087)) +
+                      (ifelse(totaltax_col_2100 %in% names(current_data), 
+                              current_data[[totaltax_col_2100]][row_idx], 0) / discount_rate_30(2100)),
+                    year == 2050 ~ 
+                      (ifelse(totaltax_col_2050 %in% names(current_data), 
+                              current_data[[totaltax_col_2050]][row_idx], 0) * (2075 - 2050) / discount_rate_30(2062)) +
+                      (ifelse(totaltax_col_2075 %in% names(current_data), 
+                              current_data[[totaltax_col_2075]][row_idx], 0) * (2100 - 2075) / discount_rate_30(2087)) +
+                      (ifelse(totaltax_col_2100 %in% names(current_data), 
+                              current_data[[totaltax_col_2100]][row_idx], 0) / discount_rate_30(2100)),
+                    year == 2062 ~ 
+                      (ifelse(totaltax_col_2062 %in% names(current_data), 
+                              current_data[[totaltax_col_2062]][row_idx], 0) * (2075 - 2062) / discount_rate_30(2068)) +
+                      (ifelse(totaltax_col_2075 %in% names(current_data), 
+                              current_data[[totaltax_col_2075]][row_idx], 0) * (2100 - 2075) / discount_rate_30(2087)) +
+                      (ifelse(totaltax_col_2100 %in% names(current_data), 
+                              current_data[[totaltax_col_2100]][row_idx], 0) / discount_rate_30(2100)),
+                    year == 2075 ~ 
+                      (ifelse(totaltax_col_2075 %in% names(current_data), 
+                              current_data[[totaltax_col_2075]][row_idx], 0) * (2100 - 2075) / discount_rate_30(2087)) +
+                      (ifelse(totaltax_col_2100 %in% names(current_data), 
+                              current_data[[totaltax_col_2100]][row_idx], 0) / discount_rate_30(2100)),
+                    year == 2087 ~ 
+                      (ifelse(totaltax_col_2087 %in% names(current_data), 
+                              current_data[[totaltax_col_2087]][row_idx], 0) * (2100 - 2087) / discount_rate_30(2093)) +
+                      (ifelse(totaltax_col_2100 %in% names(current_data), 
+                              current_data[[totaltax_col_2100]][row_idx], 0) / discount_rate_30(2100)),
+                    year == 2100 ~ 
+                      (ifelse(totaltax_col_2100 %in% names(current_data), 
+                              current_data[[totaltax_col_2100]][row_idx], 0) / discount_rate_30(2100)),
+                    TRUE ~ 0
+                  )
+                  taxrevloss_this_year <- taxrevloss_this_year + property_tax_loss
+                }
+                taxrevloss_results[[taxclass_name]] <- taxrevloss_this_year
+              } else {
+                # No properties retreat this year
+                taxrevloss_results[[taxclass_name]] <- 0
+              }
+            } 
+          }
+        }
+        taxrevloss_annual <- taxrevloss_results[["all"]]
+        taxrevloss_res_annual <- taxrevloss_results[["res"]]
+        taxrevloss_hotel_annual <- taxrevloss_results[["hotel"]]
+        taxrevloss_ag_annual <- taxrevloss_results[["ag"]]
+        taxrevloss_comm_annual <- taxrevloss_results[["comm"]]
+        taxrevloss_cons_annual <- taxrevloss_results[["cons"]]
+        
+        
         # 3% discount rate (for dwelling and land value, demolition, and clean-up NPV, tax revenue and road NPV)
         cost_privproploss <- ifelse(year==2025,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
                                                                             costtime$trigger == hazard_type & costtime$cost_type == "privproploss"])) + 
@@ -287,9 +424,7 @@ for(beach in beaches){
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year])
         
         cost_taxrevloss <- ifelse(year==2025,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
-                                                                          costtime$trigger == hazard_type & costtime$cost_type == "taxrevloss"])) + 
-          (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[taxrevloss_col]][Retreat_Analysis$Years == year])) 
-           / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year])
+                                                                          costtime$trigger == hazard_type & costtime$cost_type == "taxrevloss"])) + taxrevloss_annual
         
         cost_res <- ifelse(year==2025,0,as.numeric(costtime$cost[costtime$scenario == scen[i] & costtime$beach == beach & costtime$year == prevyear & 
                                                                    costtime$trigger == hazard_type & costtime$cost_type == "res_cost"])) + 
@@ -298,8 +433,7 @@ for(beach in beaches){
                       Retreat_Analysis[[seawall_res_col]][Retreat_Analysis$Years == year],
                       Retreat_Analysis[[osds_res_col]][Retreat_Analysis$Years == year],Retreat_Analysis[[wastewater_res_col]][Retreat_Analysis$Years == year],na.rm=T),0)
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]) +
-          (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[taxrevloss_res_col]][Retreat_Analysis$Years == year])) 
-           / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]) +
+          taxrevloss_res_annual +
           (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[privproploss_res_col]][Retreat_Analysis$Years == year]))
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year])
         
@@ -310,8 +444,7 @@ for(beach in beaches){
                       Retreat_Analysis[[seawall_hotel_col]][Retreat_Analysis$Years == year],
                       Retreat_Analysis[[osds_hotel_col]][Retreat_Analysis$Years == year],Retreat_Analysis[[wastewater_hotel_col]][Retreat_Analysis$Years == year],na.rm=T),0)
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]) +
-          (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[taxrevloss_hotel_col]][Retreat_Analysis$Years == year])) 
-           / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]) +
+          taxrevloss_hotel_annual  +
           (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[privproploss_hotel_col]][Retreat_Analysis$Years == year]))
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year])
         
@@ -322,8 +455,7 @@ for(beach in beaches){
                       Retreat_Analysis[[seawall_ag_col]][Retreat_Analysis$Years == year],
                       Retreat_Analysis[[osds_ag_col]][Retreat_Analysis$Years == year],Retreat_Analysis[[wastewater_ag_col]][Retreat_Analysis$Years == year],na.rm=T),0)
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]) +
-          (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[taxrevloss_ag_col]][Retreat_Analysis$Years == year])) 
-           / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]) +
+          taxrevloss_ag_annual +
           (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[privproploss_ag_col]][Retreat_Analysis$Years == year]))
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year])
         
@@ -334,8 +466,7 @@ for(beach in beaches){
                       Retreat_Analysis[[seawall_comm_col]][Retreat_Analysis$Years == year],
                       Retreat_Analysis[[osds_comm_col]][Retreat_Analysis$Years == year],Retreat_Analysis[[wastewater_comm_col]][Retreat_Analysis$Years == year],na.rm=T),0)
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]) +
-          (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[taxrevloss_comm_col]][Retreat_Analysis$Years == year])) 
-           / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]) +
+          taxrevloss_comm_annual  +
           (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[privproploss_comm_col]][Retreat_Analysis$Years == year]))
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year])
         
@@ -346,8 +477,7 @@ for(beach in beaches){
                       Retreat_Analysis[[seawall_cons_col]][Retreat_Analysis$Years == year],
                       Retreat_Analysis[[osds_cons_col]][Retreat_Analysis$Years == year],Retreat_Analysis[[wastewater_cons_col]][Retreat_Analysis$Years == year],na.rm=T),0)
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]) +
-          (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[taxrevloss_cons_col]][Retreat_Analysis$Years == year])) 
-           / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year]) +
+          taxrevloss_cons_annual  +
           (ifelse(scen[i] == 'AO',0,as.numeric(Retreat_Analysis[[privproploss_cons_col]][Retreat_Analysis$Years == year]))
            / DiscountRate30$Discount_Rates_30[DiscountRate30$year == year])
         

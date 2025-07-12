@@ -350,7 +350,7 @@ for (year in years) {
       demolition_apartment <- 8640  # residential apartment per unit demolition cost (per unit assuming unit is 800sqft and 9ft tall, an apartment (CPR) is 7200 cubic ft.)
       demolition_aptfoundation <- 19 #residential apartment building foundation demolition cost (per sqft foundation)
       demolition_hotelcomm <- 79  # hotel or commercial building cost (per sqft)
-      demolition_seawall <- 13922 # seawall demolition $4000/ft ($13123/m) for inaccessible seawall e.g. residential area)
+      demolition_seawall <- 15091 # seawall demolition $4000/ft ($13123/m) for inaccessible seawall e.g. residential area)
       
       #cost of seawall demolition for AO
       seawall_col <- paste0("seawall_AO",seawall,trigger)
@@ -443,8 +443,8 @@ for (year in years) {
       ### OSDS & WASTEWATER REMOVAL
       
       #for non-osds homes, assume they need wastewater pipe removal
-      wastewater_remove <- 6032 
-      osds_remove <- 2397
+      wastewater_remove <- 1216 
+      osds_remove <- 2599
       
       # OSDS & wastewater removal costs for AO ($)
       osds_col <- paste0("osdsremoval_AO",seawall,"t",trigger)
