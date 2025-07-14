@@ -562,7 +562,7 @@ write.csv(cepfparcel,'cepfparcel.csv')
 write.csv(cepfroad,'cepfroad.csv')
 write.csv(costtime,'costtime.csv')
 
-#beachesdftb <- read.csv('beachesdftb_alltaxclass.csv')
+#beachesdftb <- read.csv('beachesdftb.csv')
 #beachesdf<-read.csv('beachesdf.csv')
 #cepfbeach<-read.csv('cepfbeach.csv')
 #cepfparcel<-read.csv('cepfparcel.csv')
@@ -669,7 +669,9 @@ figspike <- ggplot(beachspike, aes(y=Len_m, x=id,fill=district)) + #Len_m costpe
   coord_polar(start=0)+
   ylim(-5000,max(beachspike$Len_m)) + #negative space for inner circle #-500000 -5000
   scale_fill_manual(values = alt_purples, na.value = "transparent") + 
-  geom_text(data=label_data,aes(x=id,y=Len_m+100,label=beachname,hjust=hjust),angle= label_data$angle,size=3) #10000 100
+  geom_text(data=label_data,aes(x=id,y=Len_m+175,label=beachname,hjust=hjust),angle= label_data$angle,size=3) + #10000 100
+  geom_text(data=label_data[!is.na(label_data$beach),], aes(x=id, y=25, label=beach, hjust=hjust), angle=label_data$angle[!is.na(label_data$beach)], 
+            size=2, color="black")
 ggsave('figspike.png', figspike, bg='transparent',width=5,height=5,dpi=300,units='in')
 
 
@@ -779,7 +781,7 @@ bubbles <- ggplot(beachesdftb, aes(x=as.numeric(number_buildings), y=as.numeric(
   labs(size = "Total cost \n ($2025, mil)")+
   #scale_color_viridis_c(option="plasma",labels = scales::label_comma()) +
   scale_color_gradientn(colors = pals::ocean.matter(100), labels = scales::label_comma(),na.value = "grey50") +
-  guides(col = guide_colourbar(title = "Median value of parcels \n($2025, mil)"))+
+  guides(col = guide_colourbar(title = "Median value of parcels \n($2025, mil)",alpha=0.5))+
   geom_text_repel(data=labels,aes(label=beachname), size= 4,color= 'black')+ #geom_text_repel
   xlab('Number of buildings affected')+
   ylab('Road affected (m)')+
@@ -803,6 +805,7 @@ ggsave('fig3_bubbles.png', bubbles,width=8,height=6,dpi=300,units='in')
 
 #spotlights: kekaha (34), wailua (17), poipu (24), hanalei (4), haena (1)
 
+beachspike$buildingland_cost <- as.numeric(beachspike$land_dwelling_cost)+as.numeric(beachspike$tax_revenue_loss)+as.numeric(beachspike$private_property_value_loss)
 
 #spike spotlights
 #kekaha (34)
@@ -812,7 +815,7 @@ spotlt_kekaha <- setNames(as.data.frame(t(spotlt_kekaha[-1])), spotlt_kekaha[[1]
 names(spotlt_kekaha) <- c('cost')
 spotlt_kekaha <- spotlt_kekaha %>% tibble::rownames_to_column(var = "costtype")
 beachname <- spotlt_kekaha$cost[spotlt_kekaha$costtype == 'Hawaiian.Name']
-spotlt_kekaha<- spotlt_kekaha[spotlt_kekaha$costtype %in% c('infrastructure_cost','residential_cost'),]
+spotlt_kekaha<- spotlt_kekaha[spotlt_kekaha$costtype %in% c('infrastructure_cost','buildingland_cost'),]
 spotlt_kekaha$Hawaiian.Name <- beachname
 figspotlt_kekaha <- ggplot(spotlt_kekaha,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
   geom_bar(position='stack',stat='identity',width=0.7)+
@@ -836,7 +839,7 @@ spotlt_wailua <- setNames(as.data.frame(t(spotlt_wailua[-1])), spotlt_wailua[[1]
 names(spotlt_wailua) <- c('cost')
 spotlt_wailua <- spotlt_wailua %>% tibble::rownames_to_column(var = "costtype")
 beachname <- spotlt_wailua$cost[spotlt_wailua$costtype == 'Hawaiian.Name']
-spotlt_wailua<- spotlt_wailua[spotlt_wailua$costtype %in% c('infrastructure_cost','residential_cost'),]
+spotlt_wailua<- spotlt_wailua[spotlt_wailua$costtype %in% c('infrastructure_cost','buildingland_cost'),]
 spotlt_wailua$Hawaiian.Name <- beachname
 figspotlt_wailua <- ggplot(spotlt_wailua,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
   geom_bar(position='stack',stat='identity',width=0.7)+
@@ -860,7 +863,7 @@ spotlt_poipu <- setNames(as.data.frame(t(spotlt_poipu[-1])), spotlt_poipu[[1]])
 names(spotlt_poipu) <- c('cost')
 spotlt_poipu <- spotlt_poipu %>% tibble::rownames_to_column(var = "costtype")
 beachname <- spotlt_poipu$cost[spotlt_poipu$costtype == 'Hawaiian.Name']
-spotlt_poipu<- spotlt_poipu[spotlt_poipu$costtype %in% c('infrastructure_cost','residential_cost'),]
+spotlt_poipu<- spotlt_poipu[spotlt_poipu$costtype %in% c('infrastructure_cost','buildingland_cost'),]
 spotlt_poipu$Hawaiian.Name <- beachname
 figspotlt_poipu <- ggplot(spotlt_poipu,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
   geom_bar(position='stack',stat='identity',width=0.7)+
@@ -884,7 +887,7 @@ spotlt_hanalei <- setNames(as.data.frame(t(spotlt_hanalei[-1])), spotlt_hanalei[
 names(spotlt_hanalei) <- c('cost')
 spotlt_hanalei <- spotlt_hanalei %>% tibble::rownames_to_column(var = "costtype")
 beachname <- spotlt_hanalei$cost[spotlt_hanalei$costtype == 'Hawaiian.Name']
-spotlt_hanalei<- spotlt_hanalei[spotlt_hanalei$costtype %in% c('infrastructure_cost','residential_cost'),]
+spotlt_hanalei<- spotlt_hanalei[spotlt_hanalei$costtype %in% c('infrastructure_cost','buildingland_cost'),]
 spotlt_hanalei$Hawaiian.Name <- beachname
 figspotlt_hanalei <- ggplot(spotlt_hanalei,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
   geom_bar(position='stack',stat='identity',width=0.7)+
@@ -908,7 +911,7 @@ spotlt_haena <- setNames(as.data.frame(t(spotlt_haena[-1])), spotlt_haena[[1]])
 names(spotlt_haena) <- c('cost')
 spotlt_haena <- spotlt_haena %>% tibble::rownames_to_column(var = "costtype")
 beachname <- spotlt_haena$cost[spotlt_haena$costtype == 'Hawaiian.Name']
-spotlt_haena<- spotlt_haena[spotlt_haena$costtype %in% c('infrastructure_cost','residential_cost'),]
+spotlt_haena<- spotlt_haena[spotlt_haena$costtype %in% c('infrastructure_cost','buildingland_cost'),]
 spotlt_haena$Hawaiian.Name <- beachname
 figspotlt_haena <- ggplot(spotlt_haena,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
   geom_bar(position='stack',stat='identity',width=0.7)+
@@ -952,7 +955,7 @@ ggsave('figspotlt_anini.png', figspotlt_anini, bg='transparent',width=7.5,height
 #legend
 figspotlt_legend <- ggplot(spotlt_anini,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
   geom_bar(position='stack',stat='identity',width=0.7)+
-  scale_fill_manual(values=c('grey','grey43'),labels=c('Infrastructure cost','Residential cost'))+
+  scale_fill_manual(values=c('grey','grey43'),labels=c('Infrastructure cost','Building & land cost'))+
   geom_text_repel(aes(label=scales::comma(round(as.numeric(cost),-3))),size = 3, position = position_stack(vjust = 0.5))+
   scale_y_continuous(breaks=seq(0,1000000000,250000000),labels=scales::dollar_format(prefix='$',suffix='M',scale = 1e-6))+
   theme_minimal() +
@@ -963,6 +966,7 @@ figspotlt_legend <- ggplot(spotlt_anini,aes(x=Hawaiian.Name, y=as.numeric(cost),
         legend.title=element_blank())+
   expand_limits(y = 1000000000)
 legend <- cowplot::get_legend(figspotlt_legend)
+library(grid)
 grid.newpage()
 grid.draw(legend)
 
