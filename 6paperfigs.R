@@ -562,12 +562,12 @@ write.csv(cepfparcel,'cepfparcel.csv')
 write.csv(cepfroad,'cepfroad.csv')
 write.csv(costtime,'costtime.csv')
 
-#beachesdftb <- read.csv('beachesdftb.csv')
-#beachesdf<-read.csv('beachesdf.csv')
-#cepfbeach<-read.csv('cepfbeach.csv')
-#cepfparcel<-read.csv('cepfparcel.csv')
-#cepfroad<-read.csv('cepfroad.csv')
-#costtime <- read.csv('costtime.csv')
+# beachesdftb <- read.csv('beachesdftb.csv')
+# beachesdf<-read.csv('beachesdf.csv')
+# cepfbeach<-read.csv('cepfbeach.csv')
+# cepfparcel<-read.csv('cepfparcel.csv')
+# cepfroad<-read.csv('cepfroad.csv')
+# costtime <- read.csv('costtime.csv')
 
 
 
@@ -935,7 +935,7 @@ spotlt_anini <- setNames(as.data.frame(t(spotlt_anini[-1])), spotlt_anini[[1]])
 names(spotlt_anini) <- c('cost')
 spotlt_anini <- spotlt_anini %>% tibble::rownames_to_column(var = "costtype")
 beachname <- spotlt_anini$cost[spotlt_anini$costtype == 'Hawaiian.Name']
-spotlt_anini<- spotlt_anini[spotlt_anini$costtype %in% c('infrastructure_cost','residential_cost'),]
+spotlt_anini<- spotlt_anini[spotlt_anini$costtype %in% c('infrastructure_cost','buildingland_cost'),]
 spotlt_anini$Hawaiian.Name <- beachname
 figspotlt_anini <- ggplot(spotlt_anini,aes(x=Hawaiian.Name, y=as.numeric(cost),fill=costtype,label=as.numeric(cost)))+
   geom_bar(position='stack',stat='identity',width=0.7)+
