@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this code or data, please cite the associated publication."
+title: "KauaiRetreat: Analysis code for managed retreat on Kauai"
+authors:
+  - family-names: "Tavares"
+    given-names: "Kammie-Dominique"
+  - family-names: "Setter"
+    given-names: "Renee O."
+    orcid: "https://orcid.org/0000-0002-6651-9054"
+repository-code: "https://github.com/UHawaii-ISR/KauaiRetreat"
+license: MIT
+preferred-citation:
+  type: article
+  authors:
+    - family-names: "Tavares"
+      given-names: "Kammie-Dominique"
+    - family-names: "Setter"
+      given-names: "Renee O."
+      orcid: "https://orcid.org/0000-0002-6651-9054"
+    - family-names: "Dreizin"
+      given-names: "Tanya"
+    - family-names: "Clinton"
+      given-names: "Alan"
+    - family-names: "Summers"
+      given-names: "Alisha"
+    - family-names: "Coffman"
+      given-names: "Makena"
+  title: "Just beach"
+  journal: "Climate Risk Management"
+  year: 2026
+  doi: "10.1016/j.crm.2026.100790"
+  url: "https://doi.org/10.1016/j.crm.2026.100790"
